@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.model;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.NbGradleProject;
 
 @SuppressWarnings("serial") // Not serializable
@@ -16,9 +16,7 @@ public final class GradleModelLoadError extends Exception {
 
         super(pickNonNull(unexpectedError, buildScriptEvaluationError));
 
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
         this.buildScriptEvaluationError = buildScriptEvaluationError;
         this.unexpectedError = unexpectedError;
     }

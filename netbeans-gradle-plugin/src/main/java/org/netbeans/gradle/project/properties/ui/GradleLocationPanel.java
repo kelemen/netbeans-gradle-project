@@ -5,14 +5,14 @@ import java.awt.Dialog;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.ButtonGroup;
 import javax.swing.JTextField;
 import org.gradle.util.GradleVersion;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingProperties;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingProperties;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
@@ -36,9 +36,7 @@ public class GradleLocationPanel extends javax.swing.JPanel {
     private final StringResolver locationResolver;
 
     public GradleLocationPanel(StringResolver locationResolver, GradleLocationRef defaultLocationRef) {
-        ExceptionHelper.checkNotNullArgument(locationResolver, "locationResolver");
-
-        this.locationResolver = locationResolver;
+        this.locationResolver = Objects.requireNonNull(locationResolver, "locationResolver");
 
         locationChangedListeners = new GenericChangeListenerManager();
 

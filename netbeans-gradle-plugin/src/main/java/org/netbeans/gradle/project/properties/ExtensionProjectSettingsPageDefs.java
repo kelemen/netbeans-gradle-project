@@ -2,9 +2,10 @@ package org.netbeans.gradle.project.properties;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
@@ -28,11 +29,8 @@ public final class ExtensionProjectSettingsPageDefs {
             NbGradleProject project,
             String extensionName,
             Lookup... extensionLookups) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(extensionName, "extensionName");
-
-        this.project = project;
-        this.extensionName = extensionName;
+        this.project = Objects.requireNonNull(project, "project");
+        this.extensionName = Objects.requireNonNull(extensionName, "extensionName");
         this.extensionLookups = extensionLookups.clone();
         this.extensionSettingsRef = new AtomicReference<>(null);
 
@@ -45,10 +43,10 @@ public final class ExtensionProjectSettingsPageDefs {
             @Nonnull final ProjectSettingsProvider.ExtensionSettings extensionSettings,
             @Nonnull final ProfileBasedSettingsPageFactory pageFactory) {
 
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(categoryId, "categoryId");
-        ExceptionHelper.checkNotNullArgument(extensionSettings, "extensionSettings");
-        ExceptionHelper.checkNotNullArgument(pageFactory, "pageFactory");
+        Objects.requireNonNull(project, "project");
+        Objects.requireNonNull(categoryId, "categoryId");
+        Objects.requireNonNull(extensionSettings, "extensionSettings");
+        Objects.requireNonNull(pageFactory, "pageFactory");
 
         return new ProfileBasedCustomizer(categoryId.getCategoryName(), categoryId.getDisplayName(), () -> {
             ProfileBasedSettingsPage settingsPage = pageFactory.createSettingsPage();

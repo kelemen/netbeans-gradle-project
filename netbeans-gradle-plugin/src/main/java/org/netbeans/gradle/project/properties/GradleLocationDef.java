@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.properties;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.tasks.vars.StringResolver;
 
 public final class GradleLocationDef {
@@ -15,7 +14,7 @@ public final class GradleLocationDef {
     private final boolean preferWrapper;
 
     public GradleLocationDef(GradleLocationRef locationRef, boolean preferWrapper) {
-        ExceptionHelper.checkNotNullArgument(locationRef, "locationRef");
+        Objects.requireNonNull(locationRef, "locationRef");
 
         // Performance hack: as is now we won't pass different resolvers, so we can cache the location value.
         this.locationRef = cachedRef(locationRef);
@@ -136,7 +135,7 @@ public final class GradleLocationDef {
     }
 
     public static GradleLocationDef parseFromString(String locationDefStr) {
-        ExceptionHelper.checkNotNullArgument(locationDefStr, "locationDefStr");
+        Objects.requireNonNull(locationDefStr, "locationDefStr");
 
         String normDef = locationDefStr.trim();
 

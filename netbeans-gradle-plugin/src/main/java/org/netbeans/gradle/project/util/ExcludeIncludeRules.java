@@ -7,7 +7,6 @@ import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Objects;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.SourceIncludePatterns;
 import org.openide.filesystems.FileObject;
@@ -21,8 +20,7 @@ public final class ExcludeIncludeRules implements FileGroupFilter, Serializable 
     private final SourceIncludePatterns sourceIncludePatterns;
 
     private ExcludeIncludeRules(SourceIncludePatterns sourceIncludePatterns) {
-        ExceptionHelper.checkNotNullArgument(sourceIncludePatterns, "sourceIncludePatterns");
-        this.sourceIncludePatterns = sourceIncludePatterns;
+        this.sourceIncludePatterns = Objects.requireNonNull(sourceIncludePatterns, "sourceIncludePatterns");
     }
 
     public static ExcludeIncludeRules create(SourceIncludePatterns sourceIncludePatterns) {
@@ -47,8 +45,8 @@ public final class ExcludeIncludeRules implements FileGroupFilter, Serializable 
     }
 
     public boolean isIncluded(Path rootPath, FileObject file) {
-        ExceptionHelper.checkNotNullArgument(rootPath, "rootPath");
-        ExceptionHelper.checkNotNullArgument(file, "file");
+        Objects.requireNonNull(rootPath, "rootPath");
+        Objects.requireNonNull(file, "file");
 
         if (isAllowAll()) {
             return true;
@@ -59,8 +57,8 @@ public final class ExcludeIncludeRules implements FileGroupFilter, Serializable 
     }
 
     public boolean isIncluded(Path rootPath, File file) {
-        ExceptionHelper.checkNotNullArgument(rootPath, "rootPath");
-        ExceptionHelper.checkNotNullArgument(file, "file");
+        Objects.requireNonNull(rootPath, "rootPath");
+        Objects.requireNonNull(file, "file");
 
         if (isAllowAll()) {
             return true;
@@ -71,8 +69,8 @@ public final class ExcludeIncludeRules implements FileGroupFilter, Serializable 
 
     @Override
     public boolean isIncluded(Path rootPath, Path file) {
-        ExceptionHelper.checkNotNullArgument(rootPath, "rootPath");
-        ExceptionHelper.checkNotNullArgument(file, "file");
+        Objects.requireNonNull(rootPath, "rootPath");
+        Objects.requireNonNull(file, "file");
 
         if (isAllowAll()) {
             return true;

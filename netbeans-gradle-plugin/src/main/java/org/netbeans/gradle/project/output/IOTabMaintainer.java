@@ -8,11 +8,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.Exceptions;
 
 public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
@@ -22,11 +22,9 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
     private final KeyCounter<TabKey> tabIndexes;
 
     public IOTabMaintainer(IOTabFactory<? extends IOTab> factory) {
-        ExceptionHelper.checkNotNullArgument(factory, "factory");
-
         this.mainLock = new ReentrantLock();
         this.currentTabs = new HashMap<>();
-        this.factory = factory;
+        this.factory = Objects.requireNonNull(factory, "factory");
         this.tabIndexes = new KeyCounter<>();
     }
 
@@ -135,16 +133,16 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
     }
 
     public IOTabRef<IOTab> getNewTab(TabKey key, String caption) {
-        ExceptionHelper.checkNotNullArgument(key, "key");
-        ExceptionHelper.checkNotNullArgument(caption, "caption");
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(caption, "caption");
 
         CountedTab<IOTab> result = newTabWithContext(key, caption);
         return new IOTabRefImpl(key, result);
     }
 
     public IOTabRef<IOTab> getTab(TabKey key, String caption) {
-        ExceptionHelper.checkNotNullArgument(key, "key");
-        ExceptionHelper.checkNotNullArgument(caption, "caption");
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(caption, "caption");
 
         cleanupTabs();
 

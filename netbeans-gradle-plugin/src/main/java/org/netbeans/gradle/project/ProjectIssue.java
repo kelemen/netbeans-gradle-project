@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.utils.ExceptionHelper;
 
 public final class ProjectIssue {
     private final List<Entry> entries;
@@ -29,13 +30,9 @@ public final class ProjectIssue {
         }
 
         public Entry(Kind kind, String summary, String details) {
-            ExceptionHelper.checkNotNullArgument(kind, "kind");
-            ExceptionHelper.checkNotNullArgument(summary, "summary");
-            ExceptionHelper.checkNotNullArgument(details, "details");
-
-            this.kind = kind;
-            this.summary = summary;
-            this.details = details;
+            this.kind = Objects.requireNonNull(kind, "kind");
+            this.summary = Objects.requireNonNull(summary, "summary");
+            this.details = Objects.requireNonNull(details, "details");
         }
 
         public Kind getKind() {

@@ -2,9 +2,10 @@ package org.netbeans.gradle.project.output;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
@@ -26,13 +27,9 @@ public final class SmartOutputHandler implements LineOutputWriter.Handler {
             OutputWriter output,
             List<TaskOutputProcessor> visitors,
             List<Consumer> processors) {
-        ExceptionHelper.checkNotNullArgument(ioParent, "ioParent");
-        ExceptionHelper.checkNotNullArgument(output, "output");
-        ExceptionHelper.checkNotNullArgument(visitors, "visitors");
-        ExceptionHelper.checkNotNullArgument(processors, "processors");
 
-        this.ioParent = ioParent;
-        this.output = output;
+        this.ioParent = Objects.requireNonNull(ioParent, "ioParent");
+        this.output = Objects.requireNonNull(output, "output");
         this.visitors = visitors.toArray(new TaskOutputProcessor[0]);
         this.processors = processors.toArray(new Consumer[0]);
 

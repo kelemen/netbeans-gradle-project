@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.util;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.utils.ExceptionHelper;
 import org.openide.util.Lookup;
 
 public final class CachedLookupValue<ValueType> {
@@ -10,11 +10,8 @@ public final class CachedLookupValue<ValueType> {
     private final AtomicReference<ValueType> valueRef;
 
     public CachedLookupValue(Lookup.Provider provider, Class<? extends ValueType> type) {
-        ExceptionHelper.checkNotNullArgument(provider, "provider");
-        ExceptionHelper.checkNotNullArgument(type, "type");
-
-        this.provider = provider;
-        this.type = type;
+        this.provider = Objects.requireNonNull(provider, "provider");
+        this.type = Objects.requireNonNull(type, "type");
         this.valueRef = new AtomicReference<>(null);
     }
 

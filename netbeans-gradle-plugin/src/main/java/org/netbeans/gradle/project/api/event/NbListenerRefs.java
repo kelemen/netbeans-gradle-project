@@ -1,9 +1,8 @@
 package org.netbeans.gradle.project.api.event;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.concurrent.Tasks;
+import org.jtrim2.event.ListenerRef;
 
 /**
  * Contains utility methods related to {@link NbListenerRef}.
@@ -21,20 +20,8 @@ public final class NbListenerRefs {
      *   returns {@code null}.
      */
     @Nonnull
-    public static NbListenerRef asNbRef(@Nonnull final ListenerRef listenerRef) {
-        ExceptionHelper.checkNotNullArgument(listenerRef, "listenerRef");
-
-        return new NbListenerRef() {
-            @Override
-            public boolean isRegistered() {
-                return listenerRef.isRegistered();
-            }
-
-            @Override
-            public void unregister() {
-                listenerRef.unregister();
-            }
-        };
+    public static NbListenerRef asNbRef(@Nonnull ListenerRef listenerRef) {
+        return listenerRef::unregister;
     }
 
     /**
@@ -53,25 +40,8 @@ public final class NbListenerRefs {
      *   {@code unregister} method. This method never returns {@code null}.
      */
     @Nonnull
-    public static NbListenerRef fromRunnable(@Nonnull final Runnable unregisterTask) {
-        ExceptionHelper.checkNotNullArgument(unregisterTask, "unregisterTask");
-
-        return new NbListenerRef() {
-            private volatile boolean registered = true;
-            private final AtomicBoolean executedTask = new AtomicBoolean(false);
-
-            @Override
-            public boolean isRegistered() {
-                return registered;
-            }
-
-            @Override
-            public void unregister() {
-                if (executedTask.compareAndSet(false, true)) {
-                    unregisterTask.run();
-                }
-            }
-        };
+    public static NbListenerRef fromRunnable(@Nonnull Runnable unregisterTask) {
+        return Tasks.runOnceTask(unregisterTask)::run;
     }
 
     private NbListenerRefs() {

@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.java.test;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.openide.util.Lookup;
 
 public final class TestTaskName {
@@ -10,9 +10,7 @@ public final class TestTaskName {
     private final String taskName;
 
     public TestTaskName(String taskName) {
-        ExceptionHelper.checkNotNullArgument(taskName, "taskName");
-
-        this.taskName = taskName;
+        this.taskName = Objects.requireNonNull(taskName, "taskName");
     }
 
     public String getTaskName() {

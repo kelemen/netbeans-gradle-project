@@ -2,8 +2,8 @@ package org.netbeans.gradle.project.tasks.vars;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 
@@ -16,14 +16,9 @@ public final class DisplayedTaskVariable {
             TaskVariable variable,
             String displayName,
             VariableTypeDescription typeDescription) {
-
-        ExceptionHelper.checkNotNullArgument(variable, "variable");
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-        ExceptionHelper.checkNotNullArgument(typeDescription, "typeDescription");
-
-        this.variable = variable;
-        this.displayName = displayName;
-        this.typeDescription = typeDescription;
+        this.variable = Objects.requireNonNull(variable, "variable");
+        this.displayName = Objects.requireNonNull(displayName, "displayName");
+        this.typeDescription = Objects.requireNonNull(typeDescription, "typeDescription");
     }
 
     public TaskVariable getVariable() {

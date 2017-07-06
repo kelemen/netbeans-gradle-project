@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
@@ -33,9 +33,7 @@ implements
     private final JavaExtension javaExt;
 
     public JavaExtensionNodes(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
     }
 
     private PropertySource<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
@@ -58,7 +56,7 @@ implements
             refs.add(addDirectoryChangeListener(listedDir.getDirectory(), listener));
         }
 
-        return ListenerRegistries.combineListenerRefs(refs);
+        return ListenerRefs.combineListenerRefs(refs);
     }
 
     @Override
@@ -67,7 +65,7 @@ implements
         ListenerRef ref2 = javaExt.getSourceDirsHandler().addDirsCreatedListener(listener);
         ListenerRef ref3 = javaSourcesDisplayMode().addChangeListener(listener);
         ListenerRef ref4 = addDirectoryChangeListener(listener);
-        return NbListenerRefs.asNbRef(ListenerRegistries.combineListenerRefs(ref1, ref2, ref3, ref4));
+        return NbListenerRefs.asNbRef(ListenerRefs.combineListenerRefs(ref1, ref2, ref3, ref4));
     }
 
     private void addListedDirs(List<SingleNodeFactory> toPopulate) {

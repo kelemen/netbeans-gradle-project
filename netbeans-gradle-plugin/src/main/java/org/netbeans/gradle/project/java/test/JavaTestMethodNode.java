@@ -2,13 +2,14 @@ package org.netbeans.gradle.project.java.test;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationSource;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationSource;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.concurrent.AsyncTasks;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbStrings;
@@ -33,11 +34,8 @@ public final class JavaTestMethodNode extends TestMethodNode {
             TestTaskName testTaskName) {
         super(testcase, javaExt.getProject());
 
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        ExceptionHelper.checkNotNullArgument(testTaskName, "testTaskName");
-
-        this.javaExt = javaExt;
-        this.testTaskName = testTaskName;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
+        this.testTaskName = Objects.requireNonNull(testTaskName, "testTaskName");
         this.specificTestcase = toSpecificTestcase(testcase);
     }
 
@@ -187,7 +185,7 @@ public final class JavaTestMethodNode extends TestMethodNode {
                 } finally {
                     progress.finish();
                 }
-            }, null);
+            }).exceptionally(AsyncTasks::expectNoError);
         }
     }
 }

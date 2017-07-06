@@ -2,12 +2,10 @@ package org.netbeans.gradle.project.java.test;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -38,11 +36,8 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
 
         super(suiteName, filtered);
 
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        ExceptionHelper.checkNotNullArgument(testTaskName, "testTaskName");
-
-        this.javaExt = javaExt;
-        this.testTaskName = testTaskName;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
+        this.testTaskName = Objects.requireNonNull(testTaskName, "testTaskName");
     }
 
     @Override
@@ -141,9 +136,7 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
-                jumpToSourcesNow();
-            }, null);
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(JavaTestsuiteNode.this::jumpToSourcesNow);
         }
     }
 

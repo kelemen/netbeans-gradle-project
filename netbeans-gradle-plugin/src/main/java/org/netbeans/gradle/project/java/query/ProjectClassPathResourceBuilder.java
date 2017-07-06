@@ -12,11 +12,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.CollectionsEx;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ui.OpenProjects;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
@@ -58,13 +58,9 @@ public final class ProjectClassPathResourceBuilder {
             NbJavaModel projectModel,
             Map<File, JavaProjectDependencyDef> translatedDependencies,
             ProjectPlatform currentPlatform) {
-        ExceptionHelper.checkNotNullArgument(projectModel, "projectModel");
-        ExceptionHelper.checkNotNullArgument(translatedDependencies, "translatedDependencies");
-        ExceptionHelper.checkNotNullArgument(currentPlatform, "currentPlatform");
-
-        this.projectModel = projectModel;
-        this.translatedDependencies = translatedDependencies;
-        this.currentPlatform = currentPlatform;
+        this.projectModel = Objects.requireNonNull(projectModel, "projectModel");
+        this.translatedDependencies = Objects.requireNonNull(translatedDependencies, "translatedDependencies");
+        this.currentPlatform = Objects.requireNonNull(currentPlatform, "currentPlatform");
         this.classpathResources = null;
         this.missing = null;
         this.openedProjectsOutput = null;
@@ -430,11 +426,8 @@ public final class ProjectClassPathResourceBuilder {
         private final ClassPathType classPathType;
 
         public SourceSetClassPathType(String sourceSetName, ClassPathType classPathType) {
-            ExceptionHelper.checkNotNullArgument(sourceSetName, "sourceSetName");
-            ExceptionHelper.checkNotNullArgument(classPathType, "classPathType");
-
-            this.sourceSetName = sourceSetName;
-            this.classPathType = classPathType;
+            this.sourceSetName = Objects.requireNonNull(sourceSetName, "sourceSetName");
+            this.classPathType = Objects.requireNonNull(classPathType, "classPathType");
         }
 
         @Override

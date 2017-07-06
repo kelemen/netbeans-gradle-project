@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.tasks.vars;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.openide.util.Lookup;
@@ -32,8 +32,8 @@ public final class StringResolvers {
     }
 
     public static StringResolver bindVariableResolver(final VariableResolver resolver, final TaskVariableMap variables) {
-        ExceptionHelper.checkNotNullArgument(resolver, "resolver");
-        ExceptionHelper.checkNotNullArgument(variables, "variables");
+        Objects.requireNonNull(resolver, "resolver");
+        Objects.requireNonNull(variables, "variables");
 
         return new StringResolver() {
             @Override

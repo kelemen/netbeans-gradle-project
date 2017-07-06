@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.api.task;
 
 import java.io.IOException;
 import javax.annotation.Nonnull;
-import org.jtrim.cancel.CancellationToken;
+import org.jtrim2.cancel.CancellationToken;
 
 /**
  * Define a service which is active during the execution of a Gradle command.

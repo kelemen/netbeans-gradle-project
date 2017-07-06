@@ -5,6 +5,7 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.Trees;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.lang.model.element.Element;
@@ -12,8 +13,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.ElementFilter;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationToken;
 import org.netbeans.api.java.source.CompilationController;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -30,9 +30,9 @@ public final class ShowTestUtils {
             JavaExtension javaExt,
             final SpecificTestcase specificTestcase) {
 
-        ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        ExceptionHelper.checkNotNullArgument(specificTestcase, "specificTestcase");
+        Objects.requireNonNull(cancelToken, "cancelToken");
+        Objects.requireNonNull(javaExt, "javaExt");
+        Objects.requireNonNull(specificTestcase, "specificTestcase");
 
         FileObject testFile = JavaTestsuiteNode.tryGetTestFile(
                 javaExt,

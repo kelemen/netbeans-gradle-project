@@ -4,7 +4,7 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.util.GradleVersions;
 
@@ -20,19 +20,15 @@ public final class NbJavaModel implements Serializable {
             JavaModelSource modelSource,
             NbJavaModule mainModule) {
 
-        this.evaluationEnvironment = evaluationEnvironment;
-        this.modelSource = modelSource;
-        this.mainModule = mainModule;
+        this.evaluationEnvironment = Objects.requireNonNull(evaluationEnvironment, "evaluationEnvironment");
+        this.modelSource = Objects.requireNonNull(modelSource, "modelSource");
+        this.mainModule = Objects.requireNonNull(mainModule, "mainModule");
     }
 
     public static NbJavaModel createModel(
             GradleTarget evaluationEnvironment,
             JavaModelSource modelSource,
             NbJavaModule mainModule) {
-
-        ExceptionHelper.checkNotNullArgument(evaluationEnvironment, "evaluationEnvironment");
-        ExceptionHelper.checkNotNullArgument(modelSource, "modelSource");
-        ExceptionHelper.checkNotNullArgument(mainModule, "mainModule");
 
         return new NbJavaModel(evaluationEnvironment, modelSource, mainModule);
     }
@@ -75,7 +71,7 @@ public final class NbJavaModel implements Serializable {
         }
 
         private Object readResolve() throws ObjectStreamException {
-            return new NbJavaModel(evaluationEnvironment, modelSource, mainModule);
+            return new NbJavaModel(getEvaluationEnvironment(), modelSource, mainModule);
         }
     }
 }

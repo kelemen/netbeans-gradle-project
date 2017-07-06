@@ -2,9 +2,9 @@ package org.netbeans.gradle.project.output;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.util.StringUtils;
 
 public final class ReplaceLineFeedReader extends Reader {
@@ -13,10 +13,9 @@ public final class ReplaceLineFeedReader extends Reader {
     private final Lock bufferLock;
 
     public ReplaceLineFeedReader(Reader src, String newLineSeparator) {
-        ExceptionHelper.checkNotNullArgument(src, "src");
-        ExceptionHelper.checkNotNullArgument(newLineSeparator, "newLineSeparator");
+        Objects.requireNonNull(newLineSeparator, "newLineSeparator");
 
-        this.src = src;
+        this.src = Objects.requireNonNull(src, "src");
         this.buffer = new LfReplacingBuffer(newLineSeparator);
         this.bufferLock = new ReentrantLock();
     }
@@ -26,8 +25,8 @@ public final class ReplaceLineFeedReader extends Reader {
     }
 
     public static Reader replaceLf(Reader src, String newLineSeparator) {
-        ExceptionHelper.checkNotNullArgument(src, "src");
-        ExceptionHelper.checkNotNullArgument(newLineSeparator, "newLineSeparator");
+        Objects.requireNonNull(src, "src");
+        Objects.requireNonNull(newLineSeparator, "newLineSeparator");
 
         if ("\n".equals(newLineSeparator)) {
             return src;

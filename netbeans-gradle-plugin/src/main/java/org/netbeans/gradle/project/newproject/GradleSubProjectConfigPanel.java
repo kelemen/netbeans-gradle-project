@@ -2,9 +2,9 @@ package org.netbeans.gradle.project.newproject;
 
 import java.awt.Component;
 import java.io.File;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.event.ChangeListener;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.script.CommonScripts;
 import org.netbeans.gradle.project.script.GroovyScripts;
 import org.netbeans.gradle.project.validate.Problem;
@@ -20,9 +20,7 @@ public final class GradleSubProjectConfigPanel implements WizardDescriptor.Panel
     private final WizardDescriptor wizard;
 
     public GradleSubProjectConfigPanel(AtomicReference<GradleSingleProjectConfig> configRef, WizardDescriptor wizard) {
-        ExceptionHelper.checkNotNullArgument(configRef, "configRef");
-
-        this.configRef = configRef;
+        this.configRef = Objects.requireNonNull(configRef, "configRef");
         this.wizard = wizard;
         this.panel = new AtomicReference<>();
     }

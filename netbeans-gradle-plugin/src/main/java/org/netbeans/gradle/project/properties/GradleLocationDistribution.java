@@ -2,9 +2,9 @@ package org.netbeans.gradle.project.properties;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.GradleLocation.Applier;
 import org.netbeans.gradle.project.tasks.vars.StringResolver;
@@ -18,12 +18,11 @@ public final class GradleLocationDistribution implements GradleLocation {
     private final URI location;
 
     public GradleLocationDistribution(URI location) {
-        ExceptionHelper.checkNotNullArgument(location, "location");
-        this.location = location;
+        this.location = Objects.requireNonNull(location, "location");
     }
 
     public static GradleLocationRef getLocationRef(final String rawUri) {
-        ExceptionHelper.checkNotNullArgument(rawUri, "rawUri");
+        Objects.requireNonNull(rawUri, "rawUri");
 
         return new GradleLocationRef() {
             @Override

@@ -5,10 +5,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.UpdateTaskExecutor;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ui.OpenProjects;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
@@ -31,11 +31,8 @@ public final class ModelCacheSizeAutoUpdater implements ProjectModelChangeListen
     }
 
     public ModelCacheSizeAutoUpdater(UpdateTaskExecutor cacheSizeCheckExecutor, NbConsumer<? super Integer> cacheSizeUpdater) {
-        ExceptionHelper.checkNotNullArgument(cacheSizeCheckExecutor, "cacheSizeCheckExecutor");
-        ExceptionHelper.checkNotNullArgument(cacheSizeUpdater, "cacheSizeUpdater");
-
-        this.cacheSizeCheckExecutor = cacheSizeCheckExecutor;
-        this.cacheSizeUpdater = cacheSizeUpdater;
+        this.cacheSizeCheckExecutor = Objects.requireNonNull(cacheSizeCheckExecutor, "cacheSizeCheckExecutor");
+        this.cacheSizeUpdater = Objects.requireNonNull(cacheSizeUpdater, "cacheSizeUpdater");
     }
 
     public static ModelCacheSizeAutoUpdater getDefault() {

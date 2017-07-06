@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.api.property;
 
 import javax.annotation.Nonnull;
-import org.jtrim.property.PropertySource;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
@@ -13,7 +13,7 @@ import org.netbeans.gradle.project.api.event.NbListenerRef;
  * file and might get updated after the content of that file changes.
  * <P>
  * This interface exists for backward compatibilty reasons only, you
- * should use {@code org.jtrim.property.PropertySource} instead.
+ * should use {@code org.jtrim2.property.PropertySource} instead.
  *
  * <h3>Thread safety</h3>
  * Instances of this interface are required to be completely thread-safe

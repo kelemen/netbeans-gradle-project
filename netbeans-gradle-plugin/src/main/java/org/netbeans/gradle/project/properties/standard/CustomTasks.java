@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties.standard;
 
 import java.util.List;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 
 public final class CustomTasks {
@@ -12,8 +12,7 @@ public final class CustomTasks {
     }
 
     public CustomTasks(PredefinedTasks tasks) {
-        ExceptionHelper.checkNotNullArgument(tasks, "tasks");
-        this.tasks = tasks;
+        this.tasks = Objects.requireNonNull(tasks, "tasks");
     }
 
     public List<PredefinedTask> getTasks() {

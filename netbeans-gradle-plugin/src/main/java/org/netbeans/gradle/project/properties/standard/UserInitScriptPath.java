@@ -1,15 +1,14 @@
 package org.netbeans.gradle.project.properties.standard;
 
 import java.nio.file.Path;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.NbGradleProject;
 
 public final class UserInitScriptPath {
     private final Path relPath;
 
     public UserInitScriptPath(Path relPath) {
-        ExceptionHelper.checkNotNullArgument(relPath, "relPath");
-        this.relPath = relPath;
+        this.relPath = Objects.requireNonNull(relPath, "relPath");
     }
 
     public Path getPath(NbGradleProject project) {

@@ -22,10 +22,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.UpdateTaskExecutor;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
@@ -49,8 +48,7 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
     private final Locker locker;
 
     public DefaultGlobalSettingsFileManager(RootProjectRegistry rootProjectRegistry) {
-        ExceptionHelper.checkNotNullArgument(rootProjectRegistry, "rootProjectRegistry");
-        this.rootProjectRegistry = rootProjectRegistry;
+        this.rootProjectRegistry = Objects.requireNonNull(rootProjectRegistry, "rootProjectRegistry");
         this.settingsDefPersistor = new GenericUpdateTaskExecutor(SETTINGS_FILE_UPDATER);
         this.outstandingDefsLock = new ReentrantLock();
         this.outstandingDefs = new HashMap<>();
@@ -114,7 +112,7 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
 
     @Override
     public void updateSettingsFile(NbGradleModel model) {
-        ExceptionHelper.checkNotNullArgument(model, "model");
+        Objects.requireNonNull(model, "model");
         setAllSettingsDef(model, getStamp());
 
         settingsDefPersistor.execute(this::persistSettingsDefsNow);
@@ -315,15 +313,10 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
                 File projectDir,
                 SettingsGradleDef settingsGradleDef,
                 String stamp) {
-            ExceptionHelper.checkNotNullArgument(rootProjectDir, "rootProjectDir");
-            ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-            ExceptionHelper.checkNotNullArgument(settingsGradleDef, "settingsGradleDef");
-            ExceptionHelper.checkNotNullArgument(stamp, "stamp");
-
-            this.rootProjectDir = rootProjectDir;
-            this.projectDir = projectDir;
-            this.settingsGradleDef = settingsGradleDef;
-            this.stamp = stamp;
+            this.rootProjectDir = Objects.requireNonNull(rootProjectDir, "rootProjectDir");
+            this.projectDir = Objects.requireNonNull(projectDir, "projectDir");
+            this.settingsGradleDef = Objects.requireNonNull(settingsGradleDef, "settingsGradleDef");
+            this.stamp = Objects.requireNonNull(stamp, "stamp");
         }
     }
 

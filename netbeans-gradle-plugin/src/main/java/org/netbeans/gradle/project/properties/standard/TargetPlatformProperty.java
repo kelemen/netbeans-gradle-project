@@ -3,11 +3,11 @@ package org.netbeans.gradle.project.properties.standard;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
@@ -61,13 +61,13 @@ public final class TargetPlatformProperty {
 
             @Override
             public ListenerRef addChangeListener(Runnable listener) {
-                ExceptionHelper.checkNotNullArgument(listener, "listener");
+                Objects.requireNonNull(listener, "listener");
 
                 ListenerRef ref1 = CommonGlobalSettings.getDefault().mayRelyOnJavaOfScript().getActiveSource().addChangeListener(listener);
                 ListenerRef ref2 = project.currentModel().addChangeListener(listener);
                 ListenerRef ref3 = JavaPlatformUtils.installedPlatforms().addChangeListener(listener);
 
-                return ListenerRegistries.combineListenerRefs(ref1, ref2, ref3);
+                return ListenerRefs.combineListenerRefs(ref1, ref2, ref3);
             }
         };
     }

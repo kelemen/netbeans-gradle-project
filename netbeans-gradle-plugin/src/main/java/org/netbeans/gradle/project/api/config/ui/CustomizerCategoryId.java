@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.api.config.ui;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines the identification of a project settings page. That is,
@@ -28,11 +28,8 @@ public final class CustomizerCategoryId {
      *   be {@code null}.
      */
     public CustomizerCategoryId(@Nonnull String categoryName, @Nonnull String displayName) {
-        ExceptionHelper.checkNotNullArgument(categoryName, "categoryName");
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-
-        this.categoryName = categoryName;
-        this.displayName = displayName;
+        this.categoryName = Objects.requireNonNull(categoryName, "categoryName");
+        this.displayName = Objects.requireNonNull(displayName, "displayName");
     }
 
     /**

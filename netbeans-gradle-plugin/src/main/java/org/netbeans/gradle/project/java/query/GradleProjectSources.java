@@ -16,8 +16,7 @@ import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.executor.UpdateTaskExecutor;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
@@ -56,9 +55,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
     private final UpdateTaskExecutor scanSourcesExecutor;
 
     public GradleProjectSources(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
         this.changeSupport = new ChangeSupport(this);
         this.currentGroups = Collections.emptyMap();
         this.hasScanned = new AtomicBoolean(false);
@@ -221,10 +218,8 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         private final SourceGroup group;
 
         public SourceRootNodeFactory(Object sourceGroupKey, SourceGroup group) {
-            ExceptionHelper.checkNotNullArgument(group, "group");
-
             this.sourceGroupKey = sourceGroupKey;
-            this.group = group;
+            this.group = Objects.requireNonNull(group, "group");
         }
 
         @Override

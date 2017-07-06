@@ -1,10 +1,10 @@
 package org.netbeans.gradle.project.properties;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.UnregisteredListenerRef;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbFunction;
 
@@ -15,11 +15,8 @@ final class PropertyOfProperty<RootValue, SubValue> implements PropertySource<Su
     public PropertyOfProperty(
             PropertySource<? extends RootValue> rootSrc,
             NbFunction<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter) {
-        ExceptionHelper.checkNotNullArgument(subPropertyGetter, "subPropertyGetter");
-        ExceptionHelper.checkNotNullArgument(rootSrc, "rootSrc");
-
-        this.rootSrc = rootSrc;
-        this.subPropertyGetter = subPropertyGetter;
+        this.rootSrc = Objects.requireNonNull(rootSrc, "rootSrc");
+        this.subPropertyGetter = Objects.requireNonNull(subPropertyGetter, "subPropertyGetter");
     }
 
     private PropertySource<SubValue> getSubProperty() {
@@ -45,9 +42,9 @@ final class PropertyOfProperty<RootValue, SubValue> implements PropertySource<Su
     }
 
     @Override
-    public ListenerRef addChangeListener(final Runnable listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-        AtomicReference<ListenerRef> subListenerRef = new AtomicReference<>(UnregisteredListenerRef.INSTANCE);
+    public ListenerRef addChangeListener(Runnable listener) {
+        Objects.requireNonNull(listener, "listener");
+        AtomicReference<ListenerRef> subListenerRef = new AtomicReference<>(ListenerRefs.unregistered());
         // subListenerRef.get() == null means that the the client
         // unregistered its listener and therefore, we must no longer
         // register listeners. That is, once this property is null, we may

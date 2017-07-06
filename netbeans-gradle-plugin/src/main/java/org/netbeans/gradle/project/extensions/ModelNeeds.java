@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
@@ -22,8 +22,7 @@ public final class ModelNeeds {
     private final GradleModelDefQuery2 query2;
 
     public ModelNeeds(GradleProjectExtensionDef<?> extensionDef) {
-        ExceptionHelper.checkNotNullArgument(extensionDef, "extensionDef");
-
+        Objects.requireNonNull(extensionDef, "extensionDef");
         this.query1 = createQuery1(extensionDef);
         this.query2 = createQuery2(extensionDef);
     }

@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.model;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 
 public final class NbGradleTask {
     private final String qualifiedName;
@@ -8,12 +8,9 @@ public final class NbGradleTask {
     private final String description;
 
     public NbGradleTask(String qualifiedName, String description) {
-        ExceptionHelper.checkNotNullArgument(qualifiedName, "qualifiedName");
-        ExceptionHelper.checkNotNullArgument(description, "description");
-
-        this.qualifiedName = qualifiedName;
+        this.qualifiedName = Objects.requireNonNull(qualifiedName, "qualifiedName");
         this.localName = getLocalName(qualifiedName);
-        this.description = description;
+        this.description = Objects.requireNonNull(description, "description");
     }
 
     private static String getLocalName(String qualifiedName) {

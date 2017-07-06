@@ -3,9 +3,9 @@ package org.netbeans.gradle.project.api.entry;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.gradle.util.GradleVersion;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.model.util.ZipUtils;
@@ -23,8 +23,7 @@ public final class SampleGradleProject implements Closeable {
     private final File tempFolder;
 
     public SampleGradleProject(File tempFolder) {
-        ExceptionHelper.checkNotNullArgument(tempFolder, "tempFolder");
-        this.tempFolder = tempFolder;
+        this.tempFolder = Objects.requireNonNull(tempFolder, "tempFolder");
     }
 
     public static SampleGradleProject createProject(String resourceRelPath) throws IOException {

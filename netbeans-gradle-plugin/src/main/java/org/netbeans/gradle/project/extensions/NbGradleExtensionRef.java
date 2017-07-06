@@ -1,10 +1,10 @@
 package org.netbeans.gradle.project.extensions;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
@@ -31,9 +31,9 @@ public final class NbGradleExtensionRef {
             GradleProjectExtension2<ModelType> extension,
             DeducedExtensionServicesProvider deducedServicesProvider) {
 
-        ExceptionHelper.checkNotNullArgument(extensionDef, "extensionDef");
-        ExceptionHelper.checkNotNullArgument(extension, "extension");
-        ExceptionHelper.checkNotNullArgument(deducedServicesProvider, "deducedServicesProvider");
+        Objects.requireNonNull(extensionDef, "extensionDef");
+        Objects.requireNonNull(extension, "extension");
+        Objects.requireNonNull(deducedServicesProvider, "deducedServicesProvider");
 
         this.name = extensionDef.getName();
         checkExtensionName(name, extensionDef);
@@ -109,7 +109,7 @@ public final class NbGradleExtensionRef {
     }
 
     public ParsedModel<?> parseModel(ModelLoadResult retrievedModels) {
-        ExceptionHelper.checkNotNullArgument(retrievedModels, "retrievedModels");
+        Objects.requireNonNull(retrievedModels, "retrievedModels");
 
         try {
             return safelyReturn(getExtensionDef().parseModel(retrievedModels));
@@ -174,11 +174,8 @@ public final class NbGradleExtensionRef {
                 GradleProjectExtensionDef<ModelType> extensionDef,
                 GradleProjectExtension2<ModelType> extension) {
 
-            ExceptionHelper.checkNotNullArgument(extensionDef, "extensionDef");
-            ExceptionHelper.checkNotNullArgument(extension, "extension");
-
-            this.extensionDef = extensionDef;
-            this.extension = extension;
+            this.extensionDef = Objects.requireNonNull(extensionDef, "extensionDef");
+            this.extension = Objects.requireNonNull(extension, "extension");
             this.modelType = extensionDef.getModelType();
 
             if (this.modelType == null) {
@@ -188,8 +185,7 @@ public final class NbGradleExtensionRef {
         }
 
         public void activate(Object model) {
-            ExceptionHelper.checkNotNullArgument(model, "model");
-
+            Objects.requireNonNull(model, "model");
             extension.activateExtension(modelType.cast(model));
         }
 

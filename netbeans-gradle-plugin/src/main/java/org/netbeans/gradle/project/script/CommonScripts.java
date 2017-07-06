@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.script;
 
 import java.nio.file.Path;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 
 public final class CommonScripts {
     public static final String DEFAULT_SCRIPT_EXTENSION = GroovyScripts.EXTENSION;
@@ -16,8 +16,7 @@ public final class CommonScripts {
     private final ScriptFileProvider scriptProvider;
 
     public CommonScripts(ScriptFileProvider scriptProvider) {
-        ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
-        this.scriptProvider = scriptProvider;
+        this.scriptProvider = Objects.requireNonNull(scriptProvider, "scriptProvider");
     }
 
     public Path getScriptFilePath(Path baseDir, String baseName) {

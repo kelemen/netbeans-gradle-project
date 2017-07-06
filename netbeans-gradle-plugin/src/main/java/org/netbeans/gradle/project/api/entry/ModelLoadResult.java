@@ -5,10 +5,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
-import org.netbeans.gradle.project.util.GradleVersions;
 import org.openide.util.Lookup;
 
 /**
@@ -50,11 +48,8 @@ public final class ModelLoadResult {
             @Nonnull File mainProjectDir,
             @Nonnull Map<File, Lookup> evaluatedProjectsModel) {
 
-        ExceptionHelper.checkNotNullArgument(evaluationEnvironment, "evaluationEnvironment");
-        ExceptionHelper.checkNotNullArgument(mainProjectDir, "mainProjectDir");
-
-        this.evaluationEnvironment = evaluationEnvironment;
-        this.mainProjectDir = mainProjectDir;
+        this.evaluationEnvironment = Objects.requireNonNull(evaluationEnvironment, "this.evaluationEnvironment");
+        this.mainProjectDir = Objects.requireNonNull(mainProjectDir, "mainProjectDir");
         this.evaluatedProjectsModel = CollectionUtils.copyNullSafeHashMap(evaluatedProjectsModel);
         this.mainProjectModels = this.evaluatedProjectsModel.get(mainProjectDir);
 
@@ -90,18 +85,10 @@ public final class ModelLoadResult {
             @Nonnull Lookup mainProjectModels,
             @Nonnull Map<File, Lookup> evaluatedProjectsModel) {
 
-        ExceptionHelper.checkNotNullArgument(evaluationEnvironment, "evaluationEnvironment");
-        ExceptionHelper.checkNotNullArgument(mainProjectDir, "mainProjectDir");
-        ExceptionHelper.checkNotNullArgument(mainProjectModels, "mainProjectModels");
-
-        this.evaluationEnvironment = evaluationEnvironment;
-        this.mainProjectDir = mainProjectDir;
-        this.mainProjectModels = mainProjectModels;
+        this.evaluationEnvironment = Objects.requireNonNull(evaluationEnvironment, "evaluationEnvironment");
+        this.mainProjectDir = Objects.requireNonNull(mainProjectDir, "mainProjectDir");
+        this.mainProjectModels = Objects.requireNonNull(mainProjectModels, "mainProjectModels");
         this.evaluatedProjectsModel = evaluatedProjectsModel;
-    }
-
-    private static GradleTarget getDefaultTarget() {
-        return GradleVersions.DEFAULT_TARGET;
     }
 
     /**
@@ -117,7 +104,7 @@ public final class ModelLoadResult {
      */
     @Nonnull
     public ModelLoadResult withMainProject(@Nonnull File projectDir) {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+        Objects.requireNonNull(projectDir, "projectDir");
 
         Lookup models = evaluatedProjectsModel.get(projectDir);
         if (models == null) {

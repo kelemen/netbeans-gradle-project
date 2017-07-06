@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.tasks.vars;
 
 import java.util.Locale;
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.util.StringUtils;
 
 public final class VariableTypeDescription {
@@ -16,8 +16,8 @@ public final class VariableTypeDescription {
     private final String escapedTypeArguments;
 
     public VariableTypeDescription(String typeName, String escapedTypeArguments) {
-        ExceptionHelper.checkNotNullArgument(typeName, "typeName");
-        ExceptionHelper.checkNotNullArgument(escapedTypeArguments, "escapedTypeArguments");
+        Objects.requireNonNull(typeName, "typeName");
+        Objects.requireNonNull(escapedTypeArguments, "escapedTypeArguments");
 
         this.typeName = typeName.toLowerCase(Locale.ROOT);
         this.escapedTypeArguments = escapedTypeArguments;

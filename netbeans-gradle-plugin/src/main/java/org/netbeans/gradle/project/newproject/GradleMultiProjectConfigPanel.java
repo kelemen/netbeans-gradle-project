@@ -1,9 +1,9 @@
 package org.netbeans.gradle.project.newproject;
 
 import java.awt.Component;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.event.ChangeListener;
-import org.jtrim.utils.ExceptionHelper;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 
@@ -13,9 +13,7 @@ public final class GradleMultiProjectConfigPanel implements WizardDescriptor.Pan
     private final WizardDescriptor wizard;
 
     public GradleMultiProjectConfigPanel(AtomicReference<GradleMultiProjectConfig> configRef, WizardDescriptor wizard) {
-        ExceptionHelper.checkNotNullArgument(configRef, "configRef");
-
-        this.configRef = configRef;
+        this.configRef = Objects.requireNonNull(configRef, "configRef");
         this.panel = new AtomicReference<>();
         this.wizard = wizard;
     }

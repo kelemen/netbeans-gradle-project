@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
-import org.jtrim.property.PropertySource;
+import org.jtrim2.property.PropertySource;
 
 /**
  * Defines the view of the project properties. An instance of this interface
@@ -45,7 +45,7 @@ public interface ActiveSettingsQuery {
      * <P>
      * If you need to explicitly specify a profile by {@link ProfileKey ProfileKey},
      * then you might want to use the method
-     * {@link ProjectSettingsProvider.ExtensionSettings#loadSettingsForProfile(org.jtrim.cancel.CancellationToken, ProfileKey) ProjectSettingsProvider.ExtensionSettings.loadSettingsForProfile}
+     * {@link ProjectSettingsProvider.ExtensionSettings#loadSettingsForProfile(org.jtrim2.cancel.CancellationToken, ProfileKey) ProjectSettingsProvider.ExtensionSettings.loadSettingsForProfile}
      * to load an {@code ActiveSettingsQuery} associated with a specific profile.
      * <P>
      * The current profile can usually only change if you are viewing the

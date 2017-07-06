@@ -1,10 +1,10 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationToken;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class GradleCommandSpec {
@@ -12,9 +12,7 @@ public final class GradleCommandSpec {
     private final GradleTaskDef processed;
 
     public GradleCommandSpec(GradleTaskDef source, GradleTaskDef processed) {
-        ExceptionHelper.checkNotNullArgument(source, "source");
-
-        this.source = source;
+        this.source = Objects.requireNonNull(source, "source");
         this.processed = processed;
     }
 
@@ -50,9 +48,7 @@ public final class GradleCommandSpec {
                 List<String> arguments,
                 List<String> jvmArguments,
                 boolean adjustSource) {
-            ExceptionHelper.checkNotNullArgument(source, "source");
-
-            this.source = source;
+            this.source = Objects.requireNonNull(source, "source");
             this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
             this.arguments = CollectionUtils.copyNullSafeList(arguments);
             this.jvmArguments = CollectionUtils.copyNullSafeList(jvmArguments);

@@ -12,11 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.swing.DefaultComboBoxModel;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableFunction;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingProperties;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.executor.CancelableFunction;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingProperties;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
@@ -37,8 +36,8 @@ import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileChooserBuilder;
 
-import static org.jtrim.property.BoolProperties.*;
-import static org.jtrim.property.swing.AutoDisplayState.*;
+import static org.jtrim2.property.BoolProperties.*;
+import static org.jtrim2.property.swing.AutoDisplayState.*;
 
 @SuppressWarnings("serial")
 public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEditorFactory {
@@ -56,11 +55,8 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
     private LicenseHeaderPanel(
             NbSupplier<? extends Path> defaultDirProvider,
             LicenseSource licenseSource) {
-        ExceptionHelper.checkNotNullArgument(defaultDirProvider, "defaultDirProvider");
-        ExceptionHelper.checkNotNullArgument(licenseSource, "licenseSource");
-
-        this.defaultDirProvider = defaultDirProvider;
-        this.licenseSource = licenseSource;
+        this.defaultDirProvider = Objects.requireNonNull(defaultDirProvider, "defaultDirProvider");
+        this.licenseSource = Objects.requireNonNull(licenseSource, "licenseSource");
 
         this.lastDisplayedCustomName = null;
         this.unknownLicense = null;
@@ -88,8 +84,8 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
     public static ProfileBasedSettingsCategory createSettingsCategory(
             final NbSupplier<? extends Path> defaultDirProvider,
             final LicenseSource licenseSource) {
-        ExceptionHelper.checkNotNullArgument(defaultDirProvider, "defaultDirProvider");
-        ExceptionHelper.checkNotNullArgument(licenseSource, "licenseSource");
+        Objects.requireNonNull(defaultDirProvider, "defaultDirProvider");
+        Objects.requireNonNull(licenseSource, "licenseSource");
 
         return new ProfileBasedSettingsCategory(CATEGORY_ID, () -> {
             return LicenseHeaderPanel.createSettingsPage(defaultDirProvider, licenseSource);
@@ -104,7 +100,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
     }
 
     private static NbSupplier<? extends Path> toDefaultDirProvider(final NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+        Objects.requireNonNull(project, "project");
         return () -> project.currentModel().getValue().getSettingsDir();
     }
 

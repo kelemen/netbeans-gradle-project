@@ -1,18 +1,15 @@
 package org.netbeans.gradle.project.properties;
 
 import java.nio.file.Path;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 
 public final class ProfileFileDef {
     private final Path profileFile;
     private final ConfigSaveOptions saveOptions;
 
     public ProfileFileDef(Path profileFile, ConfigSaveOptions saveOptions) {
-        ExceptionHelper.checkNotNullArgument(profileFile, "profileFile");
-        ExceptionHelper.checkNotNullArgument(saveOptions, "saveOptions");
-
-        this.profileFile = profileFile;
-        this.saveOptions = saveOptions;
+        this.profileFile = Objects.requireNonNull(profileFile, "profileFile");
+        this.saveOptions = Objects.requireNonNull(saveOptions, "saveOptions");
     }
 
     public Path getProfileFile() {

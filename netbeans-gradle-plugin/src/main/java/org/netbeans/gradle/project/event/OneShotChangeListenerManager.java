@@ -1,11 +1,11 @@
 package org.netbeans.gradle.project.event;
 
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.OneShotListenerManager;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.event.EventListeners;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.OneShotListenerManager;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 
 public final class OneShotChangeListenerManager implements PausableChangeListenerManager {
     private final OneShotListenerManager<Runnable, Void> oneShotManager;
@@ -16,14 +16,12 @@ public final class OneShotChangeListenerManager implements PausableChangeListene
     }
 
     public OneShotChangeListenerManager(TaskExecutor executor) {
-        this(new OneShotListenerManager<Runnable, Void>(), executor);
+        this(new OneShotListenerManager<Runnable, Void>(), Objects.requireNonNull(executor, "executor"));
     }
 
     private OneShotChangeListenerManager(
             OneShotListenerManager<Runnable, Void> oneShotManager,
             TaskExecutor executor) {
-        ExceptionHelper.checkNotNullArgument(executor, "executor");
-
         this.oneShotManager = oneShotManager;
         this.pausableManager = executor != null
                 ? new GenericChangeListenerManager(wrapOneShotManager(oneShotManager), executor)
@@ -52,7 +50,7 @@ public final class OneShotChangeListenerManager implements PausableChangeListene
     }
 
     public static OneShotChangeListenerManager getSwingNotifier() {
-        return new OneShotChangeListenerManager(SwingTaskExecutor.getStrictExecutor(false));
+        return new OneShotChangeListenerManager(SwingExecutors.getStrictExecutor(false));
     }
 
     public ListenerRef registerOrNotifyListener(Runnable listener) {

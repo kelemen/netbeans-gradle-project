@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.model;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class PersistentModelKey {
@@ -14,11 +14,8 @@ public final class PersistentModelKey {
     }
 
     public PersistentModelKey(Path rootPath, Path projectDir) {
-        ExceptionHelper.checkNotNullArgument(rootPath, "rootPath");
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-
-        this.rootPath = rootPath;
-        this.projectDir = projectDir;
+        this.rootPath = Objects.requireNonNull(rootPath, "rootPath");
+        this.projectDir = Objects.requireNonNull(projectDir, "projectDir");
     }
 
     public Path getRootPath() {

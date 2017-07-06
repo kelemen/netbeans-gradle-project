@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.license;
 
 import java.nio.file.Path;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.executor.TaskExecutor;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.util.NbBiFunction;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -23,9 +23,9 @@ public final class LicenseManagers {
             final NbFunction<? super T, ? extends Path> licenseRootProvider,
             final NbFunction<? super T, ? extends String> modelNameProvider) {
 
-        ExceptionHelper.checkNotNullArgument(licenseStore, "licenseStore");
-        ExceptionHelper.checkNotNullArgument(licenseRootProvider, "licenseRootProvider");
-        ExceptionHelper.checkNotNullArgument(modelNameProvider, "modelNameProvider");
+        Objects.requireNonNull(licenseStore, "licenseStore");
+        Objects.requireNonNull(licenseRootProvider, "licenseRootProvider");
+        Objects.requireNonNull(modelNameProvider, "modelNameProvider");
 
         NbBiFunction<T, LicenseHeaderInfo, DefaultLicenseKey> licenseKeyFactory = (T ownerModel, LicenseHeaderInfo licenseHeader) -> {
             return tryCreateLicenseKey(ownerModel, licenseHeader, licenseRootProvider);

@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.api.task;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.openide.windows.InputOutput;
 
@@ -25,11 +25,8 @@ public final class GradleCommandContext {
      *   This argument cannot be {@code null}.
      */
     public GradleCommandContext(@Nonnull Project project, @Nonnull InputOutput outputTab) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(outputTab, "outputTab");
-
-        this.project = project;
-        this.outputTab = outputTab;
+        this.project = Objects.requireNonNull(project, "project");
+        this.outputTab = Objects.requireNonNull(outputTab, "outputTab");
     }
 
     /**

@@ -3,10 +3,10 @@ package org.netbeans.gradle.project.output;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
@@ -22,9 +22,7 @@ public final class InputOutputWrapper implements Closeable {
     private volatile Reader in;
 
     public InputOutputWrapper(InputOutput io) {
-        ExceptionHelper.checkNotNullArgument(io, "io");
-
-        this.io = io;
+        this.io = Objects.requireNonNull(io, "io");
         this.closed = new AtomicBoolean(false);
 
         this.ioLock = new ReentrantLock();

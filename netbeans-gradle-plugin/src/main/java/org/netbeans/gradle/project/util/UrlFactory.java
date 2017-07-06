@@ -2,9 +2,9 @@ package org.netbeans.gradle.project.util;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.ConstructableWeakRef;
 import org.netbeans.gradle.model.util.NbSupplier5;
 import org.openide.filesystems.FileUtil;
@@ -20,9 +20,7 @@ public final class UrlFactory {
     }
 
     public UrlFactory(NbFunction<? super File, ? extends URL> urlCreator) {
-        ExceptionHelper.checkNotNullArgument(urlCreator, "urlCreator");
-
-        this.urlCreator = urlCreator;
+        this.urlCreator = Objects.requireNonNull(urlCreator, "urlCreator");
         this.cache = new ConcurrentHashMap<>(256);
     }
 

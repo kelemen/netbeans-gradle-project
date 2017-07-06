@@ -18,8 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.executor.TaskExecutor;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -106,9 +105,7 @@ public final class JavaDependenciesNode extends AbstractNode {
         private final ListenerRegistrations listenerRefs;
 
         public DependenciesChildFactory(JavaExtension javaExt) {
-            ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-
-            this.javaExt = javaExt;
+            this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
             this.lastModule = new AtomicReference<>(null);
             this.listenerRefs = new ListenerRegistrations();
         }

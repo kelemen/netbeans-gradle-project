@@ -2,8 +2,8 @@ package org.netbeans.gradle.project.api.task;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 /**
@@ -78,9 +78,8 @@ public final class GradleCommandTemplate {
         public Builder(
                 @Nonnull String displayName,
                 @Nonnull List<String> tasks) {
-            ExceptionHelper.checkNotNullArgument(displayName, "displayName");
 
-            this.displayName = displayName;
+            this.displayName = Objects.requireNonNull(displayName, "displayName");
             this.tasks = CollectionUtils.copyNullSafeList(tasks);
             this.arguments = Collections.emptyList();
             this.jvmArguments = Collections.emptyList();

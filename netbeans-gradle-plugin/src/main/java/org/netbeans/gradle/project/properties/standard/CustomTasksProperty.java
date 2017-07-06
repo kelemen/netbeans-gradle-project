@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.properties.standard;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.jtrim.collections.CollectionsEx;
+import org.jtrim2.collections.CollectionsEx;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.PropertyDef;

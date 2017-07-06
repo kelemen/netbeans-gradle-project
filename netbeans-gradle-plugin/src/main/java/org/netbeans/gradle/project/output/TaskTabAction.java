@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.output;
 
 import javax.swing.AbstractAction;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.CancellationSource;
+import org.jtrim2.cancel.CancellationSource;
 import org.netbeans.gradle.project.tasks.AsyncGradleTask;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 

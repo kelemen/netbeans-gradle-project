@@ -5,14 +5,14 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.UpdateTaskExecutor;
 
 public final class LazyPersistentModelStoreFactory<T> {
     private static final Logger LOGGER = Logger.getLogger(LazyPersistentModelStoreFactory.class.getName());
@@ -26,8 +26,7 @@ public final class LazyPersistentModelStoreFactory<T> {
     private final Map<Path, T> toSave;
 
     public LazyPersistentModelStoreFactory(ModelPersister<? super T> modelPersister, TaskExecutor persisterExecutor) {
-        ExceptionHelper.checkNotNullArgument(modelPersister, "modelPersister");
-        this.modelPersister = modelPersister;
+        this.modelPersister = Objects.requireNonNull(modelPersister, "modelPersister");
         this.persisterExecutor = new GenericUpdateTaskExecutor(persisterExecutor);
 
         this.queueLock = new ReentrantLock();
@@ -43,14 +42,13 @@ public final class LazyPersistentModelStoreFactory<T> {
         private final PersistentModelRetriever<? extends T> modelRetriever;
 
         public LazyPersistentModelStore(PersistentModelRetriever<? extends T> modelRetriever) {
-            ExceptionHelper.checkNotNullArgument(modelRetriever, "modelRetriever");
-            this.modelRetriever = modelRetriever;
+            this.modelRetriever = Objects.requireNonNull(modelRetriever, "modelRetriever");
         }
 
         @Override
         public void persistModel(T model, Path dest) throws IOException {
-            ExceptionHelper.checkNotNullArgument(model, "model");
-            ExceptionHelper.checkNotNullArgument(dest, "dest");
+            Objects.requireNonNull(model, "model");
+            Objects.requireNonNull(dest, "dest");
 
             queueLock.lock();
             try {

@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.event;
 
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistry;
-import org.jtrim.event.UnregisteredListenerRef;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.event.ListenerRegistry;
 
 public final class NbListenerManagers {
     public static <ListenerType> ListenerRegistry<ListenerType> neverNotifingRegistry() {
@@ -11,7 +11,7 @@ public final class NbListenerManagers {
         return new ListenerRegistry<ListenerType>() {
             @Override
             public ListenerRef registerListener(ListenerType listener) {
-                return UnregisteredListenerRef.INSTANCE;
+                return ListenerRefs.unregistered();
             }
 
             @Override

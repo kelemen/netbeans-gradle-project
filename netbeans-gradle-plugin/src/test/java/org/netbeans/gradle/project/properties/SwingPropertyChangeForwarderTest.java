@@ -3,8 +3,8 @@ package org.netbeans.gradle.project.properties;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 

@@ -13,17 +13,16 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventDispatcher;
-import org.jtrim.event.ListenerManager;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingProperties;
-import org.jtrim.property.swing.SwingPropertySource;
-import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.CopyOnTriggerListenerManager;
+import org.jtrim2.event.EventDispatcher;
+import org.jtrim2.event.ListenerManager;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingProperties;
+import org.jtrim2.property.swing.SwingPropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
@@ -58,10 +57,9 @@ public final class AnnotationChildNodes {
     }
 
     public AnnotationChildNodes(Project project, NbSupplier<? extends Lookup> factoryLookupProvider) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(factoryLookupProvider, "factoryLookupProvider");
+        Objects.requireNonNull(factoryLookupProvider, "factoryLookupProvider");
 
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
         this.nodeLock = new ReentrantLock();
         this.removedChildren = true;
         this.removeChildrenRef = new RemovedChildrenProperty();
@@ -160,7 +158,7 @@ public final class AnnotationChildNodes {
             }
         };
 
-        UpdateTaskExecutor listenerExecutor = new SwingUpdateTaskExecutor(false);
+        UpdateTaskExecutor listenerExecutor = SwingExecutors.getSwingUpdateExecutor(false);
         return SwingProperties.fromSwingSource(result, (Runnable listener) -> {
             return e -> listenerExecutor.execute(listener);
         });
@@ -228,7 +226,7 @@ public final class AnnotationChildNodes {
         public RemovedChildrenProperty() {
             this.changeListeners = new CopyOnTriggerListenerManager<>();
 
-            final UpdateTaskExecutor listenerExecutor = new SwingUpdateTaskExecutor(false);
+            final UpdateTaskExecutor listenerExecutor = SwingExecutors.getSwingUpdateExecutor(false);
             this.listenerDispatcher = (Runnable eventListener, Void arg) -> {
                 listenerExecutor.execute(eventListener);
             };
@@ -264,7 +262,7 @@ public final class AnnotationChildNodes {
 
             this.factoryLookupProvider = factoryLookupProvider;
             this.nodeListsRef = new AtomicReference<>(null);
-            this.listenerExecutor = new SwingUpdateTaskExecutor(false);
+            this.listenerExecutor = SwingExecutors.getSwingUpdateExecutor(false);
         }
 
         private Lookup.Result<NodeFactory> getNodeListsResult() {

@@ -1,12 +1,12 @@
 package org.netbeans.gradle.project.properties.global;
 
 import java.net.URL;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 
@@ -42,8 +42,8 @@ public final class GlobalSettingsPage extends ProfileBasedSettingsPage {
         }
 
         public Builder(JComponent editorComponent, ProfileEditorFactory editorFactory) {
-            ExceptionHelper.checkNotNullArgument(editorComponent, "editorComponent");
-            ExceptionHelper.checkNotNullArgument(editorFactory, "editorFactory");
+            Objects.requireNonNull(editorComponent, "editorComponent");
+            Objects.requireNonNull(editorFactory, "editorFactory");
 
             this.editorComponent = editorComponent;
             this.editorFactory = editorFactory;
@@ -52,9 +52,7 @@ public final class GlobalSettingsPage extends ProfileBasedSettingsPage {
         }
 
         public void setValid(PropertySource<Boolean> valid) {
-            ExceptionHelper.checkNotNullArgument(valid, "valid");
-
-            this.valid = valid;
+            this.valid = Objects.requireNonNull(valid, "valid");
         }
 
         public void setHelpUrl(URL helpUrl) {

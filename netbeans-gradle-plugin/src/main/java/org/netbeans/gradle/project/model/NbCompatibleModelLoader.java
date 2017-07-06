@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,7 +19,6 @@ import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleTaskID;
@@ -48,14 +48,10 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             NbGradleModel baseModels,
             OperationInitializer setup,
             GradleTarget gradleTarget) {
-        ExceptionHelper.checkNotNullArgument(settingsGradleDef, "settingsGradleDef");
-        ExceptionHelper.checkNotNullArgument(setup, "setup");
-        ExceptionHelper.checkNotNullArgument(gradleTarget, "gradleTarget");
-
-        this.settingsGradleDef = settingsGradleDef;
-        this.gradleTarget = gradleTarget;
+        this.settingsGradleDef = Objects.requireNonNull(settingsGradleDef, "settingsGradleDef");
+        this.gradleTarget = Objects.requireNonNull(gradleTarget, "gradleTarget");
         this.baseModels = baseModels;
-        this.setup = setup;
+        this.setup = Objects.requireNonNull(setup, "setup");
     }
 
     @Override
@@ -202,8 +198,8 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             NbGradleProjectTree rootProject,
             IdeaModule ideaModule,
             ScriptFileProvider scriptProvider) throws IOException {
-        ExceptionHelper.checkNotNullArgument(rootProject, "rootProject");
-        ExceptionHelper.checkNotNullArgument(ideaModule, "ideaModule");
+        Objects.requireNonNull(rootProject, "rootProject");
+        Objects.requireNonNull(ideaModule, "ideaModule");
 
         NbGradleProjectTree projectTree = tryCreateProjectTreeFromIdea(ideaModule, scriptProvider);
         if (projectTree == null) {
@@ -244,9 +240,9 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             NbGradleProject project,
             IdeaProject ideaProject,
             ArrayList<NbGradleModel.Builder> otherModels) throws IOException {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(ideaProject, "ideaProject");
-        ExceptionHelper.checkNotNullArgument(otherModels, "otherModels");
+        Objects.requireNonNull(project, "project");
+        Objects.requireNonNull(ideaProject, "ideaProject");
+        Objects.requireNonNull(otherModels, "otherModels");
 
         File projectDir = project.getProjectDirectoryAsFile();
         IdeaModule mainModule = IdeaJavaModelUtils.tryFindMainModule(projectDir, ideaProject);

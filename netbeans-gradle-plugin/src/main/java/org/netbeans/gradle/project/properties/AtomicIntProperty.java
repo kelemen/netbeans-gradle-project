@@ -1,9 +1,9 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.MutableProperty;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.property.MutableProperty;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 

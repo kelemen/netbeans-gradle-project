@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import org.jtrim.cancel.Cancellation;
+import org.jtrim2.cancel.Cancellation;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;

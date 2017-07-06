@@ -1,9 +1,9 @@
 package org.netbeans.gradle.project.properties;
 
 import java.nio.charset.Charset;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
@@ -48,11 +48,8 @@ public final class NbGradleCommonProperties {
     private final PropertyReference<CustomVariables> customVariables;
 
     public NbGradleCommonProperties(NbGradleProject ownerProject, ActiveSettingsQuery activeSettingsQuery) {
-        ExceptionHelper.checkNotNullArgument(ownerProject, "ownerProject");
-        ExceptionHelper.checkNotNullArgument(activeSettingsQuery, "activeSettingsQuery");
-
-        this.ownerProject = ownerProject;
-        this.activeSettingsQuery = activeSettingsQuery;
+        this.ownerProject = Objects.requireNonNull(ownerProject, "ownerProject");
+        this.activeSettingsQuery = Objects.requireNonNull(activeSettingsQuery, "activeSettingsQuery");
 
         this.builtInTasks = builtInTasks(ownerProject, activeSettingsQuery);
         this.customTasks = customTasks(activeSettingsQuery);

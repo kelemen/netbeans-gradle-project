@@ -2,10 +2,11 @@ package org.netbeans.gradle.project.output;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 
 public final class LineOutputWriter extends Writer {
     public static interface Handler {
@@ -20,9 +21,7 @@ public final class LineOutputWriter extends Writer {
     private char lastChar;
 
     public LineOutputWriter(Handler handler) {
-        ExceptionHelper.checkNotNullArgument(handler, "handler");
-
-        this.handler = handler;
+        this.handler = Objects.requireNonNull(handler, "handler");
         this.lineBuffer = new StringBuilder(256);
         this.mainLock = new ReentrantLock();
         this.lastChar = '\0';
@@ -31,7 +30,7 @@ public final class LineOutputWriter extends Writer {
 
     @Override
     public void write(char[] cbuf, int off, int len) throws IOException {
-        ExceptionHelper.checkNotNullArgument(cbuf, "cbuf");
+        Objects.requireNonNull(cbuf, "cbuf");
         ExceptionHelper.checkArgumentInRange(off, 0, cbuf.length, "off");
         ExceptionHelper.checkArgumentInRange(len, 0, cbuf.length - off, "len");
 

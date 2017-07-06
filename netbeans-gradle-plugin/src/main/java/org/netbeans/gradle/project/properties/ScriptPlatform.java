@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.api.java.platform.JavaPlatform;
 
 public final class ScriptPlatform {
@@ -8,11 +8,8 @@ public final class ScriptPlatform {
     private final PlatformSelectionMode selectionMode;
 
     public ScriptPlatform(JavaPlatform javaPlatform, PlatformSelectionMode selectionMode) {
-        ExceptionHelper.checkNotNullArgument(javaPlatform, "javaPlatform");
-        ExceptionHelper.checkNotNullArgument(selectionMode, "selectionMode");
-
-        this.javaPlatform = javaPlatform;
-        this.selectionMode = selectionMode;
+        this.javaPlatform = Objects.requireNonNull(javaPlatform, "javaPlatform");
+        this.selectionMode = Objects.requireNonNull(selectionMode, "selectionMode");
     }
 
     public static ScriptPlatform getDefault() {

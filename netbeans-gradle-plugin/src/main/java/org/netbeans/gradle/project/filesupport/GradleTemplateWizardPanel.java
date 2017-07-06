@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.newproject.NewProjectStrings;
 import org.netbeans.gradle.project.script.GroovyScripts;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -34,10 +34,8 @@ class GradleTemplateWizardPanel extends javax.swing.JPanel {
     private final PropertySource<String> fileNameStr;
 
     public GradleTemplateWizardPanel(TemplateWizard wizard) {
-        ExceptionHelper.checkNotNullArgument(wizard, "wizard");
-
         this.started = new AtomicBoolean(false);
-        this.wizard = wizard;
+        this.wizard = Objects.requireNonNull(wizard, "wizard");
         this.bckgValidator = new BackgroundValidator();
         this.targetDir = NbFileUtils.asPath(getTargetDirObj(wizard));
 

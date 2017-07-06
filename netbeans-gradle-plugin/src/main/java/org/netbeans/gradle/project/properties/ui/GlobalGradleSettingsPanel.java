@@ -6,9 +6,9 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.ListModel;
-import org.jtrim.property.BoolProperties;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
+import org.jtrim2.property.BoolProperties;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
@@ -22,7 +22,7 @@ import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.openide.awt.HtmlBrowser;
 
-import static org.jtrim.property.swing.AutoDisplayState.*;
+import static org.jtrim2.property.swing.AutoDisplayState.*;
 import static org.netbeans.gradle.project.properties.NbProperties.*;
 
 @SuppressWarnings("serial")

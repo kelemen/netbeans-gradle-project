@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.util;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -24,18 +26,18 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.collections.RefLinkedList;
-import org.jtrim.collections.RefList;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.MonitorableTaskExecutorService;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.UnregisteredListenerRef;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.collections.RefLinkedList;
+import org.jtrim2.collections.RefList;
+import org.jtrim2.concurrent.AsyncTasks;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.MonitorableTaskExecutorService;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 
 public final class FileSystemWatcher {
@@ -58,11 +60,8 @@ public final class FileSystemWatcher {
     private final Lock mainLock;
 
     public FileSystemWatcher(FileSystem fileSystem, TaskExecutor eventExecutor) {
-        ExceptionHelper.checkNotNullArgument(fileSystem, "fileSystem");
-        ExceptionHelper.checkNotNullArgument(eventExecutor, "eventExecutor");
-
-        this.fileSystem = fileSystem;
-        this.eventExecutor = eventExecutor;
+        this.fileSystem = Objects.requireNonNull(fileSystem, "fileSystem");
+        this.eventExecutor = Objects.requireNonNull(eventExecutor, "eventExecutor");
         this.mainLock = new ReentrantLock();
         this.pollExecutor = NbTaskExecutors.newStoppableExecutor("FileSystem-watcher-poll", 1);
         this.checkedPaths = new HashMap<>();
@@ -216,24 +215,31 @@ public final class FileSystemWatcher {
                 }
                 stopPolling(watchService);
             }
-        }, (boolean canceled, Throwable error) -> {
-            NbTaskExecutors.defaultCleanup(canceled, error);
-            watchService.close();
-        });
+        }).whenComplete((result, error) -> {
+            closeUnsafe(watchService);
+        }).exceptionally(AsyncTasks::expectNoError);
+    }
+
+    private static void closeUnsafe(Closeable resource) {
+        try {
+            resource.close();
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     public ListenerRef watchPath(final Path path, Runnable listener) {
-        ExceptionHelper.checkNotNullArgument(path, "path");
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
+        Objects.requireNonNull(path, "path");
+        Objects.requireNonNull(listener, "listener");
         if (path.getFileSystem() != fileSystem) {
-            return UnregisteredListenerRef.INSTANCE;
+            return ListenerRefs.unregistered();
         }
 
         try {
             return watchPathUnsafe(path, listener);
         } catch (IOException ex) {
             LOGGER.log(Level.INFO, "Failed to watch for path: " + path, ex);
-            return UnregisteredListenerRef.INSTANCE;
+            return ListenerRefs.unregistered();
         }
     }
 
@@ -540,6 +546,6 @@ public final class FileSystemWatcher {
     }
 
     private static final class DefaultHolder {
-        private static final FileSystemWatcher DEFAULT = new FileSystemWatcher(FileSystems.getDefault(), SwingTaskExecutor.getStrictExecutor(true));
+        private static final FileSystemWatcher DEFAULT = new FileSystemWatcher(FileSystems.getDefault(), SwingExecutors.getStrictExecutor(true));
     }
 }

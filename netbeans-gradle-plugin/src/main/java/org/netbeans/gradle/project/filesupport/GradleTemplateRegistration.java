@@ -10,9 +10,9 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.api.templates.TemplateRegistration;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
@@ -36,7 +36,7 @@ implements
     private int descriptorIndex;
 
     public GradleTemplateRegistration() {
-        this.config = PropertyFactory.memPropertyConcurrent(null, true, SwingTaskExecutor.getSimpleExecutor(false));
+        this.config = PropertyFactory.memPropertyConcurrent(null, true, SwingExecutors.getSimpleExecutor(false));
         this.descriptors = new ArrayList<>(1);
         this.descriptorIndex = 0;
     }

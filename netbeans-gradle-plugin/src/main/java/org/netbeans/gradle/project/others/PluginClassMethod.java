@@ -2,10 +2,11 @@ package org.netbeans.gradle.project.others;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 
 public final class PluginClassMethod {
     private static final Logger LOGGER = Logger.getLogger(PluginClassMethod.class.getName());
@@ -24,11 +25,8 @@ public final class PluginClassMethod {
     }
 
     public PluginClassMethod(ClassFinder pluginClass, String methodName, ClassFinder... argTypeFinders) {
-        ExceptionHelper.checkNotNullArgument(pluginClass, "pluginClass");
-        ExceptionHelper.checkNotNullArgument(methodName, "methodName");
-
-        this.pluginClass = pluginClass;
-        this.methodName = methodName;
+        this.pluginClass = Objects.requireNonNull(pluginClass, "pluginClass");
+        this.methodName = Objects.requireNonNull(methodName, "methodName");
         this.argTypeFinders = argTypeFinders.clone();
         this.methodRef = new AtomicReference<>(null);
         this.argTypesCache = null;

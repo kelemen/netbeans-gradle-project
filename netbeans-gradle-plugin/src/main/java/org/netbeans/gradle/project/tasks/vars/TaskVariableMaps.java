@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.tasks.vars;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.jtrim.property.PropertySource;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
 import org.netbeans.gradle.project.api.task.TaskVariable;

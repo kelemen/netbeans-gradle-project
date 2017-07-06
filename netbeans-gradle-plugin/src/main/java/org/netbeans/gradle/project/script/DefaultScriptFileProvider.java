@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbPredicate;
@@ -69,9 +69,9 @@ public final class DefaultScriptFileProvider implements ScriptFileProvider {
             Path baseDir,
             NbPredicate<? super String> baseNameFilter,
             NbConsumer<Path> fileProcessor) throws IOException {
-        ExceptionHelper.checkNotNullArgument(baseDir, "baseDir");
-        ExceptionHelper.checkNotNullArgument(baseNameFilter, "baseNameFilter");
-        ExceptionHelper.checkNotNullArgument(fileProcessor, "fileProcessor");
+        Objects.requireNonNull(baseDir, "baseDir");
+        Objects.requireNonNull(baseNameFilter, "baseNameFilter");
+        Objects.requireNonNull(fileProcessor, "fileProcessor");
 
         try (DirectoryStream<Path> files = Files.newDirectoryStream(baseDir)) {
             for (Path candidate: files) {

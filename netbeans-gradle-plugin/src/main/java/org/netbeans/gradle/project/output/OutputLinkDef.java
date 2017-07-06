@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.output;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.openide.windows.OutputEvent;
 import org.openide.windows.OutputListener;
 
@@ -10,11 +10,9 @@ public final class OutputLinkDef {
     private final Runnable action;
 
     public OutputLinkDef(int startIndex, int endIndex, Runnable action) {
-        ExceptionHelper.checkNotNullArgument(action, "action");
-
         this.startIndex = startIndex;
         this.endIndex = endIndex;
-        this.action = action;
+        this.action = Objects.requireNonNull(action, "action");
     }
 
     public OutputLinkDef offsetLinkDef(int offset) {

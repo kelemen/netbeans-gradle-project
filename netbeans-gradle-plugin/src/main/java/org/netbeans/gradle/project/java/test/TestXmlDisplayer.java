@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,7 +13,6 @@ import javax.swing.event.ChangeListener;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.api.project.ProjectUtils;
@@ -51,14 +51,10 @@ public final class TestXmlDisplayer {
     }
 
     public TestXmlDisplayer(Project project, String testName, NbGradleTestManager testManager) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(testName, "testName");
-        ExceptionHelper.checkNotNullArgument(testManager, "testManager");
-
-        this.project = project;
-        this.testName = testName;
+        this.project = Objects.requireNonNull(project, "project");
+        this.testName = Objects.requireNonNull(testName, "testName");
         this.javaExt = JavaExtension.getJavaExtensionOfProject(project);
-        this.testManager = testManager;
+        this.testManager = Objects.requireNonNull(testManager, "testManager");
     }
 
     private String getProjectName() {
@@ -185,7 +181,7 @@ public final class TestXmlDisplayer {
     }
 
     public boolean displayReport(Lookup runContext) {
-        ExceptionHelper.checkNotNullArgument(runContext, "runContext");
+        Objects.requireNonNull(runContext, "runContext");
 
         File[] reportFiles = getTestReportFiles();
         if (reportFiles.length == 0) {

@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.Action;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -51,11 +50,8 @@ public final class ProjectScriptFilesNode extends AbstractNode {
             Children children) {
         super(children, createLookup(project.getScriptFileProvider(), childFactory, children));
 
-        ExceptionHelper.checkNotNullArgument(caption, "caption");
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
-        this.caption = caption;
-        this.project = project;
+        this.caption = Objects.requireNonNull(caption, "caption");
+        this.project = Objects.requireNonNull(project, "project");
 
         setName(caption);
     }
@@ -119,8 +115,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         private final ScriptFileProvider scriptProvider;
 
         public ProjectScriptFileFinder(ScriptFileProvider scriptProvider) {
-            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
-            this.scriptProvider = scriptProvider;
+            this.scriptProvider = Objects.requireNonNull(scriptProvider, "scriptProvider");
         }
 
         private Node findNodeByFile(Node root, FileObject target) {
@@ -153,8 +148,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         private volatile boolean createdOnce;
 
         public ProjectScriptFilesChildFactory(NbGradleProject project) {
-            ExceptionHelper.checkNotNullArgument(project, "project");
-            this.project = project;
+            this.project = Objects.requireNonNull(project, "project");
             this.listenerRefs = new ListenerRegistrations();
             this.createdOnce = false;
         }
@@ -271,11 +265,8 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         private final File projectDir;
 
         public FactoryImpl(String caption, NbGradleProject project) {
-            ExceptionHelper.checkNotNullArgument(caption, "caption");
-            ExceptionHelper.checkNotNullArgument(project, "project");
-
-            this.caption = caption;
-            this.project = project;
+            this.caption = Objects.requireNonNull(caption, "caption");
+            this.project = Objects.requireNonNull(project, "project");
             this.projectDir = project.getProjectDirectoryAsFile();
         }
 

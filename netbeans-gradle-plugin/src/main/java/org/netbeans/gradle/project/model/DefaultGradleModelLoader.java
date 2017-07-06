@@ -27,13 +27,11 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.MonitorableTaskExecutorService;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.Tasks;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.concurrent.Tasks;
+import org.jtrim2.executor.MonitorableTaskExecutorService;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.BuildOperationArgs;
@@ -156,9 +154,9 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
 
     public static GradleConnector createGradleConnector(
             CancellationToken cancelToken,
-            final Project project) {
-        ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
-        ExceptionHelper.checkNotNullArgument(project, "project");
+            Project project) {
+        Objects.requireNonNull(cancelToken, "cancelToken");
+        Objects.requireNonNull(project, "project");
 
         final GradleConnector result = GradleConnector.newConnector();
         Integer timeoutSec = CommonGlobalSettings.getDefault().gradleDaemonTimeoutSec().getActiveValue();
@@ -251,9 +249,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             listener.updateModel(model, error);
         }
         else {
-            modelLoadNotifier.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
-                listener.updateModel(model, error);
-            }, null);
+            modelLoadNotifier.execute(() -> listener.updateModel(model, error));
         }
     }
 
@@ -295,15 +291,15 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             final boolean mayFetchFromCache,
             final ModelRetrievedListener<? super NbGradleModel> listener,
             final Runnable aboutToCompleteListener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-        ExceptionHelper.checkNotNullArgument(aboutToCompleteListener, "aboutToCompleteListener");
+        Objects.requireNonNull(listener, "listener");
+        Objects.requireNonNull(aboutToCompleteListener, "aboutToCompleteListener");
 
         if (modelWasSetOnce.get()) {
             fetchModelWithoutPersistentCache(mayFetchFromCache, listener, aboutToCompleteListener);
             return;
         }
 
-        modelLoadNotifier.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+        modelLoadNotifier.execute(() -> {
             NbGradleModel model = null;
             boolean needLoadFromScripts = true;
 
@@ -322,7 +318,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
                     fetchModelWithoutPersistentCache(mayFetchFromCache, listener, aboutToCompleteListener);
                 }
             }
-        }, null);
+        });
     }
 
     private static boolean isInProjectTree(NbGradleProject project, NbGradleModel rootModel) {
@@ -408,7 +404,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             final ModelRetrievedListener<? super NbGradleModel> listener,
             Runnable aboutToCompleteListener) {
 
-        final Runnable safeCompleteListener = Tasks.runOnceTask(aboutToCompleteListener, false);
+        final Runnable safeCompleteListener = Tasks.runOnceTask(aboutToCompleteListener);
 
         String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
         GradleDaemonManager.submitGradleTask(projectLoader, caption, (CancellationToken cancelToken, ProgressHandle progress) -> {
@@ -662,9 +658,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         private CacheSizeIncreaser cacheSizeIncreaser;
 
         public Builder(NbGradleProject project) {
-            ExceptionHelper.checkNotNullArgument(project, "project");
-
-            this.project = project;
+            this.project = Objects.requireNonNull(project, "project");
             this.projectLoader = DEFAULT_PROJECT_LOADER;
             this.modelLoadNotifier = DEFAULT_MODEL_LOAD_NOTIFIER;
             this.loadedProjectManager = LoadedProjectManager.getDefault();
@@ -684,27 +678,23 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         }
 
         public void setProjectLoader(TaskExecutor projectLoader) {
-            ExceptionHelper.checkNotNullArgument(projectLoader, "projectLoader");
-            this.projectLoader = projectLoader;
+            this.projectLoader = Objects.requireNonNull(projectLoader, "projectLoader");
         }
 
         public void setModelLoadNotifier(MonitorableTaskExecutorService modelLoadNotifier) {
-            ExceptionHelper.checkNotNullArgument(modelLoadNotifier, "modelLoadNotifier");
-            this.modelLoadNotifier = modelLoadNotifier;
+            this.modelLoadNotifier = Objects.requireNonNull(modelLoadNotifier, "modelLoadNotifier");
         }
 
         public void setLoadedProjectManager(LoadedProjectManager loadedProjectManager) {
-            ExceptionHelper.checkNotNullArgument(loadedProjectManager, "loadedProjectManager");
-            this.loadedProjectManager = loadedProjectManager;
+            this.loadedProjectManager = Objects.requireNonNull(loadedProjectManager, "loadedProjectManager");
         }
 
         public void setPersistentCache(PersistentModelCache<NbGradleModel> persistentCache) {
-            ExceptionHelper.checkNotNullArgument(persistentCache, "persistentCache");
-            this.persistentCache = persistentCache;
+            this.persistentCache = Objects.requireNonNull(persistentCache, "persistentCache");
         }
 
         public void setCacheRef(final GradleModelCache cache) {
-            ExceptionHelper.checkNotNullArgument(cache, "cache");
+            Objects.requireNonNull(cache, "cache");
             this.cacheRef = () -> cache;
         }
 

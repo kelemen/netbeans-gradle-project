@@ -8,11 +8,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -53,10 +54,8 @@ extends
             Collection<? extends NbGradleProjectTree> subProjects,
             boolean root) {
 
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
         this.root = root;
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
         this.listenerRefs = new ListenerRegistrations();
         this.lastTree = new AtomicReference<>(null);
         if (subProjects != null) {

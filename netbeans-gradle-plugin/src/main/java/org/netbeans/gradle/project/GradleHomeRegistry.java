@@ -6,12 +6,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
@@ -83,7 +84,7 @@ public final class GradleHomeRegistry {
     }
 
     private static void setGradleHome(final FileObject gradleHome) {
-        ExceptionHelper.checkNotNullArgument(gradleHome, "gradleHome");
+        Objects.requireNonNull(gradleHome, "gradleHome");
 
         GRADLE_HOME_UPDATER.execute(() -> {
             URL[] urls = GradleHomeClassPathProvider.getAllGradleLibs(gradleHome);

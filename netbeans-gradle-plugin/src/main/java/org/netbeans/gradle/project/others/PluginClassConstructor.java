@@ -2,8 +2,9 @@ package org.netbeans.gradle.project.others;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 
 public final class PluginClassConstructor {
     private final ClassFinder pluginClass;
@@ -18,9 +19,7 @@ public final class PluginClassConstructor {
     }
 
     public PluginClassConstructor(ClassFinder pluginClass, ClassFinder... argTypeFinders) {
-        ExceptionHelper.checkNotNullArgument(pluginClass, "pluginClass");
-
-        this.pluginClass = pluginClass;
+        this.pluginClass = Objects.requireNonNull(pluginClass, "pluginClass");
         this.argTypeFinders = argTypeFinders.clone();
         this.constructorRef = new AtomicReference<>(null);
         this.argTypesCache = null;

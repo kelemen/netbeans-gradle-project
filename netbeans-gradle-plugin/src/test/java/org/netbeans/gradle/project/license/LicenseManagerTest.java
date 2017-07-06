@@ -6,11 +6,11 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.jtrim.concurrent.SyncTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
+import org.jtrim2.executor.SyncTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.junit.Test;
 import org.netbeans.gradle.project.util.CloseableAction;
 

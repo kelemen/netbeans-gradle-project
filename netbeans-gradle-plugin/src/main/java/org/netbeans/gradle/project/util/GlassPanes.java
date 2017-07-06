@@ -8,16 +8,16 @@ import java.awt.GridBagLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseMotionAdapter;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import org.jtrim.cancel.CancellationController;
-import org.jtrim.property.swing.DelayedGlassPane;
-import org.jtrim.property.swing.GlassPaneFactory;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationController;
+import org.jtrim2.property.swing.DelayedGlassPane;
+import org.jtrim2.property.swing.GlassPaneFactory;
 
-import static org.jtrim.property.swing.AutoDisplayState.*;
+import static org.jtrim2.property.swing.AutoDisplayState.*;
 
 public final class GlassPanes {
     private static final Color LOADING_PANEL_BASE_BCKG = Color.GRAY;
@@ -34,7 +34,7 @@ public final class GlassPanes {
             final String loadingCaption,
             final CancellationController cancelTask) {
 
-        ExceptionHelper.checkNotNullArgument(loadingCaption, "loadingCaption");
+        Objects.requireNonNull(loadingCaption, "loadingCaption");
 
         return () -> {
             JPanel result = new JPanel(new GridBagLayout());
@@ -71,7 +71,7 @@ public final class GlassPanes {
     }
 
     public static DelayedGlassPane delayedLoadingPanel(String loadingCaption, CancellationController cancelTask) {
-        ExceptionHelper.checkNotNullArgument(cancelTask, "cancelTask");
+        Objects.requireNonNull(cancelTask, "cancelTask");
 
         return delayGlassPane(loadingPanel(loadingCaption, cancelTask));
     }

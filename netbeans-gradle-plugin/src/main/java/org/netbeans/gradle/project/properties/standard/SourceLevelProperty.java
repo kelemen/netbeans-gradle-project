@@ -1,10 +1,10 @@
 package org.netbeans.gradle.project.properties.standard;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ConfigPath;
@@ -39,8 +39,8 @@ public final class SourceLevelProperty {
     public static PropertySource<String> defaultValue(
             final NbGradleProject project,
             final PropertySource<? extends ProjectPlatform> targetPlatform) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(targetPlatform, "targetPlatform");
+        Objects.requireNonNull(project, "project");
+        Objects.requireNonNull(targetPlatform, "targetPlatform");
 
         final CachedLookupValue<JavaExtension> javaExtRef
                 = new CachedLookupValue<>(project, JavaExtension.class);
@@ -59,13 +59,13 @@ public final class SourceLevelProperty {
 
             @Override
             public ListenerRef addChangeListener(Runnable listener) {
-                ExceptionHelper.checkNotNullArgument(listener, "listener");
+                Objects.requireNonNull(listener, "listener");
 
                 ListenerRef ref1 = mayRelyOnJavaOfScript().addChangeListener(listener);
                 ListenerRef ref2 = project.currentModel().addChangeListener(listener);
                 ListenerRef ref3 = targetPlatform.addChangeListener(listener);
 
-                return ListenerRegistries.combineListenerRefs(ref1, ref2, ref3);
+                return ListenerRefs.combineListenerRefs(ref1, ref2, ref3);
             }
         };
     }

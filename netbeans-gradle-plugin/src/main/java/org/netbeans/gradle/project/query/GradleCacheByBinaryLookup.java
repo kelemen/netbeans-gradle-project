@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.query;
 
 import java.io.File;
+import java.util.Objects;
 import javax.swing.event.ChangeListener;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -24,13 +24,9 @@ public final class GradleCacheByBinaryLookup {
             String searchedPackaging,
             NbSupplier<File> gradleUserHomeProvider,
             NbFunction<FileObject, String> binaryToSearchedEntry) {
-        ExceptionHelper.checkNotNullArgument(searchedPackaging, "searchedPackaging");
-        ExceptionHelper.checkNotNullArgument(gradleUserHomeProvider, "gradleUserHomeProvider");
-        ExceptionHelper.checkNotNullArgument(binaryToSearchedEntry, "binaryToSearchedEntry");
-
-        this.searchedPackaging = searchedPackaging;
-        this.gradleUserHomeProvider = gradleUserHomeProvider;
-        this.binaryToSearchedEntry = binaryToSearchedEntry;
+        this.searchedPackaging = Objects.requireNonNull(searchedPackaging, "searchedPackaging");
+        this.gradleUserHomeProvider = Objects.requireNonNull(gradleUserHomeProvider, "gradleUserHomeProvider");
+        this.binaryToSearchedEntry = Objects.requireNonNull(binaryToSearchedEntry, "binaryToSearchedEntry");
     }
 
     public static void notifyCacheChange() {

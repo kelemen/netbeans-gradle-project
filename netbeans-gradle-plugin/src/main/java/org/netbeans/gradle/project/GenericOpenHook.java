@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project;
 
 import java.util.Collection;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
@@ -21,8 +21,8 @@ public final class GenericOpenHook extends ProjectOpenedHook {
     public static ProjectOpenedHook create(
             Collection<? extends PropertySource<? extends CloseableAction>> actionProperties,
             Runnable openInitializer) {
-        ExceptionHelper.checkNotNullArgument(actionProperties, "actionProperties");
-        ExceptionHelper.checkNotNullArgument(openInitializer, "openInitializer");
+        Objects.requireNonNull(actionProperties, "actionProperties");
+        Objects.requireNonNull(openInitializer, "openInitializer");
 
         CloseableActionContainer closeableActions = new CloseableActionContainer();
 

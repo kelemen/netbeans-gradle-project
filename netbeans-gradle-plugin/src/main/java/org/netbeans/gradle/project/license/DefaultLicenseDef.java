@@ -2,8 +2,8 @@ package org.netbeans.gradle.project.license;
 
 import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.util.Objects;
 import java.util.Random;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class DefaultLicenseDef implements LicenseDef {
@@ -15,13 +15,9 @@ public final class DefaultLicenseDef implements LicenseDef {
     private final String displayName;
 
     public DefaultLicenseDef(Path src, String name, String displayName) {
-        ExceptionHelper.checkNotNullArgument(src, "src");
-        ExceptionHelper.checkNotNullArgument(name, "name");
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-
-        this.src = src;
-        this.name = name;
-        this.displayName = displayName;
+        this.src = Objects.requireNonNull(src, "src");
+        this.name = Objects.requireNonNull(name, "name");
+        this.displayName = Objects.requireNonNull(displayName, "displayName");
 
         String safeName = NbFileUtils.toSafeFileName(name);
         String randomStr = Long.toHexString(RND.nextLong()) + "-" + Long.toHexString(RND.nextLong());

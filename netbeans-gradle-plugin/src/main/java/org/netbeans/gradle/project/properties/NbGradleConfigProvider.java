@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -16,17 +17,17 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.MonitorableTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.collections.CollectionsEx;
+import org.jtrim2.concurrent.AsyncTasks;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.MonitorableTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
@@ -70,17 +71,13 @@ public final class NbGradleConfigProvider {
             MultiProfileProperties multiProfileProperties,
             ProfileSettingsContainer settingsContainer) {
 
-        ExceptionHelper.checkNotNullArgument(rootDirectory, "rootDirectory");
-        ExceptionHelper.checkNotNullArgument(multiProfileProperties, "multiProfileProperties");
-        ExceptionHelper.checkNotNullArgument(settingsContainer, "settingsContainer");
-
-        this.rootDirectory = rootDirectory;
+        this.rootDirectory = Objects.requireNonNull(rootDirectory, "rootDirectory");
         this.activeConfigChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.configsChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.activeConfigRef = new AtomicReference<>(selectedConfig);
         this.configs = new AtomicReference<>(CollectionsEx.readOnlyCopy(initialConfigs));
-        this.multiProfileProperties = multiProfileProperties;
-        this.settingsContainer = settingsContainer;
+        this.multiProfileProperties = Objects.requireNonNull(multiProfileProperties, "multiProfileProperties");
+        this.settingsContainer = Objects.requireNonNull(settingsContainer, "settingsContainer");
         this.profileApplierExecutor = new GenericUpdateTaskExecutor(PROFILE_APPLIER_EXECUTOR);
         this.profileIOExecutor = NbTaskExecutors.newDefaultFifoExecutor();
 
@@ -210,7 +207,7 @@ public final class NbGradleConfigProvider {
             }
 
             fireConfigurationListChange();
-        }, null);
+        }).exceptionally(AsyncTasks::expectNoError);
     }
 
     public void addConfiguration(final NbGradleConfiguration config) {
@@ -311,7 +308,7 @@ public final class NbGradleConfigProvider {
     private void saveActiveProfile() {
         profileIOExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
             saveActiveProfileNow();
-        }, null);
+        }).exceptionally(AsyncTasks::expectNoError);
     }
 
     private void fireActiveConfigurationListChange() {

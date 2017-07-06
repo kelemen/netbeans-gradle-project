@@ -5,7 +5,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -20,8 +20,7 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
     private final JavaExtension javaExt;
 
     public GradleUnitTestFinder(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
     }
 
     private static boolean hasSource(NbJavaModule module, FileObject source) {

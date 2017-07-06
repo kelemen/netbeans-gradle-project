@@ -7,7 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.properties.PlatformSelectionMode;
@@ -29,7 +29,7 @@ public final class ExplicitPlatformRef implements PlatformSelector {
     }
 
     private JavaPlatform selectRawPlatform(List<? extends JavaPlatform> platforms, PlatformOrder order) {
-        ExceptionHelper.checkNotNullArgument(order, "order");
+        Objects.requireNonNull(order, "order");
         for (JavaPlatform platform: platforms) {
             if (Objects.equals(installDirs, getInstallDirs(platform))) {
                 return platform;

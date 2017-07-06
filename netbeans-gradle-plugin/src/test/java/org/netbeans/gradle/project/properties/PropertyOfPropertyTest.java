@@ -1,9 +1,9 @@
 package org.netbeans.gradle.project.properties;
 
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

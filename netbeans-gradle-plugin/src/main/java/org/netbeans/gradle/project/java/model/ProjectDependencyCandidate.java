@@ -2,9 +2,9 @@ package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
 import java.util.List;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -20,11 +20,8 @@ public final class ProjectDependencyCandidate {
     private final PropertySource<JavaProjectDependencyDef> projectDependency;
 
     public ProjectDependencyCandidate(Project project, File dependency) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(dependency, "dependency");
-
-        this.project = project;
-        this.dependency = dependency;
+        this.project = Objects.requireNonNull(project, "project");
+        this.dependency = Objects.requireNonNull(dependency, "dependency");
         this.projectDependency = javaModelOfProject(dependency, JavaExtension.extensionOfProject(project));
     }
 

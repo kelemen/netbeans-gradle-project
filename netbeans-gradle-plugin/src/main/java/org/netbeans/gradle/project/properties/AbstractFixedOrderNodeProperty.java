@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.Map;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.collections.CollectionsEx;
 
 abstract class AbstractFixedOrderNodeProperty extends AbstractConfigNodeProperty {
     private final Map<String, Integer> order;
@@ -11,7 +11,7 @@ abstract class AbstractFixedOrderNodeProperty extends AbstractConfigNodeProperty
         this.order = CollectionsEx.newHashMap(order.length);
         for (int i = 0; i < order.length; i++) {
             String key = order[i];
-            ExceptionHelper.checkNotNullArgument(key, "order[?]");
+            Objects.requireNonNull(key, "order[?]");
 
             this.order.put(key, i);
         }

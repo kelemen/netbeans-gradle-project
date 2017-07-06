@@ -2,8 +2,8 @@ package org.netbeans.gradle.project.api.entry;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.concurrent.WaitableSignal;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.concurrent.WaitableSignal;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 

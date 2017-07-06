@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.output;
 
 import java.io.IOException;
 import java.util.Arrays;
-import org.jtrim.cancel.CancellationSource;
+import org.jtrim2.cancel.CancellationSource;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.tasks.AsyncGradleTask;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;

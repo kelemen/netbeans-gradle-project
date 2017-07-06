@@ -7,11 +7,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.text.Document;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.annotations.common.CheckForNull;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.Project;
@@ -51,8 +51,7 @@ public class GradleCoverageProvider implements CoverageProvider {
     private FileChangeListener listener;
 
     public GradleCoverageProvider(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
         this.p = javaExt.getProject();
         this.summaryCache = null;
         this.listener = null;

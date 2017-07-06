@@ -6,8 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.collections.ArraysEx;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.ArraysEx;
+import org.jtrim2.utils.ExceptionHelper;
 
 /**
  * Defines a path to a subtree in a configuration tree. For most practical

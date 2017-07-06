@@ -7,7 +7,7 @@ import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.project.script.CommonScripts;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
@@ -31,10 +31,8 @@ public final class NbGenericModelInfo implements Serializable {
     }
 
     public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, Path settingsFile, long createTimeEpochMs) {
-        ExceptionHelper.checkNotNullArgument(projectDef, "projectDef");
-
         this.settingsFile = settingsFile;
-        this.projectDef = projectDef;
+        this.projectDef = Objects.requireNonNull(projectDef, "projectDef");
         this.createTimeEpochMs = createTimeEpochMs;
     }
 

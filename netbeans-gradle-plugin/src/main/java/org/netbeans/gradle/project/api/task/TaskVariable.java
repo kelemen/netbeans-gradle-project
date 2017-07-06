@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.api.task;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines a variable which might be replaced with a given string in Gradle
@@ -40,7 +40,7 @@ public final class TaskVariable {
      * @see #isValidVariableName(String)
      */
     public TaskVariable(@Nonnull String variableName) {
-        ExceptionHelper.checkNotNullArgument(variableName, "variableName");
+        Objects.requireNonNull(variableName, "variableName");
 
         if (!VARIABLE_NAME_PATTERN.matcher(variableName).matches()) {
             throw new IllegalArgumentException("Variable name contains an invalid character: " + variableName);
@@ -69,7 +69,7 @@ public final class TaskVariable {
      * @throws NullPointerException if the passed variable name is {@code null}
      */
     public static boolean isValidVariableName(@Nonnull String variableName) {
-        ExceptionHelper.checkNotNullArgument(variableName, "variableName");
+        Objects.requireNonNull(variableName, "variableName");
         return VARIABLE_NAME_PATTERN.matcher(variableName).matches();
     }
 

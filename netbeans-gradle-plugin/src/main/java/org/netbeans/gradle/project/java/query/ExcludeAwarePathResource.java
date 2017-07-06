@@ -4,7 +4,6 @@ import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.util.FileGroupFilter;
 import org.netbeans.gradle.project.util.UrlFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
@@ -26,7 +25,7 @@ final class ExcludeAwarePathResource extends PathResourceBase implements Filteri
             File root,
             FileGroupFilter includeRules,
             UrlFactory urlForArchiveFactory) {
-        ExceptionHelper.checkNotNullArgument(includeRules, "includeRules");
+        Objects.requireNonNull(includeRules, "includeRules");
 
         URL url = urlForArchiveFactory.toUrl(root);
         if (url == null) {

@@ -2,25 +2,23 @@ package org.netbeans.gradle.project.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.collections.RefCollection;
-import org.jtrim.collections.RefLinkedList;
-import org.jtrim.collections.RefList;
-import org.jtrim.concurrent.CancelableTask;
-import org.jtrim.concurrent.MonitorableTaskExecutor;
-import org.jtrim.concurrent.SyncTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.TaskExecutors;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.SimpleListenerRegistry;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.RefCollection;
+import org.jtrim2.collections.RefLinkedList;
+import org.jtrim2.collections.RefList;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.SimpleListenerRegistry;
+import org.jtrim2.executor.MonitorableTaskExecutor;
+import org.jtrim2.executor.SyncTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.TaskExecutors;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.NbProperties;
 
 public final class CloseableActionContainer {
@@ -64,8 +62,8 @@ public final class CloseableActionContainer {
         };
     }
 
-    private void executeSync(CancelableTask task) {
-        openSynchronizer.execute(Cancellation.UNCANCELABLE_TOKEN, task, null);
+    private void executeSync(Runnable task) {
+        openSynchronizer.execute(task);
     }
 
     public <Listener> CloseableAction.Ref definePropertyChangeAction(
@@ -92,8 +90,8 @@ public final class CloseableActionContainer {
             final SimpleListenerRegistry<Listener> listenerRegistry,
             final Listener listener,
             TaskExecutor executor) {
-        ExceptionHelper.checkNotNullArgument(listenerRegistry, "listenerRegistry");
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
+        Objects.requireNonNull(listenerRegistry, "listenerRegistry");
+        Objects.requireNonNull(listener, "listener");
 
         CloseableAction action = () -> toActionRef(listenerRegistry.registerListener(listener));
         return defineAction(PropertyFactory.constSource(action), executor);
@@ -108,7 +106,7 @@ public final class CloseableActionContainer {
     }
 
     public CloseableAction.Ref defineAction(CloseableAction action, TaskExecutor executor) {
-        ExceptionHelper.checkNotNullArgument(action, "action");
+        Objects.requireNonNull(action, "action");
         return defineAction(PropertyFactory.constSource(action), executor);
     }
 
@@ -127,7 +125,7 @@ public final class CloseableActionContainer {
             actionsLock.unlock();
         }
 
-        executeSync((CancellationToken cancelToken) -> {
+        executeSync(() -> {
             if (opened) {
                 actionDef.open();
             }
@@ -179,13 +177,11 @@ public final class CloseableActionContainer {
     }
 
     public void open() {
-        executeSync((CancellationToken cancelToken) -> {
-            openNow();
-        });
+        executeSync(this::openNow);
     }
 
     public void close() {
-        executeSync((CancellationToken cancelToken) -> {
+        executeSync(() -> {
             if (opened) {
                 closeNow();
             }
@@ -209,22 +205,21 @@ public final class CloseableActionContainer {
         private boolean closedForGood;
 
         public ActionDef(PropertySource<? extends CloseableAction> actionProperty, TaskExecutor executor) {
-            ExceptionHelper.checkNotNullArgument(actionProperty, "actionProperty");
-            ExceptionHelper.checkNotNullArgument(executor, "executor");
+            Objects.requireNonNull(executor, "executor");
 
-            this.actionProperty = actionProperty;
+            this.actionProperty = Objects.requireNonNull(actionProperty, "actionProperty");
             this.actionChangeRef = null;
             this.syncExecutor = TaskExecutors.inOrderExecutor(executor);
             this.openedActionRef = null;
             this.closedForGood = false;
         }
 
-        private void executeSync(CancelableTask task) {
-            syncExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, task, null);
+        private void executeSync(Runnable task) {
+            syncExecutor.execute(task);
         }
 
         public void replaceAction() {
-            executeSync((CancellationToken cancelToken) -> {
+            executeSync(() -> {
                 closeNow();
                 openNow();
             });
@@ -249,7 +244,7 @@ public final class CloseableActionContainer {
         }
 
         public void open() {
-            executeSync((CancellationToken cancelToken) -> {
+            executeSync(() -> {
                 if (openedActionRef == null) {
                     openNow();
                 }
@@ -273,13 +268,11 @@ public final class CloseableActionContainer {
         }
 
         public void close() {
-            executeSync((CancellationToken cancelToken) -> {
-                closeNow();
-            });
+            executeSync(this::closeNow);
         }
 
         public void closeForGood() {
-            executeSync((CancellationToken cancelToken) -> {
+            executeSync(() -> {
                 closedForGood = true;
                 closeNow();
             });

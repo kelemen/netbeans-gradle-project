@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.util.Locale;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 
 public final class JavaSourceGroupID {
@@ -9,11 +9,8 @@ public final class JavaSourceGroupID {
     private final JavaSourceGroupName groupName;
 
     public JavaSourceGroupID(String sourceSetName, JavaSourceGroupName groupName) {
-        ExceptionHelper.checkNotNullArgument(sourceSetName, "sourceSetName");
-        ExceptionHelper.checkNotNullArgument(groupName, "groupName");
-
-        this.sourceSetName = sourceSetName;
-        this.groupName = groupName;
+        this.sourceSetName = Objects.requireNonNull(sourceSetName, "sourceSetName");
+        this.groupName = Objects.requireNonNull(groupName, "groupName");
     }
 
     public String getSourceSetName() {

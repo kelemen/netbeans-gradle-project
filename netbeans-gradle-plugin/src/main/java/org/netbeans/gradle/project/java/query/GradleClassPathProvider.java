@@ -9,18 +9,18 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.TaskExecutors;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.TaskExecutors;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
@@ -88,10 +88,8 @@ implements
 
     private final LazyValue<ScriptFileProvider> scriptFileProviderRef;
 
-    public GradleClassPathProvider(final JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-
-        this.javaExt = javaExt;
+    public GradleClassPathProvider(JavaExtension javaExt) {
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
         this.currentPlatformRef = new AtomicReference<>(null);
         this.infoRefRef = new AtomicReference<>(null);
         this.loadedOnce = false;
@@ -104,7 +102,7 @@ implements
 
         TaskExecutor pathUpdater = TaskExecutors.inOrderSimpleExecutor(NbTaskExecutors.DEFAULT_EXECUTOR);
         this.classpathUpdateExecutor = new GenericUpdateTaskExecutor(pathUpdater);
-        this.changesNotifier = new SwingUpdateTaskExecutor(true);
+        this.changesNotifier = SwingExecutors.getSwingUpdateExecutor(true);
         this.propertyListenerRefs = new ListenerRegistrations();
 
         EventSource eventSource = new EventSource();

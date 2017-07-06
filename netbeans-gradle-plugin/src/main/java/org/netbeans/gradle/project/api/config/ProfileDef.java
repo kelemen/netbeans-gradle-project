@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.api.config;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines a specific profile (configuration) for a Gradle project. Note that
@@ -71,11 +71,8 @@ public final class ProfileDef {
     public ProfileDef(
             @Nonnull ProfileKey profileKey,
             @Nonnull String displayName) {
-        ExceptionHelper.checkNotNullArgument(profileKey, "profileKey");
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-
-        this.profileKey = profileKey;
-        this.displayName = displayName;
+        this.profileKey = Objects.requireNonNull(profileKey, "profileKey");
+        this.displayName = Objects.requireNonNull(displayName, "displayName");
     }
 
     /**

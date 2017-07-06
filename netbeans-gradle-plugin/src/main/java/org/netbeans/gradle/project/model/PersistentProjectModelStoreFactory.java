@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.model;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.util.SerializationUtils2;
 
@@ -38,8 +38,7 @@ public final class PersistentProjectModelStoreFactory {
         private final NbGradleProject ownerProject;
 
         public PersistentProjectModelStore(NbGradleProject ownerProject) {
-            ExceptionHelper.checkNotNullArgument(ownerProject, "ownerProject");
-            this.ownerProject = ownerProject;
+            this.ownerProject = Objects.requireNonNull(ownerProject, "ownerProject");
         }
 
         @Override

@@ -6,12 +6,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.openide.filesystems.FileObject;
@@ -85,7 +85,7 @@ public final class GradleFileUtils {
     }
 
     public static boolean isKnownBinaryDirName(String dirName) {
-        ExceptionHelper.checkNotNullArgument(dirName, "dirName");
+        Objects.requireNonNull(dirName, "dirName");
 
         String lowerDirName = dirName.toLowerCase(Locale.US);
         return BINARY_DIR_NAMES.contains(lowerDirName);

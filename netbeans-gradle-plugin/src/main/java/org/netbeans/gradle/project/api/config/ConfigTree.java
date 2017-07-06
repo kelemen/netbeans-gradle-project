@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.CollectionsEx;
+import org.jtrim2.utils.ExceptionHelper;
 
 /**
  * Defines a tree based configuration store. The edges in the tree are identified
@@ -149,8 +149,8 @@ public final class ConfigTree {
          *   argument cannot be {@code null}.
          */
         public void setChildTree(@Nonnull String key, @Nonnull ConfigTree tree) {
-            ExceptionHelper.checkNotNullArgument(key, "key");
-            ExceptionHelper.checkNotNullArgument(tree, "tree");
+            Objects.requireNonNull(key, "key");
+            Objects.requireNonNull(tree, "tree");
 
             cachedBuilt = null;
 
@@ -250,7 +250,7 @@ public final class ConfigTree {
          */
         @Nonnull
         public Builder getChildBuilder(@Nonnull String key) {
-            ExceptionHelper.checkNotNullArgument(key, "key");
+            Objects.requireNonNull(key, "key");
 
             List<TreeOrBuilder> valueList = getChildTreeList(key);
             if (valueList.isEmpty()) {
@@ -282,7 +282,7 @@ public final class ConfigTree {
          */
         @Nonnull
         public Builder addChildBuilder(@Nonnull String key) {
-            ExceptionHelper.checkNotNullArgument(key, "key");
+            Objects.requireNonNull(key, "key");
 
             cachedBuilt = null;
 
@@ -300,7 +300,7 @@ public final class ConfigTree {
          *   to be removed. This argument cannot be {@code null}.
          */
         public void removeChild(@Nonnull String key) {
-            ExceptionHelper.checkNotNullArgument(key, "key");
+            Objects.requireNonNull(key, "key");
 
             if (childTrees == null) {
                 return;
@@ -475,8 +475,7 @@ public final class ConfigTree {
      */
     @Nonnull
     public ConfigTree getDeepChildTree(@Nonnull ConfigPath path) {
-        ExceptionHelper.checkNotNullArgument(path, "path");
-
+        Objects.requireNonNull(path, "path");
         return getDeepChildTree(path.getKeys().iterator());
     }
 
@@ -539,7 +538,7 @@ public final class ConfigTree {
      */
     @Nonnull
     public List<ConfigTree> getChildTrees(@Nonnull String key) {
-        ExceptionHelper.checkNotNullArgument(key, "key");
+        Objects.requireNonNull(key, "key");
 
         List<ConfigTree> result = childTrees.get(key);
         return result != null ? result : Collections.<ConfigTree>emptyList();
@@ -556,7 +555,7 @@ public final class ConfigTree {
      */
     @Nonnull
     public ConfigTree getChildTree(@Nonnull String key) {
-        ExceptionHelper.checkNotNullArgument(key, "key");
+        Objects.requireNonNull(key, "key");
 
         List<ConfigTree> result = childTrees.get(key);
         return result != null ? result.get(0) : EMPTY;

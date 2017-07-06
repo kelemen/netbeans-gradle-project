@@ -4,12 +4,12 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.model.NbGenericModelInfo;
@@ -85,7 +85,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     public static Project tryLoadSafeProject(File projectDir) {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+        Objects.requireNonNull(projectDir, "projectDir");
 
         FileObject projectDirObj = FileUtil.toFileObject(projectDir);
         if (projectDirObj == null) {
@@ -104,7 +104,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     private static Project findSafeProject(FileObject projectDir) throws IOException {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+        Objects.requireNonNull(projectDir, "projectDir");
 
         try (Closeable safeToOpen = NbGradleProjectFactory.safeToOpen(projectDir)) {
             assert safeToOpen != null; // Avoid warning
@@ -127,7 +127,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     public static Closeable safeToOpen(Path projectDir) {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+        Objects.requireNonNull(projectDir, "projectDir");
 
         Path normProjectDir = projectDir.normalize();
 
@@ -266,9 +266,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
         private final AtomicBoolean closed;
 
         public CounterCloser(Path key) {
-            ExceptionHelper.checkNotNullArgument(key, "key");
-
-            this.key = key;
+            this.key = Objects.requireNonNull(key, "key");
             this.closed = new AtomicBoolean(false);
         }
 

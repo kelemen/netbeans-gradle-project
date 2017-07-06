@@ -4,7 +4,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -15,8 +15,7 @@ public final class JavaProjectPlatform implements ProjectPlatform {
     private final JavaPlatform platform;
 
     public JavaProjectPlatform(JavaPlatform platform) {
-        ExceptionHelper.checkNotNullArgument(platform, "platform");
-        this.platform = platform;
+        this.platform = Objects.requireNonNull(platform, "platform");
     }
 
     private static Collection<URL> urlsOfClassPath(ClassPath classPath) {

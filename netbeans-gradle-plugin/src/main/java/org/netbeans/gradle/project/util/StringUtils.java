@@ -17,8 +17,8 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.StringTokenizer;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.openide.filesystems.FileUtil;
@@ -86,7 +86,7 @@ public final class StringUtils {
     }
 
     private static List<String> toLinesUnsafe(String output) throws IOException {
-        ExceptionHelper.checkNotNullArgument(output, "output");
+        Objects.requireNonNull(output, "output");
 
         List<String> lines = new ArrayList<>();
         BufferedReader reader = new BufferedReader(new StringReader(output));
@@ -103,7 +103,7 @@ public final class StringUtils {
     }
 
     public static String getTopMostClassName(String className) {
-        ExceptionHelper.checkNotNullArgument(className, "className");
+        Objects.requireNonNull(className, "className");
 
         int nestedClassSeparator = className.indexOf('$');
         return nestedClassSeparator >= 0

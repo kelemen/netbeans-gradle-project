@@ -1,13 +1,13 @@
 package org.netbeans.gradle.project.api.task;
 
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationToken;
 
 /**
  * Defines custom actions to be associated with a
@@ -96,9 +96,7 @@ public final class CustomCommandActions {
          *   {@code null}
          */
         public Builder(@Nonnull TaskKind taskKind) {
-            ExceptionHelper.checkNotNullArgument(taskKind, "taskKind");
-
-            this.taskKind = taskKind;
+            this.taskKind = Objects.requireNonNull(taskKind, "taskKind");
             this.commandCompleteListener = null;
             this.stdOutProcessor = null;
             this.stdErrProcessor = null;
@@ -142,8 +140,7 @@ public final class CustomCommandActions {
          *   {@code null}.
          */
         public void setCancelToken(@Nonnull CancellationToken cancelToken) {
-            ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
-            this.cancelToken = cancelToken;
+            this.cancelToken = Objects.requireNonNull(cancelToken, "cancelToken");
         }
 
         /**
@@ -509,9 +506,7 @@ public final class CustomCommandActions {
      */
     @Nonnull
     public static CustomCommandActions simpleAction(@Nonnull TaskKind taskKind) {
-        ExceptionHelper.checkNotNullArgument(taskKind, "taskKind");
-
-        switch (taskKind) {
+        switch (Objects.requireNonNull(taskKind, "taskKind")) {
             case BUILD:
                 return BUILD;
             case RUN:

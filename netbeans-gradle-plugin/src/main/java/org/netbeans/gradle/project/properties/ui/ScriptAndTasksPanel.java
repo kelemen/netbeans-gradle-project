@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.DefaultComboBoxModel;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
@@ -127,8 +126,7 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements ProfileEd
         private final JavaPlatform platform;
 
         public JavaPlatformItem(JavaPlatform platform) {
-            ExceptionHelper.checkNotNullArgument(platform, "platform");
-            this.platform = platform;
+            this.platform = Objects.requireNonNull(platform, "platform");
         }
 
         public JavaPlatform getPlatform() {

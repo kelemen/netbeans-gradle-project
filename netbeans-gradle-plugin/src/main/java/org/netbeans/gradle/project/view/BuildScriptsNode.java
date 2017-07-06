@@ -15,8 +15,8 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.concurrent.AsyncTasks;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
@@ -136,9 +136,7 @@ public final class BuildScriptsNode extends AbstractNode {
         private volatile boolean createdOnce;
 
         public BuildScriptChildFactory(NbGradleProject project) {
-            ExceptionHelper.checkNotNullArgument(project, "project");
-
-            this.project = project;
+            this.project = Objects.requireNonNull(project, "project");
             this.listenerRefs = new ListenerRegistrations();
             this.createdOnce = false;
         }
@@ -271,7 +269,7 @@ public final class BuildScriptsNode extends AbstractNode {
                 NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (cancelToken) -> {
                     createBuildSrc(buildSrcDir);
                     openProjectNow(buildSrcDir);
-                }, null);
+                }).exceptionally(AsyncTasks::expectNoError);
             }
         }
 
@@ -288,9 +286,7 @@ public final class BuildScriptsNode extends AbstractNode {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (cancelToken) -> {
-                doActionNow(getBuildSrcDir(project));
-            }, null);
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(() -> doActionNow(getBuildSrcDir(project)));
         }
     }
 
@@ -376,9 +372,7 @@ public final class BuildScriptsNode extends AbstractNode {
         private final File projectDir;
 
         public NodeFactoryImpl(NbGradleProject project) {
-            ExceptionHelper.checkNotNullArgument(project, "project");
-
-            this.project = project;
+            this.project = Objects.requireNonNull(project, "project");
             this.projectDir = project.getProjectDirectoryAsFile();
         }
 

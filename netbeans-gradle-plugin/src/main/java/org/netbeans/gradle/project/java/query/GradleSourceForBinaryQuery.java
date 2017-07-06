@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.event.ChangeListener;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -52,9 +51,7 @@ implements
     }
 
     public GradleSourceForBinaryQuery(NbSupplier<? extends NbJavaModule> moduleProvider) {
-        ExceptionHelper.checkNotNullArgument(moduleProvider, "moduleProvider");
-
-        this.moduleProvider = moduleProvider;
+        this.moduleProvider = Objects.requireNonNull(moduleProvider, "moduleProvider");
         this.changes = LazyChangeSupport.createSwing(new EventSource());
     }
 

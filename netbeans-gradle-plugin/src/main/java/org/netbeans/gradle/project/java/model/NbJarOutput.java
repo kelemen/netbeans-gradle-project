@@ -8,8 +8,9 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 
 public final class NbJarOutput implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -21,11 +22,8 @@ public final class NbJarOutput implements Serializable {
     private final Set<File> classDirs;
 
     public NbJarOutput(String taskName, File jar, Collection<? extends File> classDirs) {
-        ExceptionHelper.checkNotNullArgument(taskName, "taskName");
-        ExceptionHelper.checkNotNullArgument(jar, "jar");
-
-        this.taskName = taskName;
-        this.jar = jar;
+        this.taskName = Objects.requireNonNull(taskName, "taskName");
+        this.jar = Objects.requireNonNull(jar, "jar");
         this.classDirs = Collections.unmodifiableSet(new HashSet<>(classDirs));
 
         ExceptionHelper.checkNotNullElements(this.classDirs, "classDirs");

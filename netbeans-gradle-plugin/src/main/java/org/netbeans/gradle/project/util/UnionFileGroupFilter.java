@@ -6,7 +6,6 @@ import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Objects;
-import org.jtrim.utils.ExceptionHelper;
 
 public final class UnionFileGroupFilter implements FileGroupFilter, Serializable {
     private static final long serialVersionUID = 1L;
@@ -15,11 +14,8 @@ public final class UnionFileGroupFilter implements FileGroupFilter, Serializable
     private final FileGroupFilter filter2;
 
     private UnionFileGroupFilter(FileGroupFilter filter1, FileGroupFilter filter2) {
-        ExceptionHelper.checkNotNullArgument(filter1, "filter1");
-        ExceptionHelper.checkNotNullArgument(filter2, "filter2");
-
-        this.filter1 = filter1;
-        this.filter2 = filter2;
+        this.filter1 = Objects.requireNonNull(filter1, "filter1");
+        this.filter2 = Objects.requireNonNull(filter2, "filter2");
     }
 
     public static FileGroupFilter union(FileGroupFilter filter1, FileGroupFilter filter2) {

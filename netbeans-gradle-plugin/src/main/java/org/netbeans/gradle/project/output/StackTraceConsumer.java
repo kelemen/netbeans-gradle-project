@@ -3,11 +3,11 @@ package org.netbeans.gradle.project.output;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.api.project.Project;
@@ -25,9 +25,7 @@ public final class StackTraceConsumer implements OutputLinkFinder {
     private final ClassPath classPath;
 
     public StackTraceConsumer(Project project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
         this.classPath = getClassPathFromProject(project);
     }
 

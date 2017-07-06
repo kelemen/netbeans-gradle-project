@@ -3,9 +3,9 @@ package org.netbeans.gradle.project;
 import java.beans.PropertyChangeListener;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.Icon;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.gradle.project.properties.SwingPropertyChangeForwarder;
@@ -23,7 +23,7 @@ public final class GradleProjectInformation implements ProjectInformation {
         SwingPropertyChangeForwarder result = changeListenersRef.get();
         if (result == null) {
             SwingPropertyChangeForwarder.Builder combinedListeners
-                    = new SwingPropertyChangeForwarder.Builder(SwingTaskExecutor.getStrictExecutor(false));
+                    = new SwingPropertyChangeForwarder.Builder(SwingExecutors.getStrictExecutor(false));
             PropertySource<String> displayName = PropertyFactory.lazilyNotifiedSource(project.getDisplayInfo().displayName());
             combinedListeners.addProperty(PROP_DISPLAY_NAME, displayName);
             result = combinedListeners.create();

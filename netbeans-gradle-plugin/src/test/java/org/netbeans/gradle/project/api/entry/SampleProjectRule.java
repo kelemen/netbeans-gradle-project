@@ -7,11 +7,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -33,8 +34,7 @@ public final class SampleProjectRule implements TestRule {
     private Map<FileObject, Project> loadedProjects;
 
     public SampleProjectRule(String resourceName, TestRule... wrapperRules) {
-        ExceptionHelper.checkNotNullArgument(resourceName, "resourceName");
-        this.resourceName = resourceName;
+        this.resourceName = Objects.requireNonNull(resourceName, "resourceName");
         this.wrapperRules = wrapperRules.clone();
         this.projectRef = new AtomicReference<>(null);
         this.loadedProjectsLock = new ReentrantLock();

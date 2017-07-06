@@ -8,12 +8,13 @@ import com.sun.jdi.connect.Transport;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.MonitorableTaskExecutorService;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.concurrent.AsyncTasks;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.executor.MonitorableTaskExecutorService;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
 import org.netbeans.gradle.project.api.task.GradleCommandContext;
@@ -39,8 +40,7 @@ public final class DebuggerServiceFactory implements GradleCommandServiceFactory
     private final JavaExtension javaExt;
 
     public DebuggerServiceFactory(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
     }
 
     @Override
@@ -82,10 +82,10 @@ public final class DebuggerServiceFactory implements GradleCommandServiceFactory
                 LOGGER.log(Level.INFO, "JPDADebugger.startListening has successfully connected to the debugee.");
             } catch (DebuggerStartException ex) {
                 LOGGER.log(Level.INFO, "JPDADebugger.startListening failed.", ex);
-            }finally {
+            } finally {
                 cancelRef.unregister();
             }
-        }, null);
+        }).exceptionally(AsyncTasks::expectNoError);
     }
 
     @Override

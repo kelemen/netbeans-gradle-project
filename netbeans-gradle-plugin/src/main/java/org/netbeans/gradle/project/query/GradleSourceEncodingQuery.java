@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.query;
 
 import java.nio.charset.Charset;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
@@ -15,11 +15,8 @@ public final class GradleSourceEncodingQuery extends FileEncodingQueryImplementa
     public GradleSourceEncodingQuery(
             FileObject projectDir,
             PropertySource<Charset> sourceEncoding) {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-        ExceptionHelper.checkNotNullArgument(sourceEncoding, "sourceEncoding");
-
-        this.projectDir = projectDir;
-        this.sourceEncoding = sourceEncoding;
+        this.projectDir = Objects.requireNonNull(projectDir, "projectDir");
+        this.sourceEncoding = Objects.requireNonNull(sourceEncoding, "sourceEncoding");
     }
 
     @Override

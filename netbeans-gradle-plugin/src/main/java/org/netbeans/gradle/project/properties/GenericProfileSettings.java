@@ -3,16 +3,16 @@ package org.netbeans.gradle.project.properties;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutorService;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.TaskExecutorService;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.MutableProperty;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.PropertyDef;
@@ -40,9 +40,7 @@ public final class GenericProfileSettings implements LoadableSingleProfileSettin
     private final UpdateTaskExecutor saveExecutor;
 
     public GenericProfileSettings(ProfileLocationProvider locationProvider) {
-        ExceptionHelper.checkNotNullArgument(locationProvider, "locationProvider");
-
-        this.locationProvider = locationProvider;
+        this.locationProvider = Objects.requireNonNull(locationProvider, "locationProvider");
         this.settings = new ProfileSettings();
         this.ioLock = new ReentrantLock();
         this.dirty = false;

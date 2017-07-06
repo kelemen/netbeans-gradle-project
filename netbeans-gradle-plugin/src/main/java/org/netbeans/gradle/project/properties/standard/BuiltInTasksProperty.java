@@ -5,12 +5,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.CollectionsEx;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ConfigPath;
@@ -41,8 +41,8 @@ public final class BuiltInTasksProperty {
     public static PropertySource<BuiltInTasks> defaultValue(
             final NbGradleProject project,
             final ActiveSettingsQuery settingsQuery) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(settingsQuery, "settingsQuery");
+        Objects.requireNonNull(project, "project");
+        Objects.requireNonNull(settingsQuery, "settingsQuery");
 
         return new PropertySource<BuiltInTasks>() {
             @Override
@@ -197,9 +197,7 @@ public final class BuiltInTasksProperty {
         private final Map<String, PredefinedTask> nameToTask;
 
         private BuiltInTasksImpl(PredefinedTasks tasks) {
-            ExceptionHelper.checkNotNullArgument(tasks, "tasks");
-
-            this.tasks = tasks;
+            this.tasks = Objects.requireNonNull(tasks, "tasks");
             this.nameToTask = createNameToTask(tasks.getTasks());
         }
 
@@ -214,7 +212,7 @@ public final class BuiltInTasksProperty {
 
         @Override
         public PredefinedTask tryGetByCommand(String command) {
-            ExceptionHelper.checkNotNullArgument(command, "command");
+            Objects.requireNonNull(command, "command");
             return nameToTask.get(command);
         }
 

@@ -5,11 +5,11 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
@@ -58,8 +58,8 @@ public final class JavaPlatformUtils {
             String versionStr,
             Collection<? extends JavaPlatform> platforms) {
 
-        ExceptionHelper.checkNotNullArgument(specName, "specName");
-        ExceptionHelper.checkNotNullArgument(versionStr, "versionStr");
+        Objects.requireNonNull(specName, "specName");
+        Objects.requireNonNull(versionStr, "versionStr");
 
         SpecificationVersion version;
         try {
@@ -173,7 +173,7 @@ public final class JavaPlatformUtils {
 
         @Override
         public ListenerRef addChangeListener(final Runnable listener) {
-            ExceptionHelper.checkNotNullArgument(listener, "listener");
+            Objects.requireNonNull(listener, "listener");
 
             final PropertyChangeListener propertyChangeListener = (PropertyChangeEvent evt) -> {
                 if (JavaPlatformManager.PROP_INSTALLED_PLATFORMS.equals(evt.getPropertyName())) {

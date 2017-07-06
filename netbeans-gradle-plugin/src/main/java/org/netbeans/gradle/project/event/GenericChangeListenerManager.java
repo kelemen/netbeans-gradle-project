@@ -1,17 +1,17 @@
 package org.netbeans.gradle.project.event;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.Tasks;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerManager;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.concurrent.Tasks;
+import org.jtrim2.event.CopyOnTriggerListenerManager;
+import org.jtrim2.event.EventListeners;
+import org.jtrim2.event.ListenerManager;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 
 public final class GenericChangeListenerManager implements PausableChangeListenerManager {
     private final ChangeListenerManager wrapped;
@@ -36,9 +36,7 @@ public final class GenericChangeListenerManager implements PausableChangeListene
     }
 
     private GenericChangeListenerManager(ChangeListenerManager wrapped, UpdateTaskExecutor executor) {
-        ExceptionHelper.checkNotNullArgument(wrapped, "wrapped");
-
-        this.wrapped = wrapped;
+        this.wrapped = Objects.requireNonNull(wrapped, "wrapped");
         this.pauseCount = new AtomicInteger(0);
         this.hasUnfired = new AtomicBoolean(false);
 
@@ -69,7 +67,7 @@ public final class GenericChangeListenerManager implements PausableChangeListene
     }
 
     public static GenericChangeListenerManager getSwingNotifier() {
-        return new GenericChangeListenerManager(SwingTaskExecutor.getStrictExecutor(false));
+        return new GenericChangeListenerManager(SwingExecutors.getStrictExecutor(false));
     }
 
     @Override
@@ -80,7 +78,7 @@ public final class GenericChangeListenerManager implements PausableChangeListene
                     fireEventually();
                 }
             }
-        }, false);
+        });
 
         pauseCount.incrementAndGet();
         return unpauseTask::run;

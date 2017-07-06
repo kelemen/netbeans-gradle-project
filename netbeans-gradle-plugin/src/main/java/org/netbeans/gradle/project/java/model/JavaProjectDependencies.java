@@ -8,18 +8,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.TaskExecutors;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.TaskExecutors;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaClassPaths;
@@ -46,11 +46,10 @@ public final class JavaProjectDependencies {
     }
 
     public JavaProjectDependencies(JavaExtension javaExt, TaskExecutor executor) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
         this.updateExecutor = new GenericUpdateTaskExecutor(TaskExecutors.inOrderSimpleExecutor(executor));
         this.translatedDependencies = PropertyFactory
-                .memPropertyConcurrent(null, true, SwingTaskExecutor.getStrictExecutor(true));
+                .memPropertyConcurrent(null, true, SwingExecutors.getStrictExecutor(true));
         this.translatedJavaDependenciesMap = NbProperties.propertyOfProperty(translatedDependencies, (TranslatedDependencies src) -> {
             return src != null
                     ? new ProjectDepedencyDefProperty(src.translatedDependencies)
@@ -83,7 +82,7 @@ public final class JavaProjectDependencies {
             for (ProjectDependencyCandidate candidate: src.values()) {
                 candidate.projectDependency().addChangeListener(listener);
             }
-            return ListenerRegistries.combineListenerRefs(result);
+            return ListenerRefs.combineListenerRefs(result);
         }
     }
 

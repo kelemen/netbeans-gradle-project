@@ -13,17 +13,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.InitLaterListenerRef;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.CollectionsEx;
+import org.jtrim2.event.InitLaterListenerRef;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.PropertySource;
 
 public final class SwingPropertyChangeForwarder {
     public static final class Builder {
@@ -88,7 +85,7 @@ public final class SwingPropertyChangeForwarder {
     }
 
     public void firePropertyChange(final PropertyChangeEvent changeEvent) {
-        ExceptionHelper.checkNotNullArgument(changeEvent, "changeEvent");
+        Objects.requireNonNull(changeEvent, "changeEvent");
 
         String name = changeEvent.getPropertyName();
 
@@ -117,9 +114,7 @@ public final class SwingPropertyChangeForwarder {
                 });
             }
             else {
-                eventExecutorSrc.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
-                    fireListeners(changeEvent, toCall);
-                }, null);
+                eventExecutorSrc.execute(() -> fireListeners(changeEvent, toCall));
             }
         }
     }
@@ -152,7 +147,7 @@ public final class SwingPropertyChangeForwarder {
             }
         }
 
-        combinedRef.init(ListenerRegistries.combineListenerRefs(refs));
+        combinedRef.init(ListenerRefs.combineListenerRefs(refs));
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -275,13 +270,9 @@ public final class SwingPropertyChangeForwarder {
         private final boolean forwardValue;
 
         public NamedProperty(String name, PropertySource<?> property, Object source, boolean forwardValue) {
-            ExceptionHelper.checkNotNullArgument(name, "name");
-            ExceptionHelper.checkNotNullArgument(property, "property");
-            ExceptionHelper.checkNotNullArgument(source, "source");
-
-            this.name = name;
-            this.property = property;
-            this.source = source;
+            this.name = Objects.requireNonNull(name, "name");
+            this.property = Objects.requireNonNull(property, "property");
+            this.source = Objects.requireNonNull(source, "source");
             this.forwardValue = forwardValue;
         }
 

@@ -3,8 +3,8 @@ package org.netbeans.gradle.project.tasks.vars;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.util.NbCollectionsEx;
@@ -22,9 +22,9 @@ final class LenientVariableResolver implements VariableResolver {
 
     @Override
     public String replaceVars(String str, TaskVariableMap varReplaceMap, Collection<? super DisplayedTaskVariable> collectedVariables) {
-        ExceptionHelper.checkNotNullArgument(str, "str");
-        ExceptionHelper.checkNotNullArgument(varReplaceMap, "varReplaceMap");
-        ExceptionHelper.checkNotNullArgument(collectedVariables, "collectedVariables");
+        Objects.requireNonNull(str, "str");
+        Objects.requireNonNull(varReplaceMap, "varReplaceMap");
+        Objects.requireNonNull(collectedVariables, "collectedVariables");
 
         StringBuilder result = null;
         int index = 0;

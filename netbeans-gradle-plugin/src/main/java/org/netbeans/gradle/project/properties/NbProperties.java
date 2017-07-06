@@ -2,20 +2,19 @@ package org.netbeans.gradle.project.properties;
 
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionListener;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.event.SimpleListenerRegistry;
-import org.jtrim.event.UnregisteredListenerRef;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingProperties;
-import org.jtrim.property.swing.SwingPropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.event.SimpleListenerRegistry;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingProperties;
+import org.jtrim2.property.swing.SwingPropertySource;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbBiFunction;
 import org.netbeans.gradle.project.util.NbFunction;
@@ -34,8 +33,8 @@ public final class NbProperties {
     public static <Value> PropertySource<Value> atomicValueView(
             final AtomicReference<? extends Value> valueRef,
             final SimpleListenerRegistry<Runnable> changeListeners) {
-        ExceptionHelper.checkNotNullArgument(valueRef, "valueRef");
-        ExceptionHelper.checkNotNullArgument(changeListeners, "changeListeners");
+        Objects.requireNonNull(valueRef, "valueRef");
+        Objects.requireNonNull(changeListeners, "changeListeners");
 
         return new PropertySource<Value>() {
             @Override
@@ -91,7 +90,7 @@ public final class NbProperties {
     }
 
     public static <Value> PropertySource<Value> listSelection(final JList<? extends Value> list) {
-        ExceptionHelper.checkNotNullArgument(list, "list");
+        Objects.requireNonNull(list, "list");
 
         return new PropertySource<Value>() {
             @Override
@@ -101,7 +100,7 @@ public final class NbProperties {
 
             @Override
             public ListenerRef addChangeListener(final Runnable listener) {
-                ExceptionHelper.checkNotNullArgument(listener, "listener");
+                Objects.requireNonNull(listener, "listener");
 
                 ListSelectionListener swingListener = e -> listener.run();
 
@@ -121,7 +120,7 @@ public final class NbProperties {
     public static <Value> SwingPropertySource<Value, ChangeListener> toOldProperty(
             PropertySource<? extends Value> property,
             Object src) {
-        ExceptionHelper.checkNotNullArgument(property, "property");
+        Objects.requireNonNull(property, "property");
         final ChangeEvent event = new ChangeEvent(src);
 
         return SwingProperties.toSwingSource(property, (ChangeListener eventListener, Void arg) -> {
@@ -134,8 +133,8 @@ public final class NbProperties {
     }
 
     public static <T> PropertySource<T> lookupProperty(Lookup lookup, Class<? extends T> type) {
-        ExceptionHelper.checkNotNullArgument(lookup, "lookup");
-        ExceptionHelper.checkNotNullArgument(type, "type");
+        Objects.requireNonNull(lookup, "lookup");
+        Objects.requireNonNull(type, "type");
 
         Lookup.Result<? extends T> lookupResult = lookup.lookupResult(type);
         LookupResultProperty<T> oldProperty = new LookupResultProperty<>(lookupResult);
@@ -149,8 +148,7 @@ public final class NbProperties {
         private final AtomicReference<T> cache;
 
         public CacheFirstNonNullProperty(PropertySource<? extends T> src) {
-            ExceptionHelper.checkNotNullArgument(src, "src");
-            this.src = src;
+            this.src = Objects.requireNonNull(src, "src");
             this.cache = new AtomicReference<>(null);
         }
 
@@ -168,10 +166,10 @@ public final class NbProperties {
 
         @Override
         public ListenerRef addChangeListener(final Runnable listener) {
-            ExceptionHelper.checkNotNullArgument(listener, "listener");
+            Objects.requireNonNull(listener, "listener");
 
             if (cache.get() != null) {
-                return UnregisteredListenerRef.INSTANCE;
+                return ListenerRefs.unregistered();
             }
 
             return src.addChangeListener(new Runnable() {
@@ -192,8 +190,7 @@ public final class NbProperties {
         private final Lookup.Result<? extends T> lookupResult;
 
         public LookupResultProperty(Lookup.Result<? extends T> lookupResult) {
-            ExceptionHelper.checkNotNullArgument(lookupResult, "lookupResult");
-            this.lookupResult = lookupResult;
+            this.lookupResult = Objects.requireNonNull(lookupResult, "lookupResult");
         }
 
         @Override
@@ -229,11 +226,6 @@ public final class NbProperties {
         }
 
         @Override
-        public boolean isRegistered() {
-            return wrappedRef.isRegistered();
-        }
-
-        @Override
         public void unregister() {
             wrappedRef.unregister();
         }
@@ -250,9 +242,7 @@ public final class NbProperties {
         private final PropertySource<? extends Value> src;
 
         public WeakListenerProperty(PropertySource<? extends Value> src) {
-            ExceptionHelper.checkNotNullArgument(src, "src");
-
-            this.src = src;
+            this.src = Objects.requireNonNull(src, "src");
         }
 
         @Override
@@ -262,7 +252,7 @@ public final class NbProperties {
 
         @Override
         public ListenerRef addChangeListener(Runnable listener) {
-            ExceptionHelper.checkNotNullArgument(listener, "listener");
+            Objects.requireNonNull(listener, "listener");
 
             final WeakReference<Runnable> listenerRef = new WeakReference<>(listener);
             ListenerRef result = src.addChangeListener(() -> {
@@ -285,12 +275,10 @@ public final class NbProperties {
                 PropertySource<? extends T> src1,
                 PropertySource<? extends U> src2,
                 NbBiFunction<? super T, ? super U, ? extends R> valueCombiner) {
-            ExceptionHelper.checkNotNullArgument(src1, "src1");
-            ExceptionHelper.checkNotNullArgument(src2, "src2");
-            ExceptionHelper.checkNotNullArgument(valueCombiner, "valueCombiner");
+            Objects.requireNonNull(valueCombiner, "valueCombiner");
 
-            this.src1 = src1;
-            this.src2 = src2;
+            this.src1 = Objects.requireNonNull(src1, "src1");
+            this.src2 = Objects.requireNonNull(src2, "src2");
             this.valueRef = new CombinedValues<>(src1, src2, valueCombiner);
         }
 
@@ -301,7 +289,7 @@ public final class NbProperties {
 
         @Override
         public ListenerRef addChangeListener(Runnable listener) {
-            return ListenerRegistries.combineListenerRefs(
+            return ListenerRefs.combineListenerRefs(
                     src1.addChangeListener(listener),
                     src2.addChangeListener(listener));
         }

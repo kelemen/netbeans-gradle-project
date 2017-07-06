@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.api.config.ui;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines a settings page for an extension with properties stored under a custom name. The settings page will support
@@ -32,11 +32,8 @@ public final class ProfileBasedForeignSettingsCategory {
     public ProfileBasedForeignSettingsCategory(
             @Nonnull String extensionName,
             @Nonnull ProfileBasedSettingsCategory settingsCategory) {
-        ExceptionHelper.checkNotNullArgument(extensionName, "extensionName");
-        ExceptionHelper.checkNotNullArgument(settingsCategory, "settingsCategory");
-
-        this.extensionName = extensionName;
-        this.settingsCetegory = settingsCategory;
+        this.extensionName = Objects.requireNonNull(extensionName, "extensionName");
+        this.settingsCetegory = Objects.requireNonNull(settingsCategory, "settingsCategory");
     }
 
     /**

@@ -2,28 +2,28 @@ package org.netbeans.gradle.project.validate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.jtrim.collections.Equality;
-import org.jtrim.collections.RefLinkedList;
-import org.jtrim.collections.RefList;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingProperties;
-import org.jtrim.property.swing.SwingPropertySource;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.Equality;
+import org.jtrim2.collections.RefLinkedList;
+import org.jtrim2.collections.RefList;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingProperties;
+import org.jtrim2.property.swing.SwingPropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 
-import static org.jtrim.property.PropertyFactory.*;
+import static org.jtrim2.property.PropertyFactory.*;
 
 public final class BackgroundValidator {
     private final UpdateTaskExecutor validationExecutor;
@@ -49,7 +49,7 @@ public final class BackgroundValidator {
             Validator<InputType> validator,
             PropertySource<? extends InputType> input) {
 
-        return addValidator(validator, input, SwingTaskExecutor.getStrictExecutor(true));
+        return addValidator(validator, input, SwingExecutors.getStrictExecutor(true));
     }
 
     public <InputType> ListenerRef addValidator(
@@ -57,9 +57,9 @@ public final class BackgroundValidator {
             final PropertySource<? extends InputType> input,
             final TaskExecutor inputReaderExecutor) {
 
-        ExceptionHelper.checkNotNullArgument(validator, "validator");
-        ExceptionHelper.checkNotNullArgument(input, "input");
-        ExceptionHelper.checkNotNullArgument(inputReaderExecutor, "inputReaderExecutor");
+        Objects.requireNonNull(validator, "validator");
+        Objects.requireNonNull(input, "input");
+        Objects.requireNonNull(inputReaderExecutor, "inputReaderExecutor");
 
         final UpdateTaskExecutor updateReader = new GenericUpdateTaskExecutor(inputReaderExecutor);
 
@@ -76,19 +76,7 @@ public final class BackgroundValidator {
 
         performValidation();
 
-        final ListenerRef result = ListenerRegistries.combineListenerRefs(ref1, ref2);
-        return new ListenerRef() {
-            @Override
-            public boolean isRegistered() {
-                return result.isRegistered();
-            }
-
-            @Override
-            public void unregister() {
-                result.unregister();
-                performValidation();
-            }
-        };
+        return ListenerRefs.combineListenerRefs(ref1, ref2, this::performValidation);
     }
 
     public PropertySource<Problem> currentProblem() {
@@ -133,25 +121,12 @@ public final class BackgroundValidator {
                 validatorsLock.unlock();
             }
 
-            return new ListenerRef() {
-                @Override
-                public boolean isRegistered() {
-                    validatorsLock.lock();
-                    try {
-                        return !elementRef.isRemoved();
-                    } finally {
-                        validatorsLock.unlock();
-                    }
-                }
-
-                @Override
-                public void unregister() {
-                    validatorsLock.lock();
-                    try {
-                        elementRef.remove();
-                    } finally {
-                        validatorsLock.unlock();
-                    }
+            return () -> {
+                validatorsLock.lock();
+                try {
+                    elementRef.remove();
+                } finally {
+                    validatorsLock.unlock();
                 }
             };
         }

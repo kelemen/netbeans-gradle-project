@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.newproject;
 
 import java.nio.file.Path;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 
 public final class GradleSingleProjectConfig {
     private final String projectName;
@@ -12,11 +12,8 @@ public final class GradleSingleProjectConfig {
             String projectName,
             Path projectFolder,
             String mainClass) {
-        ExceptionHelper.checkNotNullArgument(projectName, "projectName");
-        ExceptionHelper.checkNotNullArgument(projectFolder, "projectFolder");
-
-        this.projectName = projectName;
-        this.projectFolder = projectFolder;
+        this.projectName = Objects.requireNonNull(projectName, "projectName");
+        this.projectFolder = Objects.requireNonNull(projectFolder, "projectFolder");
         this.mainClass = mainClass;
     }
 

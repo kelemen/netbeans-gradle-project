@@ -1,15 +1,14 @@
 package org.netbeans.gradle.project.lookups;
 
 import java.util.Collection;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.openide.util.Lookup;
 
 public class DelegateLookup extends Lookup {
     protected final Lookup wrapped;
 
     public DelegateLookup(Lookup wrapped) {
-        ExceptionHelper.checkNotNullArgument(wrapped, "wrapped");
-        this.wrapped = wrapped;
+        this.wrapped = Objects.requireNonNull(wrapped, "wrapped");
     }
 
     @Override

@@ -1,9 +1,9 @@
 package org.netbeans.gradle.project.util;
 
+import java.util.Objects;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import org.jtrim.cancel.CancellationController;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationController;
 import org.netbeans.gradle.project.NbStrings;
 
 @SuppressWarnings("serial")
@@ -11,7 +11,7 @@ class TextWithCancelPanel extends javax.swing.JPanel {
     private final CancellationController cancelTask;
 
     public TextWithCancelPanel(String text, CancellationController cancelTask) {
-        ExceptionHelper.checkNotNullArgument(text, "text");
+        Objects.requireNonNull(text, "text");
 
         this.cancelTask = cancelTask;
 

@@ -11,12 +11,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ProxyListenerRegistry;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.concurrent.AsyncTasks;
+import org.jtrim2.event.EventListeners;
+import org.jtrim2.event.ProxyListenerRegistry;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -146,8 +147,7 @@ public final class GradleHomeNode extends AbstractNode {
         private final ScriptFileProvider scriptProvider;
 
         public GradleHomePathFinder(ScriptFileProvider scriptProvider) {
-            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
-            this.scriptProvider = scriptProvider;
+            this.scriptProvider = Objects.requireNonNull(scriptProvider, "scriptProvider");
         }
 
         @Override
@@ -206,9 +206,7 @@ public final class GradleHomeNode extends AbstractNode {
         private volatile boolean createdOnce;
 
         public GradleHomeNodeChildFactory(ScriptFileProvider scriptProvider) {
-            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
-
-            this.scriptProvider = scriptProvider;
+            this.scriptProvider = Objects.requireNonNull(scriptProvider, "scriptProvider");
             this.listenerRefs = new ListenerRegistrations();
             this.userHomeChangeListeners = new ProxyListenerRegistry<>(NbListenerManagers.neverNotifingRegistry());
             this.hasInitDDirDisplayed = false;
@@ -375,8 +373,7 @@ public final class GradleHomeNode extends AbstractNode {
         private final ScriptFileProvider scriptProvider;
 
         public FactoryImpl(ScriptFileProvider scriptProvider) {
-            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
-            this.scriptProvider = scriptProvider;
+            this.scriptProvider = Objects.requireNonNull(scriptProvider, "scriptProvider");
         }
 
         @Override
@@ -399,7 +396,7 @@ public final class GradleHomeNode extends AbstractNode {
                     Path initDPath = userHome.resolve(INIT_D_NAME);
                     Files.createDirectories(initDPath);
                 }
-            }, null);
+            }).exceptionally(AsyncTasks::expectNoError);
         }
     }
 }

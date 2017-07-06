@@ -10,9 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -100,11 +99,8 @@ public final class JavaSourceSetNode extends AbstractNode {
         private final ListenerRegistrations listenerRegs;
 
         public JavaSourceSetNodeChildFactory(JavaExtension javaExt, String sourceSetName) {
-            ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-            ExceptionHelper.checkNotNullArgument(sourceSetName, "sourceSetName");
-
-            this.javaExt = javaExt;
-            this.sourceSetName = sourceSetName;
+            this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
+            this.sourceSetName = Objects.requireNonNull(sourceSetName, "sourceSetName");
             this.listenerRegs = new ListenerRegistrations();
         }
 
@@ -236,11 +232,8 @@ public final class JavaSourceSetNode extends AbstractNode {
         private final PropertySource<Set<File>> sourceSetFiles;
 
         public JavaSourceSetNodeFactory(JavaExtension javaExt, String sourceSetName) {
-            ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-            ExceptionHelper.checkNotNullArgument(sourceSetName, "sourceSetName");
-
-            this.javaExt = javaExt;
-            this.sourceSetName = sourceSetName;
+            this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
+            this.sourceSetName = Objects.requireNonNull(sourceSetName, "sourceSetName");
             this.sourceSetFiles = new SourceSetFilesProperty(javaExt, sourceSetName);
         }
 

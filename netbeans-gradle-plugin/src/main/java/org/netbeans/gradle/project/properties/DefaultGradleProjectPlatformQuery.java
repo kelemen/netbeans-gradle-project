@@ -6,10 +6,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
@@ -36,10 +36,10 @@ implements
     }
 
     @Override
-    public NbListenerRef addPlatformChangeListener(final Runnable listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
+    public NbListenerRef addPlatformChangeListener(Runnable listener) {
+        Objects.requireNonNull(listener, "listener");
 
-        return NbListenerRefs.asNbRef(ListenerRegistries.combineListenerRefs(
+        return NbListenerRefs.asNbRef(ListenerRefs.combineListenerRefs(
                 JavaPlatformUtils.installedPlatforms().addChangeListener(listener),
                 orderProperty().addChangeListener(listener)));
     }

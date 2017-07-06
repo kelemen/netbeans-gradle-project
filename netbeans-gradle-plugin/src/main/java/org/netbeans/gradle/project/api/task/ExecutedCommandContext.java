@@ -2,8 +2,8 @@ package org.netbeans.gradle.project.api.task;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.tasks.vars.EmptyTaskVarMap;
 
@@ -52,8 +52,7 @@ public final class ExecutedCommandContext {
          *   Gradle command had been resolved. This argument cannot be {@code null}.
          */
         public void setTaskVariables(@Nonnull TaskVariableMap taskVariables) {
-            ExceptionHelper.checkNotNullArgument(taskVariables, "taskVariables");
-            this.taskVariables = taskVariables;
+            this.taskVariables = Objects.requireNonNull(taskVariables, "taskVariables");
         }
 
         /**

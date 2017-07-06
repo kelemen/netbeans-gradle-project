@@ -13,7 +13,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
@@ -77,7 +76,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
     }
 
     public static ProfileBasedSettingsCategory createSettingsCategory(final NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+        Objects.requireNonNull(project, "project");
         return new ProfileBasedSettingsCategory(CATEGORY_ID, () -> CommonProjectPropertiesPanel.createSettingsPage(project));
     }
 
@@ -442,11 +441,8 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
         private final PlatformSelectionMode selectionMode;
 
         public JavaPlatformComboItem(JavaPlatform platform, PlatformSelectionMode selectionMode) {
-            ExceptionHelper.checkNotNullArgument(platform, "platform");
-            ExceptionHelper.checkNotNullArgument(selectionMode, "selectionMode");
-
-            this.platform = platform;
-            this.selectionMode = selectionMode;
+            this.platform = Objects.requireNonNull(platform, "platform");
+            this.selectionMode = Objects.requireNonNull(selectionMode, "selectionMode");
         }
 
         public JavaPlatform getPlatform() {
@@ -499,8 +495,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
         private final ProjectPlatform platform;
 
         public ProjectPlatformComboItem(ProjectPlatform platform) {
-            ExceptionHelper.checkNotNullArgument(platform, "platform");
-            this.platform = platform;
+            this.platform = Objects.requireNonNull(platform, "platform");
         }
 
         public ProjectPlatform getPlatform() {

@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.GradleLocation.Applier;
 import org.netbeans.gradle.project.tasks.vars.StringResolver;
@@ -13,12 +13,11 @@ public final class GradleLocationDirectory implements GradleLocation {
     private final File gradleHome;
 
     public GradleLocationDirectory(File gradleHome) {
-        ExceptionHelper.checkNotNullArgument(gradleHome, "gradleHome");
-        this.gradleHome = gradleHome;
+        this.gradleHome = Objects.requireNonNull(gradleHome, "gradleHome");
     }
 
     public static GradleLocationRef getLocationRef(final String rawDir) {
-        ExceptionHelper.checkNotNullArgument(rawDir, "rawDir");
+        Objects.requireNonNull(rawDir, "rawDir");
 
         return new GradleLocationRef() {
             @Override

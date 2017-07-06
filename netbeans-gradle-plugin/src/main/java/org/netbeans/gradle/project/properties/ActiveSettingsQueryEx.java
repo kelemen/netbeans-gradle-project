@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
-import org.jtrim.property.PropertySource;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.w3c.dom.Element;
 

@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.api.config.ui;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines a settings page for an extension. The settings page will support storing its properties into any profiles.
@@ -29,11 +29,8 @@ public final class ProfileBasedSettingsCategory {
     public ProfileBasedSettingsCategory(
             @Nonnull CustomizerCategoryId categoryId,
             @Nonnull ProfileBasedSettingsPageFactory settingsPageFactory) {
-        ExceptionHelper.checkNotNullArgument(categoryId, "categoryId");
-        ExceptionHelper.checkNotNullArgument(settingsPageFactory, "settingsPageFactory");
-
-        this.categoryId = categoryId;
-        this.settingsPageFactory = settingsPageFactory;
+        this.categoryId = Objects.requireNonNull(categoryId, "categoryId");
+        this.settingsPageFactory = Objects.requireNonNull(settingsPageFactory, "settingsPageFactory");
     }
 
     /**

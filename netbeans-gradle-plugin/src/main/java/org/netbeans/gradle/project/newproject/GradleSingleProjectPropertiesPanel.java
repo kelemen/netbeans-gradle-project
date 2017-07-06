@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.event.ChangeListener;
-import org.jtrim.event.ListenerRef;
+import org.jtrim2.event.ListenerRef;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.Validator;
 import org.netbeans.gradle.project.validate.Validators;

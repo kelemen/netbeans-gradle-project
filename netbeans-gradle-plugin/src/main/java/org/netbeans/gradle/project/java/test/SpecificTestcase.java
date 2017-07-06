@@ -1,17 +1,14 @@
 package org.netbeans.gradle.project.java.test;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 
 public final class SpecificTestcase {
     private final String testClassName;
     private final String testMethodName;
 
     public SpecificTestcase(String testClassName, String testMethodName) {
-        ExceptionHelper.checkNotNullArgument(testClassName, "testClassName");
-        ExceptionHelper.checkNotNullArgument(testMethodName, "testMethodName");
-
-        this.testClassName = testClassName;
-        this.testMethodName = testMethodName;
+        this.testClassName = Objects.requireNonNull(testClassName, "testClassName");
+        this.testMethodName = Objects.requireNonNull(testMethodName, "testMethodName");
     }
 
     public String getTestClassName() {

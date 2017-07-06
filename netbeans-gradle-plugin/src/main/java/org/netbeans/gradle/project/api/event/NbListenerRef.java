@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.api.event;
 
-import org.jtrim.event.ListenerRef;
+import org.jtrim2.event.ListenerRef;
 
 /**
  * Defines a reference of an event handler which has been registered to be
@@ -11,9 +11,9 @@ import org.jtrim.event.ListenerRef;
  * done previously.
  * <P>
  * This interface exists for backward compatibilty reasons only, you
- * should use {@code org.jtrim.event.ListenerRef} whenever possible. If
+ * should use {@code org.jtrim2.event.ListenerRef} whenever possible. If
  * you need to convert a {@code ListenerRef} to this interface, use the
- * {@link NbListenerRefs#asNbRef(org.jtrim.event.ListenerRef) NbListenerRefs.asNbRef}
+ * {@link NbListenerRefs#asNbRef(org.jtrim2.event.ListenerRef) NbListenerRefs.asNbRef}
  * method.
  *
  * <h3>Thread safety</h3>

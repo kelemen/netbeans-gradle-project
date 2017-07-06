@@ -13,9 +13,9 @@ import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
-import static org.jtrim.property.BoolProperties.*;
-import static org.jtrim.property.swing.AutoDisplayState.*;
-import static org.jtrim.property.swing.SwingProperties.*;
+import static org.jtrim2.property.BoolProperties.*;
+import static org.jtrim2.property.swing.AutoDisplayState.*;
+import static org.jtrim2.property.swing.SwingProperties.*;
 
 @SuppressWarnings("serial")
 public class GradleDaemonPanel extends javax.swing.JPanel implements ProfileEditorFactory {

@@ -180,9 +180,11 @@ dependencies {
     compile project(':netbeans-gradle-default-models')
 
     compile 'com.google.guava:guava:19.0'
-    compile 'org.jtrim:jtrim-gui:1.7.3'
-    compile 'org.jtrim:jtrim-async:1.7.3'
-    compile 'org.jtrim:jtrim-core:1.7.3'
+
+    def jtrimVersion = '2.0.0-alpha-1'
+
+    compile "org.jtrim2:jtrim-swing-property:${jtrimVersion}"
+
     testCompile 'junit:junit:4.12'
     testCompile 'com.google.guava:guava:14.0.1'
     testCompile 'org.mockito:mockito-core:1.9.5'

@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.model.issue;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 
 public final class DependencyResolutionIssue {
@@ -20,15 +20,10 @@ public final class DependencyResolutionIssue {
             DependencyKind dependencyKind,
             Throwable stackTrace) {
 
-        ExceptionHelper.checkNotNullArgument(projectName, "projectName");
-        ExceptionHelper.checkNotNullArgument(sourceSetName, "sourceSetName");
-        ExceptionHelper.checkNotNullArgument(dependencyKind, "dependencyKind");
-        ExceptionHelper.checkNotNullArgument(stackTrace, "stackTrace");
-
-        this.projectName = projectName;
-        this.sourceSetName = sourceSetName;
-        this.dependencyKind = dependencyKind;
-        this.stackTrace = stackTrace;
+        this.projectName = Objects.requireNonNull(projectName, "projectName");
+        this.sourceSetName = Objects.requireNonNull(sourceSetName, "sourceSetName");
+        this.dependencyKind = Objects.requireNonNull(dependencyKind, "dependencyKind");
+        this.stackTrace = Objects.requireNonNull(stackTrace, "stackTrace");
     }
 
     public static DependencyResolutionIssue compileIssue(String projectName, String sourceSetName, Throwable stackTrace) {

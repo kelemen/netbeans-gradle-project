@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.java.query;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -15,8 +15,7 @@ implements
     private final JavaExtension javaExt;
 
     public J2SEPlatformFromScriptQueryImpl(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
     }
 
     private static GradleProjectPlatformQuery findOwnerQuery(String name) {

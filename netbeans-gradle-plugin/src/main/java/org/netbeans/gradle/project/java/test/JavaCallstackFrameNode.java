@@ -2,12 +2,10 @@ package org.netbeans.gradle.project.java.test;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -21,9 +19,7 @@ public final class JavaCallstackFrameNode extends CallstackFrameNode {
     public JavaCallstackFrameNode(String frameInfo, String displayName, JavaExtension javaExt) {
         super(frameInfo, displayName);
 
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
     }
 
     @Override
@@ -73,9 +69,7 @@ public final class JavaCallstackFrameNode extends CallstackFrameNode {
 
         @Override
         public void actionPerformed(final ActionEvent e) {
-            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
-                doActionNow(e);
-            }, null);
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(() -> doActionNow(e));
         }
     }
 }

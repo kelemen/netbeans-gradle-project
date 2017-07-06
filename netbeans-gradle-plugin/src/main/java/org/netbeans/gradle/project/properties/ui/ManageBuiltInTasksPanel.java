@@ -19,7 +19,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -78,7 +77,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel implements Profi
     }
 
     public static ProfileBasedSettingsCategory createSettingsCategory(final NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+        Objects.requireNonNull(project, "project");
 
         return new ProfileBasedSettingsCategory(CATEGORY_ID, () -> ManageBuiltInTasksPanel.createSettingsPage(project));
     }

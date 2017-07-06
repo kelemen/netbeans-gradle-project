@@ -6,10 +6,10 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.JTextArea;
-import org.jtrim.property.BoolProperties;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.property.BoolProperties;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.util.NbSupplier;
@@ -158,8 +158,8 @@ public class CustomActionPanel extends javax.swing.JPanel {
     public PredefinedTask tryGetPredefinedTask(
             String displayName,
             NbSupplier<? extends List<PredefinedTask.Name>> fallbackNames) {
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-        ExceptionHelper.checkNotNullArgument(fallbackNames, "fallbackNames");
+        Objects.requireNonNull(displayName, "displayName");
+        Objects.requireNonNull(fallbackNames, "fallbackNames");
 
         boolean tasksMustExist = jMustExistCheck.isSelected();
         List<String> rawTaskNames = getTasks();

@@ -1,10 +1,10 @@
 package org.netbeans.gradle.project.filesupport;
 
 import java.awt.Component;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.event.ChangeListener;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.property.MutableProperty;
 import org.openide.WizardDescriptor;
 import org.openide.loaders.TemplateWizard;
 import org.openide.util.HelpCtx;
@@ -16,11 +16,8 @@ final class GradleTemplateWizardPanelWrapper implements WizardDescriptor.Panel<W
     private final AtomicReference<GradleTemplateWizardPanel> panelRef;
 
     public GradleTemplateWizardPanelWrapper(MutableProperty<GradleTemplateWizardConfig> config, TemplateWizard wizard) {
-        ExceptionHelper.checkNotNullArgument(config, "config");
-        ExceptionHelper.checkNotNullArgument(wizard, "wizard");
-
-        this.config = config;
-        this.wizard = wizard;
+        this.config = Objects.requireNonNull(config, "config");
+        this.wizard = Objects.requireNonNull(wizard, "wizard");
         this.panelRef = new AtomicReference<>(null);
     }
 

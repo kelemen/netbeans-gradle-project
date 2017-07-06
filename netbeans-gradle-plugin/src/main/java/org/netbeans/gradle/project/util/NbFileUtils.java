@@ -16,11 +16,12 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
@@ -106,7 +107,7 @@ public final class NbFileUtils {
     }
 
     public static String toSafeFileName(String name) {
-        ExceptionHelper.checkNotNullArgument(name, "name");
+        Objects.requireNonNull(name, "name");
 
         StringBuilder result = new StringBuilder(name.length());
         for (int i = 0; i < name.length(); i++) {
@@ -126,8 +127,8 @@ public final class NbFileUtils {
             final FileObject dir,
             final boolean listenForDirs,
             final Runnable listener) {
-        ExceptionHelper.checkNotNullArgument(dir, "dir");
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
+        Objects.requireNonNull(dir, "dir");
+        Objects.requireNonNull(listener, "listener");
 
         final FileChangeListener fileChangeListener = new FileChangeAdapter() {
             @Override
@@ -234,8 +235,8 @@ public final class NbFileUtils {
     }
 
     public static void deleteDirectory(final CancellationToken cancelToken, Path directory) throws IOException {
-        ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
-        ExceptionHelper.checkNotNullArgument(directory, "directory");
+        Objects.requireNonNull(cancelToken, "cancelToken");
+        Objects.requireNonNull(directory, "directory");
 
         Files.walkFileTree(directory, new FileVisitor<Path>() {
             @Override
@@ -267,8 +268,8 @@ public final class NbFileUtils {
     }
 
     public static void deleteDirectory(CancellationToken cancelToken, FileObject directory) throws IOException {
-        ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
-        ExceptionHelper.checkNotNullArgument(directory, "directory");
+        Objects.requireNonNull(cancelToken, "cancelToken");
+        Objects.requireNonNull(directory, "directory");
 
         File asFile = FileUtil.toFile(directory);
         if (asFile == null) {
@@ -299,9 +300,9 @@ public final class NbFileUtils {
             Collection<String> lines,
             Charset charset,
             String lineSeparator) throws IOException {
-        ExceptionHelper.checkNotNullArgument(file, "file");
+        Objects.requireNonNull(file, "file");
+        Objects.requireNonNull(charset, "charset");
         ExceptionHelper.checkNotNullElements(lines, "lines");
-        ExceptionHelper.checkNotNullArgument(charset, "charset");
 
         if (lineSeparator == null) {
             Files.write(file, lines, charset);

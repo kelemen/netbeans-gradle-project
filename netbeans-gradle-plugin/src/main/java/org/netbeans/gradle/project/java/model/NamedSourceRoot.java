@@ -8,8 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -31,15 +31,10 @@ public final class NamedSourceRoot {
             File root,
             ExcludeIncludeRules includeRules) {
 
-        ExceptionHelper.checkNotNullArgument(groupID, "groupID");
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-        ExceptionHelper.checkNotNullArgument(root, "root");
-        ExceptionHelper.checkNotNullArgument(includeRules, "includeRules");
-
-        this.groupID = groupID;
-        this.displayName = displayName;
-        this.root = root;
-        this.includeRules = includeRules;
+        this.groupID = Objects.requireNonNull(groupID, "groupID");
+        this.displayName = Objects.requireNonNull(displayName, "displayName");
+        this.root = Objects.requireNonNull(root, "root");
+        this.includeRules = Objects.requireNonNull(includeRules, "includeRules");
     }
 
     public JavaSourceGroupID getGroupID() {

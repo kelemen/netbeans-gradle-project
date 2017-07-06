@@ -3,15 +3,16 @@ package org.netbeans.gradle.project.view;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationController;
-import org.jtrim.cancel.CancellationSource;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationController;
+import org.jtrim2.cancel.CancellationSource;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.concurrent.AsyncTasks;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ui.OpenProjects;
@@ -32,8 +33,7 @@ public final class DeleteProjectAction extends AbstractAction {
     public DeleteProjectAction(NbGradleProject project) {
         super(NbStrings.getDeleteProjectCaption());
 
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
     }
 
     private void closeAffectedProjects() {
@@ -85,9 +85,9 @@ public final class DeleteProjectAction extends AbstractAction {
         final ProgressHandle progress = createProgress(cancel.getController());
 
         progress.start();
-        NbTaskExecutors.DEFAULT_EXECUTOR.execute(cancel.getToken(), this::doRemoveProject, (canceled, error) -> {
-            NbTaskExecutors.defaultCleanup(canceled, error);
-            progress.finish();
-        });
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(cancel.getToken(), this::doRemoveProject)
+                .whenComplete((result, error) -> {
+                    progress.finish();
+                }).exceptionally(AsyncTasks::expectNoError);
     }
 }

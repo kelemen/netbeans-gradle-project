@@ -6,13 +6,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.cancel.CancelableWaits;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationController;
-import org.jtrim.cancel.CancellationSource;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancelableWaits;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationController;
+import org.jtrim2.cancel.CancellationSource;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.concurrent.AsyncTasks;
+import org.jtrim2.executor.TaskExecutor;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 
@@ -72,9 +72,9 @@ public final class GradleDaemonManager {
             TaskExecutor executor,
             final DaemonTaskDefFactory taskDefFactory,
             final CommandCompleteListener listener) {
-        ExceptionHelper.checkNotNullArgument(executor, "executor");
-        ExceptionHelper.checkNotNullArgument(taskDefFactory, "taskDefFactory");
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
+        Objects.requireNonNull(executor, "executor");
+        Objects.requireNonNull(taskDefFactory, "taskDefFactory");
+        Objects.requireNonNull(listener, "listener");
 
         final CancellationSource cancel = Cancellation.createCancellationSource();
         final String origDisplayName = taskDefFactory.getDisplayName();
@@ -119,19 +119,17 @@ public final class GradleDaemonManager {
             else {
                 runBlockingGradleTask(cancelToken, task, progress.getCurrentHandle());
             }
-        }, (boolean canceled, Throwable error) -> {
-            try {
-                if (!canceled) {
-                    listener.onComplete(error);
-                }
-            } finally {
-                progress.finish();
-            }
-
-            if (canceled) {
+        }).handle((result, error) -> {
+            if (AsyncTasks.isCanceled(error)) {
                 LOGGER.log(Level.INFO, "Canceled task: {0}", origDisplayName);
             }
-        });
+            else {
+                listener.onComplete(error);
+            }
+            return null;
+        }).whenComplete((result, error) -> {
+            progress.finish();
+        }).exceptionally(AsyncTasks::expectNoError);
     }
 
     private static final class ReplaceableProgressHandle {
@@ -139,10 +137,8 @@ public final class GradleDaemonManager {
         private final CancellationController cancelController;
 
         public ReplaceableProgressHandle(CancellationController cancelController) {
-            ExceptionHelper.checkNotNullArgument(cancelController, "cancelController");
-
             this.handleRef = new AtomicReference<>(null);
-            this.cancelController = cancelController;
+            this.cancelController = Objects.requireNonNull(cancelController, "cancelController");
         }
 
         public void start(String displayName) {

@@ -4,8 +4,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class PluginClassImplementation {
@@ -29,12 +29,8 @@ public final class PluginClassImplementation {
     private PluginClassImplementation(
             ClassFinder type,
             InvocationHandler invocationHandler) {
-
-        ExceptionHelper.checkNotNullArgument(type, "type");
-        ExceptionHelper.checkNotNullArgument(invocationHandler, "invocationHandler");
-
-        this.type = type;
-        this.invocationHandler = invocationHandler;
+        this.type = Objects.requireNonNull(type, "type");
+        this.invocationHandler = Objects.requireNonNull(invocationHandler, "invocationHandler");
         this.instanceRef = new AtomicReference<>(null);
     }
 
@@ -91,8 +87,7 @@ public final class PluginClassImplementation {
         private final Object delegate;
 
         public SimpleDelegator(Object delegate) {
-            ExceptionHelper.checkNotNullArgument(delegate, "delegate");
-            this.delegate = delegate;
+            this.delegate = Objects.requireNonNull(delegate, "delegate");
         }
 
         @Override

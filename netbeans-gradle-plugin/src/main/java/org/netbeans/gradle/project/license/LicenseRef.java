@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.license;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 
 public final class LicenseRef {
     private final String id;
@@ -8,11 +8,8 @@ public final class LicenseRef {
     private final boolean dynamic;
 
     public LicenseRef(String id, String displayName, boolean dynamic) {
-        ExceptionHelper.checkNotNullArgument(id, "id");
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-
-        this.id = id;
-        this.displayName = displayName;
+        this.id = Objects.requireNonNull(id, "id");
+        this.displayName = Objects.requireNonNull(displayName, "displayName");
         this.dynamic = dynamic;
     }
 

@@ -1,10 +1,10 @@
 package org.netbeans.gradle.project.api.config.ui;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.swing.JComponent;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableFunction;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.executor.CancelableFunction;
 
 /**
  * Defines a profile based property editor page. Instances of these
@@ -49,13 +49,9 @@ public class ProfileBasedSettingsPage {
             @Nonnull JComponent settingsPanel,
             @Nonnull ProfileEditorFactory editorFactory,
             @Nonnull CancelableFunction<? extends Runnable> asyncPanelInitializer) {
-        ExceptionHelper.checkNotNullArgument(settingsPanel, "settingsPanel");
-        ExceptionHelper.checkNotNullArgument(editorFactory, "editorFactory");
-        ExceptionHelper.checkNotNullArgument(asyncPanelInitializer, "asyncPanelInitializer");
-
-        this.settingsPanel = settingsPanel;
-        this.editorFactory = editorFactory;
-        this.asyncPanelInitializer = asyncPanelInitializer;
+        this.settingsPanel = Objects.requireNonNull(settingsPanel, "settingsPanel");
+        this.editorFactory = Objects.requireNonNull(editorFactory, "editorFactory");
+        this.asyncPanelInitializer = Objects.requireNonNull(asyncPanelInitializer, "asyncPanelInitializer");
     }
 
     /**

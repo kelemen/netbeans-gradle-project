@@ -27,8 +27,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.CollectionsEx;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
@@ -292,8 +291,8 @@ final class ConfigXmlUtils {
     }
 
     private static String parseNode(Element root, Set<String> excludedNames, ConfigTree.Builder result) {
-        ExceptionHelper.checkNotNullArgument(root, "root");
-        ExceptionHelper.checkNotNullArgument(result, "result");
+        Objects.requireNonNull(root, "root");
+        Objects.requireNonNull(result, "result");
 
         boolean setValue = addAttributes(root, result);
 
@@ -437,9 +436,9 @@ final class ConfigXmlUtils {
     }
 
     public static void addTree(Element parent, ConfigTree tree, ConfigNodeProperty nodeProperties) {
-        ExceptionHelper.checkNotNullArgument(parent, "parent");
-        ExceptionHelper.checkNotNullArgument(tree, "tree");
-        ExceptionHelper.checkNotNullArgument(nodeProperties, "nodeProperties");
+        Objects.requireNonNull(parent, "parent");
+        Objects.requireNonNull(tree, "tree");
+        Objects.requireNonNull(nodeProperties, "nodeProperties");
 
         Document document = parent.getOwnerDocument();
         Objects.requireNonNull(document, "parent.getOwnerDocument()");
@@ -503,8 +502,8 @@ final class ConfigXmlUtils {
     }
 
     public static void savePrettyXmlDocument(Document document, Result result) throws IOException {
-        ExceptionHelper.checkNotNullArgument(document, "document");
-        ExceptionHelper.checkNotNullArgument(result, "result");
+        Objects.requireNonNull(document, "document");
+        Objects.requireNonNull(result, "result");
 
         Source source = new DOMSource(document);
 
@@ -536,7 +535,7 @@ final class ConfigXmlUtils {
     }
 
     public static void saveXmlTo(Document document, Path output, ConfigSaveOptions saveOptions) throws IOException {
-        ExceptionHelper.checkNotNullArgument(saveOptions, "saveOptions");
+        Objects.requireNonNull(saveOptions, "saveOptions");
 
         saveXmlTo(document, output, saveOptions.getPreferredLineSeparator());
     }
@@ -545,8 +544,8 @@ final class ConfigXmlUtils {
             Document document,
             Path output,
             String lineSeparator) throws IOException {
-        ExceptionHelper.checkNotNullArgument(document, "document");
-        ExceptionHelper.checkNotNullArgument(output, "output");
+        Objects.requireNonNull(document, "document");
+        Objects.requireNonNull(output, "output");
 
         if (lineSeparator == null) {
             Result result = new StreamResult(output.toFile());

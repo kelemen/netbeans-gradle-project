@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.api.config;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines a unique ID of a profile within a particular project. That is, this
@@ -50,10 +49,8 @@ public final class ProfileKey {
      *   cannot be {@code null}.
      */
     public ProfileKey(@Nullable String groupName, @Nonnull String fileName) {
-        ExceptionHelper.checkNotNullArgument(fileName, "fileName");
-
         this.groupName = groupName;
-        this.fileName = fileName;
+        this.fileName = Objects.requireNonNull(fileName, "fileName");
     }
 
     /**

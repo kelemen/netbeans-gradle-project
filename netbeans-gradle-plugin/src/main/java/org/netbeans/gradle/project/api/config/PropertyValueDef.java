@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.property.PropertySource;
+import org.jtrim2.property.PropertySource;
 
 /**
  * Defines a conversion (to and from) between property values and keys storable

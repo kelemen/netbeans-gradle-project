@@ -5,11 +5,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -50,9 +50,7 @@ public final class ProjectLookupHack extends ProxyLookup {
     private final LookupContainer lookupContainer;
 
     public ProjectLookupHack(LookupContainer lookupContainer) {
-        ExceptionHelper.checkNotNullArgument(lookupContainer, "lookupContainer");
-
-        this.lookupContainer = lookupContainer;
+        this.lookupContainer = Objects.requireNonNull(lookupContainer, "lookupContainer");
         this.activated = new AtomicBoolean(false);
 
         setLookups(new AccessPreventerLookup());

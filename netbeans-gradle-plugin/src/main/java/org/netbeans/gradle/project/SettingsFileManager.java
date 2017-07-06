@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project;
 
 import java.io.File;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
 
 final class SettingsFileManager {
@@ -11,11 +11,8 @@ final class SettingsFileManager {
     public SettingsFileManager(
             File projectDir,
             GlobalSettingsFileManager globalManager) {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-        ExceptionHelper.checkNotNullArgument(globalManager, "globalManager");
-
-        this.projectDir = projectDir;
-        this.globalManager = globalManager;
+        this.projectDir = Objects.requireNonNull(projectDir, "projectDir");
+        this.globalManager = Objects.requireNonNull(globalManager, "globalManager");
     }
 
     public SettingsGradleDef getPreferredSettingsGradleDef() {

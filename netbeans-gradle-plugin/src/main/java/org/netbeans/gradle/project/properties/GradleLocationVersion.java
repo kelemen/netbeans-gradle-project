@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.tasks.vars.StringResolver;
 
@@ -10,12 +10,11 @@ public final class GradleLocationVersion implements GradleLocation {
     private final String versionStr;
 
     public GradleLocationVersion(String versionStr) {
-        ExceptionHelper.checkNotNullArgument(versionStr, "versionStr");
-        this.versionStr = versionStr;
+        this.versionStr = Objects.requireNonNull(versionStr, "versionStr");
     }
 
-    public static GradleLocationRef getLocationRef(final String rawVersionStr) {
-        ExceptionHelper.checkNotNullArgument(rawVersionStr, "rawVersionStr");
+    public static GradleLocationRef getLocationRef(String rawVersionStr) {
+        Objects.requireNonNull(rawVersionStr, "rawVersionStr");
 
         return new GradleLocationRef() {
             @Override

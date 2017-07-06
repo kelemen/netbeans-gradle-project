@@ -4,9 +4,9 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import org.gradle.util.GradleVersion;
-import org.jtrim.utils.ExceptionHelper;
 import org.openide.modules.SpecificationVersion;
 
 /**
@@ -32,11 +32,8 @@ public final class GradleTarget implements Serializable {
     public GradleTarget(
             @Nonnull SpecificationVersion javaVersion,
             @Nonnull GradleVersion gradleVersion) {
-        ExceptionHelper.checkNotNullArgument(javaVersion, "javaVersion");
-        ExceptionHelper.checkNotNullArgument(gradleVersion, "gradleVersion");
-
-        this.jdkVersion = javaVersion;
-        this.gradleVersion = gradleVersion;
+        this.jdkVersion = Objects.requireNonNull(javaVersion, "javaVersion");
+        this.gradleVersion = Objects.requireNonNull(gradleVersion, "gradleVersion");
     }
 
     /**

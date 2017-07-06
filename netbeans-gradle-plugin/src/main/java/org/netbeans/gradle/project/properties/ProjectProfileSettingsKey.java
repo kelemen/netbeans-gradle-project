@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.properties.global.GlobalProfileSettingsKey;
@@ -25,7 +24,7 @@ public final class ProjectProfileSettingsKey implements ProfileSettingsKey {
     }
 
     public static ProfileSettingsKey getForProject(@Nonnull Path projectDir, @Nullable ProfileKey key) {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+        Objects.requireNonNull(projectDir, "projectDir");
 
         if (ProfileKey.GLOBAL_PROFILE.equals(key)) {
             return GlobalProfileSettingsKey.GLOBAL_DEFAULTS_KEY;

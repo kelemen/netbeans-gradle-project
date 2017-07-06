@@ -9,10 +9,11 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 
 public final class ReaderInputStream extends InputStream {
     private final Reader reader;
@@ -28,10 +29,9 @@ public final class ReaderInputStream extends InputStream {
     }
 
     public ReaderInputStream(Reader reader, Charset encoding) {
-        ExceptionHelper.checkNotNullArgument(reader, "reader");
-        ExceptionHelper.checkNotNullArgument(encoding, "encoding");
+        Objects.requireNonNull(encoding, "encoding");
 
-        this.reader = reader;
+        this.reader = Objects.requireNonNull(reader, "reader");
         this.encoderLock = new ReentrantLock();
         this.encoder = encoding.newEncoder();
         this.remainingChars = null;
@@ -212,7 +212,7 @@ public final class ReaderInputStream extends InputStream {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        ExceptionHelper.checkNotNullArgument(b, "b");
+        Objects.requireNonNull(b, "b");
         ExceptionHelper.checkArgumentInRange(off, 0, b.length, "off");
         ExceptionHelper.checkArgumentInRange(len, 0, b.length - off, "len");
         // Note that while this method is implemented to be thread-safe

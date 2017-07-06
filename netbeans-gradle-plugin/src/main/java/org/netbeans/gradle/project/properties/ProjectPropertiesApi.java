@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.nio.charset.Charset;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
@@ -11,7 +11,7 @@ import org.netbeans.gradle.project.api.property.GradleProperty;
 
 public final class ProjectPropertiesApi {
     public static GradleProperty.SourceEncoding sourceEncoding(final PropertySource<Charset> property) {
-        ExceptionHelper.checkNotNullArgument(property, "property");
+        Objects.requireNonNull(property, "property");
         return new GradleProperty.SourceEncoding() {
             @Override
             public Charset getValue() {
@@ -26,7 +26,7 @@ public final class ProjectPropertiesApi {
     }
 
     public static GradleProperty.ScriptPlatform scriptPlatform(final PropertySource<ScriptPlatform> property) {
-        ExceptionHelper.checkNotNullArgument(property, "property");
+        Objects.requireNonNull(property, "property");
         return new GradleProperty.ScriptPlatform() {
             @Override
             public JavaPlatform getValue() {
@@ -42,7 +42,7 @@ public final class ProjectPropertiesApi {
     }
 
     public static GradleProperty.SourceLevel sourceLevel(final PropertySource<String> property) {
-        ExceptionHelper.checkNotNullArgument(property, "property");
+        Objects.requireNonNull(property, "property");
         return new GradleProperty.SourceLevel() {
             @Override
             public String getValue() {
@@ -57,7 +57,7 @@ public final class ProjectPropertiesApi {
     }
 
     public static GradleProperty.BuildPlatform buildPlatform(final PropertySource<ProjectPlatform> property) {
-        ExceptionHelper.checkNotNullArgument(property, "property");
+        Objects.requireNonNull(property, "property");
         return new GradleProperty.BuildPlatform() {
             @Override
             public ProjectPlatform getValue() {

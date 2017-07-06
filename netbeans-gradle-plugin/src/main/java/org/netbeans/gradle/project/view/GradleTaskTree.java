@@ -6,10 +6,10 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.MultiMapUtils;
@@ -24,10 +24,8 @@ public final class GradleTaskTree {
     private final List<GradleTaskTree> children;
 
     public GradleTaskTree(GradleTaskID taskID) {
-        ExceptionHelper.checkNotNullArgument(taskID, "taskID");
-
+        this.taskID = Objects.requireNonNull(taskID, "taskID");
         this.caption = taskID.getName();
-        this.taskID = taskID;
         this.children = Collections.emptyList();
     }
 
@@ -39,9 +37,7 @@ public final class GradleTaskTree {
             String caption,
             GradleTaskID taskID,
             List<GradleTaskTree> children) {
-        ExceptionHelper.checkNotNullArgument(caption, "caption");
-
-        this.caption = caption;
+        this.caption = Objects.requireNonNull(caption, "caption");
         this.taskID = taskID;
         this.children = CollectionUtils.copyNullSafeList(children);
     }

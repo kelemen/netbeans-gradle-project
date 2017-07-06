@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -22,8 +21,7 @@ public final class PredefinedTask {
         private final boolean mustExist;
 
         public Name(String name, boolean mustExist) {
-            ExceptionHelper.checkNotNullArgument(name, "name");
-            this.name = name;
+            this.name = Objects.requireNonNull(name, "name");
             this.mustExist = mustExist;
         }
 
@@ -72,9 +70,7 @@ public final class PredefinedTask {
             List<String> arguments,
             List<String> jvmArguments,
             boolean nonBlocking) {
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-
-        this.displayName = displayName;
+        this.displayName = Objects.requireNonNull(displayName, "displayName");
         this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
         this.arguments = CollectionUtils.copyNullSafeList(arguments);
         this.jvmArguments = CollectionUtils.copyNullSafeList(jvmArguments);

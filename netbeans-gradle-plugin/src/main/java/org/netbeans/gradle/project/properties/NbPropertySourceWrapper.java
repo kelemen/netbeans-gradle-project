@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.property.NbPropertySource;
@@ -12,8 +12,7 @@ implements
     private final PropertySource<ValueType> source;
 
     public NbPropertySourceWrapper(PropertySource<ValueType> source) {
-        ExceptionHelper.checkNotNullArgument(source, "source");
-        this.source = source;
+        this.source = Objects.requireNonNull(source, "source");
     }
 
     @Override

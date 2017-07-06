@@ -4,14 +4,14 @@ package org.netbeans.gradle.project;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.property.PropertySource;
-import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
@@ -36,14 +36,11 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
     private final Runnable modelUpdateDispatcher;
 
     public ProjectModelManager(final NbGradleProject project, final NbGradleModel initialModel) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(initialModel, "initialModel");
-
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
         this.modelChangeListeners = GenericChangeListenerManager.getSwingNotifier();
-        this.currentModelRef = new AtomicReference<>(initialModel);
+        this.currentModelRef = new AtomicReference<>(Objects.requireNonNull(initialModel, "initialModel"));
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
-        this.modelUpdater = new SwingUpdateTaskExecutor(true);
+        this.modelUpdater = SwingExecutors.getSwingUpdateExecutor(true);
         this.modelUpdateDispatcher = this::onModelChange;
         this.loadErrorRef = new LazyValue<>(() -> project.getProjectIssueManager().createIssueRef());
     }

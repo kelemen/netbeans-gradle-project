@@ -5,11 +5,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.event.ChangeListener;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingPropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingPropertySource;
 import org.junit.Test;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -47,15 +46,8 @@ public class AnnotationChildNodesTest extends SwingTestAware {
         return new AnnotationChildNodes(project, () -> lookup);
     }
 
-    private static NodeList<?> testNodeList(PropertySource<? extends TestNodeListSnapshot> nodeList) {
-        return new TestNodeList(nodeList);
-    }
-
     private static NodeFactory testNodeFactory(final PropertySource<? extends TestNodeListSnapshot> nodeList) {
-        return (Project project) -> {
-            ExceptionHelper.checkNotNullArgument(project, "project");
-            return testNodeList(nodeList);
-        };
+        return project -> new TestNodeList(nodeList);
     }
 
     @Test

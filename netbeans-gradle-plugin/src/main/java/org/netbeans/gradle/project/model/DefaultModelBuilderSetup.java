@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.api.progress.ProgressHandle;
@@ -90,7 +90,8 @@ public final class DefaultModelBuilderSetup implements OperationInitializer {
     }
 
     private static JavaPlatform tryGetScriptJavaPlatform(Project project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+        Objects.requireNonNull(project, "project");
+
         NbGradleProject gradleProject = NbGradleProjectFactory.tryGetGradleProject(project);
         ScriptPlatform result = gradleProject != null ? gradleProject.getCommonProperties().scriptPlatform().getActiveValue() : null;
         return result != null ? result.getJavaPlatform() : null;

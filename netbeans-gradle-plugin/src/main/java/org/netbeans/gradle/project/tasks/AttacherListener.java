@@ -9,13 +9,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationController;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationController;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -43,11 +41,8 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     private final CancellationController buildCancel;
 
     public AttacherListener(JavaExtension javaExt, CancellationController buildCancel) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        ExceptionHelper.checkNotNullArgument(buildCancel, "buildCancel");
-
-        this.javaExt = javaExt;
-        this.buildCancel = buildCancel;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
+        this.buildCancel = Objects.requireNonNull(buildCancel, "buildCancel");
     }
 
     private static void addSourcesOfModule(NbJavaModule module, Set<FileObject> result) {
@@ -138,13 +133,13 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     }
 
     @Override
-    public void onDebugeeListening(final int port) {
-        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+    public void onDebugeeListening(int port) {
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(() -> {
             try {
                 doAttach(port);
             } catch (DebuggerStartException ex) {
                 LOGGER.log(Level.INFO, "Failed to attach to debugee.", ex);
             }
-        }, null);
+        });
     }
 }

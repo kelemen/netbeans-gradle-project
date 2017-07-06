@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

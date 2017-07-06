@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.jtrim.property.PropertySource;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.Problem;

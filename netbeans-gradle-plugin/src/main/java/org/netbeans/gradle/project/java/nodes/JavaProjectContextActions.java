@@ -6,11 +6,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.java.JavaTestTask;
@@ -33,9 +33,7 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
     private final JavaExtension javaExt;
 
     public JavaProjectContextActions(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
     }
 
     private static Action createProjectAction(String command, String label) {

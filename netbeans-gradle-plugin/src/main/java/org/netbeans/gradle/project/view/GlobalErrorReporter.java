@@ -1,10 +1,10 @@
 package org.netbeans.gradle.project.view;
 
+import java.util.Objects;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.openide.awt.NotificationDisplayer;
@@ -13,7 +13,7 @@ public final class GlobalErrorReporter {
     private static final Icon ERROR_ICON = NbIcons.getPriorityHighIcon();
 
     public static void showIssue(final String message, final Icon icon) {
-        ExceptionHelper.checkNotNullArgument(message, "message");
+        Objects.requireNonNull(message, "message");
 
         SwingUtilities.invokeLater(() -> {
             NotificationDisplayer displayer = NotificationDisplayer.getDefault();

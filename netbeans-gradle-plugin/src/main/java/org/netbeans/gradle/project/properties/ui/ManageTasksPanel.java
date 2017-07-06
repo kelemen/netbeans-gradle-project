@@ -6,9 +6,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.DefaultListModel;
 import javax.swing.ListModel;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
@@ -142,8 +142,7 @@ public class ManageTasksPanel extends javax.swing.JPanel implements ProfileEdito
         private final PredefinedTask task;
 
         public PredefinedTaskItem(PredefinedTask task) {
-            ExceptionHelper.checkNotNullArgument(task, "task");
-            this.task = task;
+            this.task = Objects.requireNonNull(task, "task");
         }
 
         public boolean isMustExist() {

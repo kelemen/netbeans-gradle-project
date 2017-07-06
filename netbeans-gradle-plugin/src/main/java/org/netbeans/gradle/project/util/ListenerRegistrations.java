@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.jtrim.event.ListenerRef;
+import org.jtrim2.event.ListenerRef;
 
 public final class ListenerRegistrations {
     private final List<ListenerRef> listenerRefs;

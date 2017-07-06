@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.collections.Equality;
-import org.jtrim.collections.EqualityComparator;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.CollectionsEx;
+import org.jtrim2.collections.Equality;
+import org.jtrim2.collections.EqualityComparator;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.standard.CommonProperties;
 
 /**
@@ -102,9 +103,7 @@ public final class PropertyDef<ValueKey, ValueType> {
          *   elements.
          */
         public Builder(@Nonnull Collection<ConfigPath> configPaths) {
-            this.configPaths = CollectionsEx.readOnlyCopy(configPaths);
-            ExceptionHelper.checkNotNullElements(this.configPaths, "configPaths");
-
+            this.configPaths = ExceptionHelper.checkNotNullElements(CollectionsEx.readOnlyCopy(configPaths), "configPaths");
             this.keyEncodingDef = NoOpKeyEncodingDef.getInstance();
             this.valueDef = NoOpValueDef.getInstance();
             this.valueMerger = CommonProperties.getParentIfNullValueMerger();
@@ -125,8 +124,7 @@ public final class PropertyDef<ValueKey, ValueType> {
          *   cannot be {@code null}.
          */
         public void setKeyEncodingDef(@Nonnull PropertyKeyEncodingDef<ValueKey> keyEncodingDef) {
-            ExceptionHelper.checkNotNullArgument(keyEncodingDef, "keyEncodingDef");
-            this.keyEncodingDef = keyEncodingDef;
+            this.keyEncodingDef = Objects.requireNonNull(keyEncodingDef, "keyEncodingDef");
         }
 
         /**
@@ -141,8 +139,7 @@ public final class PropertyDef<ValueKey, ValueType> {
          *   cannot be {@code null}.
          */
         public void setValueDef(@Nonnull PropertyValueDef<ValueKey, ValueType> valueDef) {
-            ExceptionHelper.checkNotNullArgument(valueDef, "valueDef");
-            this.valueDef = valueDef;
+            this.valueDef = Objects.requireNonNull(valueDef, "valueDef");
         }
 
         /**
@@ -158,8 +155,7 @@ public final class PropertyDef<ValueKey, ValueType> {
          *   This argument cannot be {@code null}.
          */
         public void setValueMerger(@Nonnull ValueMerger<ValueType> valueMerger) {
-            ExceptionHelper.checkNotNullArgument(valueMerger, "valueMerger");
-            this.valueMerger = valueMerger;
+            this.valueMerger = Objects.requireNonNull(valueMerger, "valueMerger");
         }
 
         /**
@@ -174,8 +170,7 @@ public final class PropertyDef<ValueKey, ValueType> {
          *   be {@code null}.
          */
         public void setValueKeyEquality(@Nonnull EqualityComparator<? super ValueKey> valueKeyEquality) {
-            ExceptionHelper.checkNotNullArgument(valueKeyEquality, "valueKeyEquality");
-            this.valueKeyEquality = valueKeyEquality;
+            this.valueKeyEquality = Objects.requireNonNull(valueKeyEquality, "valueKeyEquality");
         }
 
         /**

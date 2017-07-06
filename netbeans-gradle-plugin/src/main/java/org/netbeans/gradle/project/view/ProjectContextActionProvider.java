@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
@@ -15,10 +16,9 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.AutoDisplayState;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.AutoDisplayState;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -50,9 +50,7 @@ public final class ProjectContextActionProvider implements ContextActionProvider
     private final NbGradleProject project;
 
     public ProjectContextActionProvider(NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
     }
 
     @Override
@@ -233,11 +231,8 @@ public final class ProjectContextActionProvider implements ContextActionProvider
         private NbGradleModel lastUsedModule;
 
         public CustomTasksMenuBuilder(NbGradleProject project, JMenu menu) {
-            ExceptionHelper.checkNotNullArgument(project, "project");
-            ExceptionHelper.checkNotNullArgument(menu, "menu");
-
-            this.project = project;
-            this.menu = menu;
+            this.project = Objects.requireNonNull(project, "project");
+            this.menu = Objects.requireNonNull(menu, "menu");
             this.lastUsedTasks = null;
             this.lastUsedModule = null;
         }
@@ -450,11 +445,8 @@ public final class ProjectContextActionProvider implements ContextActionProvider
         private NbGradleModel lastUsedModel;
 
         public TasksMenuBuilder(NbGradleProject project, JMenu menu) {
-            ExceptionHelper.checkNotNullArgument(project, "project");
-            ExceptionHelper.checkNotNullArgument(menu, "menu");
-
-            this.project = project;
-            this.menu = menu;
+            this.project = Objects.requireNonNull(project, "project");
+            this.menu = Objects.requireNonNull(menu, "menu");
             this.lastUsedModel = null;
         }
 

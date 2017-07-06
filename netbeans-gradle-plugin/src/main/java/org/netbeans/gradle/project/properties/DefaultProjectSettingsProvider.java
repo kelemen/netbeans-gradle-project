@@ -3,8 +3,8 @@ package org.netbeans.gradle.project.properties;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.cancel.CancellationToken;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileDef;
@@ -18,11 +18,8 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
     public DefaultProjectSettingsProvider(
             NbGradleSingleProjectConfigProvider configProvider,
             ProjectProfileLoader profileLoader) {
-        ExceptionHelper.checkNotNullArgument(configProvider, "configProvider");
-        ExceptionHelper.checkNotNullArgument(profileLoader, "profileLoader");
-
-        this.configProvider = configProvider;
-        this.profileLoader = profileLoader;
+        this.configProvider = Objects.requireNonNull(configProvider, "configProvider");
+        this.profileLoader = Objects.requireNonNull(profileLoader, "profileLoader");
     }
 
     @Override
@@ -36,8 +33,8 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
     }
 
     @Override
-    public ExtensionSettings getExtensionSettings(final String extensionName) {
-        ExceptionHelper.checkNotNullArgument(extensionName, "extensionName");
+    public ExtensionSettings getExtensionSettings(String extensionName) {
+        Objects.requireNonNull(extensionName, "extensionName");
 
         if (extensionName.isEmpty()) {
             return new RootExtensionSettings(configProvider, profileLoader);
@@ -97,7 +94,7 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
 
         @Override
         public ActiveSettingsQuery loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile) {
-            ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
+            Objects.requireNonNull(cancelToken, "cancelToken");
 
             ActiveSettingsQueryEx rootSettings = profileLoader.loadActiveSettingsForProfile(profile);
             return new ExtensionActiveSettingsQuery(rootSettings, extensionName);
@@ -105,8 +102,8 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
 
         @Override
         public void loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile, final ActiveSettingsQueryListener settingsQueryListener) {
-            ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
-            ExceptionHelper.checkNotNullArgument(settingsQueryListener, "settingsQueryListener");
+            Objects.requireNonNull(cancelToken, "cancelToken");
+            Objects.requireNonNull(settingsQueryListener, "settingsQueryListener");
 
             profileLoader.loadActiveSettingsForProfile(profile, (ActiveSettingsQuery settings) -> {
                 settingsQueryListener.onLoad(new ExtensionActiveSettingsQuery(settings, extensionName));

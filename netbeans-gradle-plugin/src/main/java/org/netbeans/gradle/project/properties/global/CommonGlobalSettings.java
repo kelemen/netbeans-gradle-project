@@ -4,8 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.property.PropertyFactory;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
@@ -58,8 +58,7 @@ public final class CommonGlobalSettings {
     private final PropertyReference<Integer> gradleDaemonTimeoutSec;
 
     public CommonGlobalSettings(ActiveSettingsQuery activeSettingsQuery) {
-        ExceptionHelper.checkNotNullArgument(activeSettingsQuery, "activeSettingsQuery");
-        this.activeSettingsQuery = activeSettingsQuery;
+        this.activeSettingsQuery = Objects.requireNonNull(activeSettingsQuery, "activeSettingsQuery");
 
         this.platformPreferenceOrder = platformPreferenceOrder(activeSettingsQuery);
         this.defaultJdk = defaultJdk(activeSettingsQuery, this.platformPreferenceOrder);
@@ -334,7 +333,7 @@ public final class CommonGlobalSettings {
         private static volatile CommonGlobalSettings DEFAULT = DEFAULT_STORED;
 
         public static void withCleanMemorySettings(NbConsumer<? super GenericProfileSettings> task) {
-            ExceptionHelper.checkNotNullArgument(task, "task");
+            Objects.requireNonNull(task, "task");
             try {
                 GenericProfileSettings settings = GenericProfileSettings.createTestMemorySettings();
                 DEFAULT = new CommonGlobalSettings(new MultiProfileProperties(Collections.<SingleProfileSettingsEx>singletonList(settings)));

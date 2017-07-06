@@ -7,13 +7,13 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.MonitorableTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.TaskExecutors;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.concurrent.AsyncTasks;
+import org.jtrim2.executor.MonitorableTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.TaskExecutors;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.NbBiFunction;
@@ -38,17 +38,12 @@ public final class LicenseManager<T> {
     public PropertySource<CloseableAction> getRegisterListenerAction(
             PropertySource<? extends T> modelProperty,
             PropertySource<? extends LicenseHeaderInfo> headerProperty) {
-        ExceptionHelper.checkNotNullArgument(modelProperty, "modelProperty");
-        ExceptionHelper.checkNotNullArgument(headerProperty, "headerProperty");
-
-        return NbProperties.combine(headerProperty, modelProperty, (LicenseHeaderInfo headerInfo, T model) -> {
-            return getRegisterListenerAction(model, headerInfo);
-        });
+        return NbProperties.combine(headerProperty, modelProperty, this::getRegisterListenerAction);
     }
 
     private CloseableAction getRegisterListenerAction(
-            T ownerModel,
-            LicenseHeaderInfo header) {
+            LicenseHeaderInfo header,
+            T ownerModel) {
         Objects.requireNonNull(ownerModel, "ownerModel");
         return () -> impl.registerLicense(ownerModel, header);
     }
@@ -67,20 +62,16 @@ public final class LicenseManager<T> {
                 LicenseStore<LD> licenseStore,
                 NbBiFunction<? super T, ? super LicenseHeaderInfo, ? extends LK> licenseKeyFactory,
                 NbBiFunction<? super T, ? super LK, ? extends LD> licenseDefFactory) {
-            ExceptionHelper.checkNotNullArgument(licenseStore, "licenseStore");
-            ExceptionHelper.checkNotNullArgument(licenseKeyFactory, "licenseKeyFactory");
-            ExceptionHelper.checkNotNullArgument(licenseDefFactory, "licenseDefFactory");
-
             this.syncExecutor = TaskExecutors.inOrderExecutor(executor);
-            this.licenseStore = licenseStore;
-            this.licenseKeyFactory = licenseKeyFactory;
-            this.licenseDefFactory = licenseDefFactory;
+            this.licenseStore = Objects.requireNonNull(licenseStore, "licenseStore");
+            this.licenseKeyFactory = Objects.requireNonNull(licenseKeyFactory, "licenseKeyFactory");
+            this.licenseDefFactory = Objects.requireNonNull(licenseDefFactory, "licenseDefFactory");
             this.licenseRegistartions = new HashMap<>();
         }
 
         public String tryGetRegisteredLicenseName(T ownerModel, LicenseHeaderInfo headerInfo) {
-            ExceptionHelper.checkNotNullArgument(ownerModel, "ownerModel");
-            ExceptionHelper.checkNotNullArgument(headerInfo, "headerInfo");
+            Objects.requireNonNull(ownerModel, "ownerModel");
+            Objects.requireNonNull(headerInfo, "headerInfo");
 
             LK key = tryGetLicenseKey(ownerModel, headerInfo);
             RegisteredLicense<LD> registration = key != null
@@ -118,7 +109,7 @@ public final class LicenseManager<T> {
                     licenseRegistartions.remove(key);
                     removeLicense(registration);
                 }
-            }, null);
+            }).exceptionally(AsyncTasks::expectNoError);
         }
 
         private void doRegister(final T ownerModel, final LK key) {
@@ -132,11 +123,11 @@ public final class LicenseManager<T> {
                 else {
                     registration.use();
                 }
-            }, null);
+            }).exceptionally(AsyncTasks::expectNoError);
         }
 
         public CloseableAction.Ref registerLicense(T ownerModel, LicenseHeaderInfo header) {
-            ExceptionHelper.checkNotNullArgument(ownerModel, "ownerModel");
+            Objects.requireNonNull(ownerModel, "ownerModel");
 
             if (header == null) {
                 return CloseableAction.CLOSED_REF;

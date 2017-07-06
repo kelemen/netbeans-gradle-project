@@ -1,8 +1,9 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.util.List;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.collections.CollectionsEx;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -12,9 +13,7 @@ public final class JavaProjectDependencyDef {
     private final List<JavaSourceSet> sourceSets;
 
     public JavaProjectDependencyDef(JavaExtension javaExt, List<JavaSourceSet> sourceSets) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
         this.sourceSets = CollectionsEx.readOnlyCopy(sourceSets);
 
         ExceptionHelper.checkNotNullElements(this.sourceSets, "sourceSets");

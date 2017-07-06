@@ -1,10 +1,10 @@
 package org.netbeans.gradle.project.util;
 
 import javax.swing.event.ChangeListener;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
+import org.jtrim2.executor.GenericUpdateTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.openide.util.ChangeSupport;
 
 public final class LazyChangeSupport {
@@ -19,7 +19,7 @@ public final class LazyChangeSupport {
     }
 
     public static LazyChangeSupport createSwing(Source source) {
-        return create(source, SwingTaskExecutor.getStrictExecutor(true));
+        return create(source, SwingExecutors.getStrictExecutor(true));
     }
 
     public static LazyChangeSupport create(Source source, TaskExecutor eventExecutor) {

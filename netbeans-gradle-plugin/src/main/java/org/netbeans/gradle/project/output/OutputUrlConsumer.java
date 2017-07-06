@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.output;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.awt.HtmlBrowser;
 import org.openide.windows.OutputEvent;
@@ -50,13 +50,13 @@ public final class OutputUrlConsumer implements OutputLinkFinder {
         return null;
     }
 
-    public static Runnable getUrlOpenTask(final URL url) {
-        ExceptionHelper.checkNotNullArgument(url, "url");
+    public static Runnable getUrlOpenTask(URL url) {
+        Objects.requireNonNull(url, "url");
         return () -> HtmlBrowser.URLDisplayer.getDefault().showURLExternal(url);
     }
 
-    public static OutputListener getUrlListener(final URL url) {
-        ExceptionHelper.checkNotNullArgument(url, "url");
+    public static OutputListener getUrlListener(URL url) {
+        Objects.requireNonNull(url, "url");
 
         return new OutputListener() {
             @Override

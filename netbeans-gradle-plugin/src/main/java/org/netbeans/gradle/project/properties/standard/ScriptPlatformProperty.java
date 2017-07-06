@@ -1,9 +1,9 @@
 package org.netbeans.gradle.project.properties.standard;
 
 import java.util.Arrays;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
@@ -66,7 +66,7 @@ public final class ScriptPlatformProperty {
 
     private static PropertyValueDef<PlatformSelector, ScriptPlatform> getPlatformIdValueDef(
             final PropertySource<? extends PlatformOrder> orderRef) {
-        ExceptionHelper.checkNotNullArgument(orderRef, "orderRef");
+        Objects.requireNonNull(orderRef, "orderRef");
 
         return new PropertyValueDef<PlatformSelector, ScriptPlatform>() {
             @Override

@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.api.config.ui;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 
 /**
@@ -25,10 +25,8 @@ public final class ProfileInfo {
      *   format displayable to a user. This argument cannot be {@code null}.
      */
     public ProfileInfo(@Nullable ProfileKey profileKey, @Nonnull String displayName) {
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-
         this.profileKey = profileKey;
-        this.displayName = displayName;
+        this.displayName = Objects.requireNonNull(displayName, "displayName");
     }
 
     /**

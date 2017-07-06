@@ -2,9 +2,9 @@ package org.netbeans.gradle.project.others;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.openide.util.Lookup;
 
@@ -14,8 +14,7 @@ public final class ProjectLookupObject {
     private final PluginClass pluginClass;
 
     public ProjectLookupObject(PluginClass pluginClass) {
-        ExceptionHelper.checkNotNullArgument(pluginClass, "pluginClass");
-        this.pluginClass = pluginClass;
+        this.pluginClass = Objects.requireNonNull(pluginClass, "pluginClass");
     }
 
     private static Map<Class<?>, Object> createArgs(Project project) {

@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.tasks;
 
-import org.jtrim.cancel.CancellationToken;
+import org.jtrim2.cancel.CancellationToken;
 
 public interface DaemonTaskDefFactory {
     public String getDisplayName();

@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -89,10 +90,8 @@ public final class GradleTaskDef {
         }
 
         public Builder(TaskOutputDef outputDef, List<String> taskNames) {
-            ExceptionHelper.checkNotNullArgument(outputDef, "outputDef");
-
             this.commandName = "";
-            this.outputDef = outputDef;
+            this.outputDef = Objects.requireNonNull(outputDef, "outputDef");
             this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
             this.arguments = Collections.emptyList();
             this.jvmArguments = Collections.emptyList();
@@ -118,8 +117,7 @@ public final class GradleTaskDef {
         }
 
         public void setCommandServiceFactory(GradleCommandServiceFactory commandServiceFactory) {
-            ExceptionHelper.checkNotNullArgument(commandServiceFactory, "commandServiceFactory");
-            this.commandServiceFactory = commandServiceFactory;
+            this.commandServiceFactory = Objects.requireNonNull(commandServiceFactory, "commandServiceFactory");
         }
 
         public CancellationToken getCancelToken() {
@@ -127,16 +125,15 @@ public final class GradleTaskDef {
         }
 
         public void setCancelToken(CancellationToken cancelToken) {
-            ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
-            this.cancelToken = cancelToken;
+            this.cancelToken = Objects.requireNonNull(cancelToken, "cancelToken");
         }
 
         public TaskVariableMap getNonUserTaskVariables() {
             return nonUserTaskVariables;
         }
 
-        public void addNonUserTaskVariables(final TaskVariableMap nonUserTaskVariables) {
-            ExceptionHelper.checkNotNullArgument(nonUserTaskVariables, "nonUserTaskVariables");
+        public void addNonUserTaskVariables(TaskVariableMap nonUserTaskVariables) {
+            Objects.requireNonNull(nonUserTaskVariables, "nonUserTaskVariables");
 
             final TaskVariableMap currentTaskVariables = this.nonUserTaskVariables;
             if (currentTaskVariables == EmptyTaskVarMap.INSTANCE) {
@@ -153,13 +150,11 @@ public final class GradleTaskDef {
         }
 
         public void setCommandExceptionHider(CommandExceptionHider commandExceptionHider) {
-            ExceptionHelper.checkNotNullArgument(commandExceptionHider, "commandExceptionHider");
-            this.commandExceptionHider = commandExceptionHider;
+            this.commandExceptionHider = Objects.requireNonNull(commandExceptionHider, "commandExceptionHider");
         }
 
         public void setNonUserTaskVariables(TaskVariableMap nonUserTaskVariables) {
-            ExceptionHelper.checkNotNullArgument(nonUserTaskVariables, "nonUserTaskVariables");
-            this.nonUserTaskVariables = nonUserTaskVariables;
+            this.nonUserTaskVariables = Objects.requireNonNull(nonUserTaskVariables, "nonUserTaskVariables");
         }
 
         public boolean isCleanOutput() {
@@ -175,8 +170,7 @@ public final class GradleTaskDef {
         }
 
         public void setCommandName(String commandName) {
-            ExceptionHelper.checkNotNullArgument(commandName, "commandName");
-            this.commandName = commandName;
+            this.commandName = Objects.requireNonNull(commandName, "commandName");
         }
 
         public TaskOutputDef getOutputDef() {
@@ -184,8 +178,7 @@ public final class GradleTaskDef {
         }
 
         public void setOutputDef(TaskOutputDef outputDef) {
-            ExceptionHelper.checkNotNullArgument(outputDef, "outputDef");
-            this.outputDef = outputDef;
+            this.outputDef = Objects.requireNonNull(outputDef, "outputDef");
         }
 
         public boolean isNonBlocking() {
@@ -248,8 +241,7 @@ public final class GradleTaskDef {
         }
 
         public void setStdOutListener(SingleExecutionOutputProcessor stdOutListener) {
-            ExceptionHelper.checkNotNullArgument(stdOutListener, "stdOutListener");
-            this.stdOutListener = stdOutListener;
+            this.stdOutListener = Objects.requireNonNull(stdOutListener, "stdOutListener");
         }
 
         public SingleExecutionOutputProcessor getStdErrListener() {
@@ -257,8 +249,7 @@ public final class GradleTaskDef {
         }
 
         public void setStdErrListener(SingleExecutionOutputProcessor stdErrListener) {
-            ExceptionHelper.checkNotNullArgument(stdErrListener, "stdErrListener");
-            this.stdErrListener = stdErrListener;
+            this.stdErrListener = Objects.requireNonNull(stdErrListener, "stdErrListener");
         }
 
         public ContextAwareCommandFinalizer getSuccessfulCommandFinalizer() {
@@ -266,8 +257,7 @@ public final class GradleTaskDef {
         }
 
         public void setSuccessfulCommandFinalizer(ContextAwareCommandFinalizer successfulCommandFinalizer) {
-            ExceptionHelper.checkNotNullArgument(successfulCommandFinalizer, "successfulCommandFinalizer");
-            this.successfulCommandFinalizer = successfulCommandFinalizer;
+            this.successfulCommandFinalizer = Objects.requireNonNull(successfulCommandFinalizer, "successfulCommandFinalizer");
         }
 
         public ContextAwareCommandCompleteListener getCommandFinalizer() {
@@ -275,8 +265,7 @@ public final class GradleTaskDef {
         }
 
         public void setCommandFinalizer(ContextAwareCommandCompleteListener commandFinalizer) {
-            ExceptionHelper.checkNotNullArgument(commandFinalizer, "commandFinalizer");
-            this.commandFinalizer = commandFinalizer;
+            this.commandFinalizer = Objects.requireNonNull(commandFinalizer, "commandFinalizer");
         }
 
         public GradleTargetVerifier getGradleTargetVerifier() {
@@ -444,9 +433,9 @@ public final class GradleTaskDef {
             TaskOutputDef outputDef,
             GradleCommandTemplate command,
             StringResolver strResolver) {
-        ExceptionHelper.checkNotNullArgument(outputDef, "outputDef");
-        ExceptionHelper.checkNotNullArgument(command, "command");
-        ExceptionHelper.checkNotNullArgument(strResolver, "strResolver");
+        Objects.requireNonNull(outputDef, "outputDef");
+        Objects.requireNonNull(command, "command");
+        Objects.requireNonNull(strResolver, "strResolver");
 
         GradleTaskDef.Builder builder = new Builder(outputDef, processList(command.getTasks(), strResolver));
         builder.setCommandName(command.getDisplayName());

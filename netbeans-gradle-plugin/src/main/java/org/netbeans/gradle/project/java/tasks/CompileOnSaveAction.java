@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.java.tasks;
 
+import java.util.Objects;
 import javax.swing.text.Document;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
@@ -19,9 +19,7 @@ public final class CompileOnSaveAction implements OnSaveTask {
     private final FileObject srcFile;
 
     public CompileOnSaveAction(FileObject srcFile) {
-        ExceptionHelper.checkNotNullArgument(srcFile, "srcFile");
-
-        this.srcFile = srcFile;
+        this.srcFile = Objects.requireNonNull(srcFile, "srcFile");
     }
 
     @Override

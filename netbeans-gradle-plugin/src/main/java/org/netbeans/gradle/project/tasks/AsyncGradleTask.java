@@ -31,12 +31,12 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultCancellationTokenSource;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationSource;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationSource;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.util.TemporaryFileManager;
@@ -109,13 +109,9 @@ public final class AsyncGradleTask implements Runnable {
             GradleCommandSpecFactory taskDefFactroy,
             Set<GradleActionProviderContext> actionContexts,
             CommandCompleteListener listener) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(taskDefFactroy, "taskDefFactroy");
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        this.project = project;
-        this.taskDefFactroy = taskDefFactroy;
-        this.listener = listener;
+        this.project = Objects.requireNonNull(project, "project");
+        this.taskDefFactroy = Objects.requireNonNull(taskDefFactroy, "taskDefFactroy");
+        this.listener = Objects.requireNonNull(listener, "listener");
         this.actionContexts = copyEnumSet(actionContexts);
 
         ExceptionHelper.checkNotNullElements(this.actionContexts, "actionContexts");
@@ -361,10 +357,8 @@ public final class AsyncGradleTask implements Runnable {
                 progress);
     }
 
-    private static void scheduleCancel(final DefaultCancellationTokenSource cancelSource) {
-        CANCEL_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
-            cancelSource.cancel();
-        }, null);
+    private static void scheduleCancel(DefaultCancellationTokenSource cancelSource) {
+        CANCEL_EXECUTOR.execute(cancelSource::cancel);
     }
 
     private void runBuild(CancellationToken cancelToken, BuildLauncher buildLauncher) {

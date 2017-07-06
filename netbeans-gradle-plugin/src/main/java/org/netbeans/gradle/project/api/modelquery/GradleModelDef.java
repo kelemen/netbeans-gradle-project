@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
@@ -155,7 +155,7 @@ public final class GradleModelDef {
     }
 
     private static <T> GradleProjectInfoQuery2<T> createDefaultQuery(final ProjectInfoBuilder2<T> builder) {
-        ExceptionHelper.checkNotNullArgument(builder, "builder");
+        Objects.requireNonNull(builder, "builder");
 
         final ModelClassPathDef classPathDef = BuilderUtils.getClassPathOfBuilder(builder);
 

@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
-import org.jtrim.event.ListenerRef;
+import org.jtrim2.event.ListenerRef;
 
 public interface LoadableSingleProfileSettingsEx extends SingleProfileSettingsEx {
     public void ensureLoadedAndWait();

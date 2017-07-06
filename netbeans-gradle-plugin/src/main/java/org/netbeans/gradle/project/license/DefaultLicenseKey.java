@@ -2,18 +2,14 @@ package org.netbeans.gradle.project.license;
 
 import java.nio.file.Path;
 import java.util.Objects;
-import org.jtrim.utils.ExceptionHelper;
 
 public final class DefaultLicenseKey {
     private final String name;
     private final Path srcPath;
 
     public DefaultLicenseKey(String name, Path srcPath) {
-        ExceptionHelper.checkNotNullArgument(name, "name");
-        ExceptionHelper.checkNotNullArgument(srcPath, "srcPath");
-
-        this.name = name;
-        this.srcPath = srcPath;
+        this.name = Objects.requireNonNull(name, "name");
+        this.srcPath = Objects.requireNonNull(srcPath, "srcPath");
     }
 
     public String getName() {

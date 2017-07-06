@@ -1,18 +1,14 @@
 package org.netbeans.gradle.project.properties.standard;
 
 import java.util.Objects;
-import org.jtrim.utils.ExceptionHelper;
 
 public final class CustomVariable {
     private final String name;
     private final String value;
 
     public CustomVariable(String name, String value) {
-        ExceptionHelper.checkNotNullArgument(name, "name");
-        ExceptionHelper.checkNotNullArgument(value, "value");
-
-        this.name = name;
-        this.value = value;
+        this.name = Objects.requireNonNull(name, "name");
+        this.value = Objects.requireNonNull(value, "value");
     }
 
     public String getName() {

@@ -10,13 +10,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingProperties;
-import org.jtrim.property.swing.SwingPropertySource;
-import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingProperties;
+import org.jtrim2.property.swing.SwingPropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
@@ -32,7 +31,7 @@ import org.openide.filesystems.ImageDecorator;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
-import static org.jtrim.property.PropertyFactory.*;
+import static org.jtrim2.property.PropertyFactory.*;
 
 public final class BadgeAwareNode extends FilterNode {
     private static final Logger LOGGER = Logger.getLogger(BadgeAwareNode.class.getName());
@@ -47,13 +46,13 @@ public final class BadgeAwareNode extends FilterNode {
 
     private BadgeAwareNode(Node original, PropertySource<? extends Collection<File>> files) {
         super(original);
-        ExceptionHelper.checkNotNullArgument(files, "files");
+        Objects.requireNonNull(files, "files");
 
         this.files = files;
         this.listenerRegs = new ListenerRegistrations();
         this.fileObjs = lazilySetProperty(memProperty(new FileObjects()));
         this.fileUpdater = NbTaskExecutors.newDefaultUpdateExecutor();
-        this.iconChangeNotifier = new SwingUpdateTaskExecutor(true);
+        this.iconChangeNotifier = SwingExecutors.getSwingUpdateExecutor(true);
         this.statusProperty = NbProperties.propertyOfProperty(fileObjs, arg -> new FileSystemStatusProperty(arg).toStandard());
     }
 
@@ -176,7 +175,7 @@ public final class BadgeAwareNode extends FilterNode {
 
         public PropertySource<ImageDecorator> toStandard() {
             return SwingProperties.fromSwingSource(this, (Runnable listener) -> {
-                ExceptionHelper.checkNotNullArgument(listener, "listener");
+                Objects.requireNonNull(listener, "listener");
 
                 return (FileStatusEvent ev) -> {
                     if (anythingChanged(ev)) {

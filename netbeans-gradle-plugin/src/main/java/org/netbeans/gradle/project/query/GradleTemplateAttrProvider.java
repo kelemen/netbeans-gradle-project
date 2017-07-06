@@ -3,8 +3,8 @@ package org.netbeans.gradle.project.query;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.templates.CreateDescriptor;
 import org.netbeans.api.templates.CreateFromTemplateAttributes;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -21,11 +21,8 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
             NbGradleProject project,
             LicenseManager<? super NbGradleModel> licenseManager) {
 
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(licenseManager, "licenseManager");
-
-        this.project = project;
-        this.licenseManager = licenseManager;
+        this.project = Objects.requireNonNull(project, "project");
+        this.licenseManager = Objects.requireNonNull(licenseManager, "licenseManager");
     }
 
     @Override

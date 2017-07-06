@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
@@ -43,8 +43,7 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
     private final JavaExtension javaExt;
 
     public JavaGradleTaskVariableQuery(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
     }
 
     private static String getSourceSetName(JavaExtension project, Lookup actionContext) {

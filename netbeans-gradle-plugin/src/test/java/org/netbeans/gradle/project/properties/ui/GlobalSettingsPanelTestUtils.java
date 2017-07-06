@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.properties.ui;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import javax.swing.SwingUtilities;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 import org.junit.Assert;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ConfigTree;

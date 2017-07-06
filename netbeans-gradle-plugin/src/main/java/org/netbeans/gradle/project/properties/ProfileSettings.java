@@ -23,17 +23,16 @@ import javax.swing.SwingUtilities;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.jtrim.collections.EqualityComparator;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.ListenerManager;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySourceProxy;
-import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.EqualityComparator;
+import org.jtrim2.event.CopyOnTriggerListenerManager;
+import org.jtrim2.event.ListenerManager;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySourceProxy;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.PropertyDef;
@@ -80,7 +79,7 @@ public final class ProfileSettings {
     }
 
     ListenerRef addDocumentChangeListener(Runnable listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
+        Objects.requireNonNull(listener, "listener");
         return configUpdateListeners.registerListener(changedPaths -> listener.run());
     }
 
@@ -97,13 +96,12 @@ public final class ProfileSettings {
     }
 
     private static Document readXml(InputStream xmlSource) throws IOException, SAXException {
-        ExceptionHelper.checkNotNullArgument(xmlSource, "xmlSource");
-
+        Objects.requireNonNull(xmlSource, "xmlSource");
         return getDocumentBuilder().parse(xmlSource);
     }
 
     private static Document readXml(Path xmlFile) throws IOException, SAXException {
-        ExceptionHelper.checkNotNullArgument(xmlFile, "xmlFile");
+        Objects.requireNonNull(xmlFile, "xmlFile");
 
         if (!Files.exists(xmlFile)) {
             return getEmptyDocument();
@@ -168,8 +166,8 @@ public final class ProfileSettings {
     }
 
     public void saveToFile(Path xmlFile, ConfigSaveOptions saveOptions) throws IOException {
-        ExceptionHelper.checkNotNullArgument(xmlFile, "xmlFile");
-        ExceptionHelper.checkNotNullArgument(saveOptions, "saveOptions");
+        Objects.requireNonNull(xmlFile, "xmlFile");
+        Objects.requireNonNull(saveOptions, "saveOptions");
 
         Document document = toXml();
 
@@ -241,8 +239,8 @@ public final class ProfileSettings {
         fireDocumentUpdate(ROOT_PATH);
     }
 
-    private void loadFromDocument(final Document document) {
-        ExceptionHelper.checkNotNullArgument(document, "document");
+    private void loadFromDocument(Document document) {
+        Objects.requireNonNull(document, "document");
 
         ConfigTree.Builder parsedDocument = ConfigXmlUtils.parseDocument(document, ConfigXmlUtils.AUXILIARY_NODE_NAME);
         List<Element> loadedAuxConfigs = getAuxiliaryElements(document.getDocumentElement());
@@ -319,7 +317,7 @@ public final class ProfileSettings {
     }
 
     public Element getAuxConfigValue(DomElementKey key) {
-        ExceptionHelper.checkNotNullArgument(key, "key");
+        Objects.requireNonNull(key, "key");
 
         Element result;
         configLock.lock();
@@ -335,7 +333,7 @@ public final class ProfileSettings {
     }
 
     public boolean setAuxConfigValue(DomElementKey key, Element value) {
-        ExceptionHelper.checkNotNullArgument(key, "key");
+        Objects.requireNonNull(key, "key");
 
         Element toAdd = value != null
                 ? (Element)EXPORT_DOCUMENT.importNode(value, true)
@@ -461,7 +459,7 @@ public final class ProfileSettings {
         private final PropertySourceProxy<ValueType> source;
 
         public DomTrackingProperty(PropertyDef<ValueKey, ValueType> propertyDef) {
-            ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
+            Objects.requireNonNull(propertyDef, "propertyDef");
 
             this.configPathsAsList = copyPaths(propertyDef.getConfigPaths());
             this.configPaths = configPathsAsList.toArray(new ConfigPath[configPathsAsList.size()]);
@@ -479,7 +477,7 @@ public final class ProfileSettings {
             this.lastValueKeyRef = new AtomicReference<>(initialValueKey);
             this.source = PropertyFactory.proxySource(valueDef.property(initialValueKey.value));
 
-            this.eventThread = new SwingUpdateTaskExecutor(true);
+            this.eventThread = SwingExecutors.getSwingUpdateExecutor(true);
         }
 
         private void updateConfigFromKey() {
@@ -608,8 +606,8 @@ public final class ProfileSettings {
         }
 
         @Override
-        public ListenerRef addChangeListener(final Runnable listener) {
-            ExceptionHelper.checkNotNullArgument(listener, "listener");
+        public ListenerRef addChangeListener(Runnable listener) {
+            Objects.requireNonNull(listener, "listener");
 
             ListenerRef ref1 = configUpdateListeners.registerListener((Collection<ConfigPath> changedPaths) -> {
                 if (affectsThis(changedPaths)) {
@@ -619,7 +617,7 @@ public final class ProfileSettings {
 
             ListenerRef ref2 = source.addChangeListener(() -> eventThread.execute(listener));
 
-            return ListenerRegistries.combineListenerRefs(ref1, ref2);
+            return ListenerRefs.combineListenerRefs(ref1, ref2);
         }
 
         @Override

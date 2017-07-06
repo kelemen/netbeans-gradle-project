@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.properties.global;
 
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
-import org.jtrim.event.ListenerRef;
+import org.jtrim2.event.ListenerRef;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.openide.util.NbPreferences;

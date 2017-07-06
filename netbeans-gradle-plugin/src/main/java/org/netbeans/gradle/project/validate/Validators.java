@@ -2,15 +2,15 @@
 package org.netbeans.gradle.project.validate;
 
 import java.awt.Color;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.swing.JLabel;
 import javax.swing.text.JTextComponent;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingProperties;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingProperties;
 import org.netbeans.gradle.project.NbStrings;
 import org.openide.WizardDescriptor;
 
@@ -26,8 +26,8 @@ public final class Validators {
     public static Validator<String> createNonEmptyValidator(
             final Problem.Level severity,
             final String errorMessage) {
-        ExceptionHelper.checkNotNullArgument(severity, "severity");
-        ExceptionHelper.checkNotNullArgument(errorMessage, "errorMessage");
+        Objects.requireNonNull(severity, "severity");
+        Objects.requireNonNull(errorMessage, "errorMessage");
 
         return (String inputType) -> {
             return inputType.isEmpty()
@@ -52,9 +52,9 @@ public final class Validators {
             final Pattern pattern,
             final Problem.Level severity,
             final String errorMessage) {
-        ExceptionHelper.checkNotNullArgument(pattern, "pattern");
-        ExceptionHelper.checkNotNullArgument(severity, "severity");
-        ExceptionHelper.checkNotNullArgument(errorMessage, "errorMessage");
+        Objects.requireNonNull(pattern, "pattern");
+        Objects.requireNonNull(severity, "severity");
+        Objects.requireNonNull(errorMessage, "errorMessage");
 
         return (String inputType) -> {
             if (!pattern.matcher(inputType).matches()) {
@@ -88,8 +88,8 @@ public final class Validators {
     public static ListenerRef connectLabelToProblems(
             BackgroundValidator validator,
             final JLabel jLabel) {
-        ExceptionHelper.checkNotNullArgument(validator, "validator");
-        ExceptionHelper.checkNotNullArgument(jLabel, "jLabel");
+        Objects.requireNonNull(validator, "validator");
+        Objects.requireNonNull(jLabel, "jLabel");
 
         jLabel.setText("");
 
@@ -132,8 +132,8 @@ public final class Validators {
     public static ListenerRef connectWizardDescriptorToProblems(
             BackgroundValidator validator,
             final WizardDescriptor wizard) {
-        ExceptionHelper.checkNotNullArgument(validator, "validator");
-        ExceptionHelper.checkNotNullArgument(wizard, "wizard");
+        Objects.requireNonNull(validator, "validator");
+        Objects.requireNonNull(wizard, "wizard");
 
         wizard.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, null);
 

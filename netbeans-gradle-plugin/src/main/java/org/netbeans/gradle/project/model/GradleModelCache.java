@@ -6,11 +6,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventDispatcher;
-import org.jtrim.event.ListenerManager;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.CopyOnTriggerListenerManager;
+import org.jtrim2.event.EventDispatcher;
+import org.jtrim2.event.ListenerManager;
+import org.jtrim2.event.ListenerRef;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -87,7 +86,7 @@ public final class GradleModelCache {
     }
 
     private static CacheKey tryCreateKey(NbGradleModel model) {
-        ExceptionHelper.checkNotNullArgument(model, "model");
+        Objects.requireNonNull(model, "model");
 
         File projectDir = model.getGenericInfo().getProjectDir();
 
@@ -175,8 +174,7 @@ public final class GradleModelCache {
         private final File settingsFile;
 
         public CacheKey(File projectDir, File settingsFile) {
-            ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-            this.projectDir = projectDir;
+            this.projectDir = Objects.requireNonNull(projectDir, "projectDir");
             this.settingsFile = settingsFile;
         }
 

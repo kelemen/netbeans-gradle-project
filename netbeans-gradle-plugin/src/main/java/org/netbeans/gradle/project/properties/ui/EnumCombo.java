@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.JComboBox;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 
 public final class EnumCombo<EnumType extends Enum<EnumType>> {
@@ -20,12 +19,9 @@ public final class EnumCombo<EnumType extends Enum<EnumType>> {
             Class<EnumType> enumType,
             EnumType defaultValue,
             JComboBox<Item<EnumType>> combo) {
-        ExceptionHelper.checkNotNullArgument(enumType, "enumType");
-        ExceptionHelper.checkNotNullArgument(combo, "combo");
-
-        this.enumType = enumType;
+        this.enumType = Objects.requireNonNull(enumType, "enumType");
         this.defaultValue = defaultValue;
-        this.combo = combo;
+        this.combo = Objects.requireNonNull(combo, "combo");
 
         fillCombo();
     }

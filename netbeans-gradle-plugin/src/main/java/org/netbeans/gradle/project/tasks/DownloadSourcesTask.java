@@ -1,12 +1,12 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.io.File;
+import java.util.Objects;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.idea.IdeaProject;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.CancellationToken;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.OperationInitializer;
@@ -19,8 +19,7 @@ public final class DownloadSourcesTask implements DaemonTask {
     private final Project project;
 
     public DownloadSourcesTask(Project project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
     }
 
     public static DaemonTaskDef createTaskDef(Project project) {

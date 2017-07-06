@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.tasks.vars;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.openide.util.Lookup;
@@ -62,13 +62,9 @@ public final class CachingVariableMap<ProjectInfo> implements TaskVariableMap {
             VariableDefMap<ProjectInfo> taskVariableMap,
             ProjectInfo project,
             Lookup actionContext) {
-        ExceptionHelper.checkNotNullArgument(taskVariableMap, "taskVariableMap");
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(actionContext, "actionContext");
-
-        this.project = project;
-        this.actionContext = actionContext;
-        this.taskVariableMap = taskVariableMap;
+        this.project = Objects.requireNonNull(project, "project");
+        this.actionContext = Objects.requireNonNull(actionContext, "actionContext");
+        this.taskVariableMap = Objects.requireNonNull(taskVariableMap, "taskVariableMap");
         this.cache = new ConcurrentHashMap<>();
     }
 

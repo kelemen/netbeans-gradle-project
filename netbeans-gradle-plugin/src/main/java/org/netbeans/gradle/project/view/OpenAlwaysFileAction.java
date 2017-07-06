@@ -4,11 +4,10 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
 import org.netbeans.gradle.project.script.CommonScripts;
@@ -30,23 +29,22 @@ public final class OpenAlwaysFileAction extends AbstractAction {
     public OpenAlwaysFileAction(String name, final Path file) {
         this(name, () -> file);
 
-        ExceptionHelper.checkNotNullArgument(file, "file");
+        Objects.requireNonNull(file, "file");
     }
 
     public OpenAlwaysFileAction(String name, NbSupplier<? extends Path> fileRef) {
         super(name);
 
-        ExceptionHelper.checkNotNullArgument(fileRef, "fileRef");
-        this.fileRef = fileRef;
+        this.fileRef = Objects.requireNonNull(fileRef, "fileRef");
     }
 
     public static OpenAlwaysFileAction openScriptAction(
             final Path baseDir,
             final String scriptBaseName,
             final ScriptFileProvider scriptProvider) {
-        ExceptionHelper.checkNotNullArgument(baseDir, "baseDir");
-        ExceptionHelper.checkNotNullArgument(scriptBaseName, "scriptBaseName");
-        ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
+        Objects.requireNonNull(baseDir, "baseDir");
+        Objects.requireNonNull(scriptBaseName, "scriptBaseName");
+        Objects.requireNonNull(scriptProvider, "scriptProvider");
 
         String caption = NbStrings.getOpenFileCaption(scriptBaseName + CommonScripts.DEFAULT_SCRIPT_EXTENSION);
         final CommonScripts commonScripts = new CommonScripts(scriptProvider);
@@ -95,8 +93,6 @@ public final class OpenAlwaysFileAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (cancelToken) -> {
-            openFileNow();
-        }, null);
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(this::openFileNow);
     }
 }

@@ -9,14 +9,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.prefs.Preferences;
 import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.text.JTextComponent;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -89,8 +89,8 @@ public final class NewProjectUtils {
     }
 
     public static void createMainClass(Path projectDir, String mainClass) throws IOException {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-        ExceptionHelper.checkNotNullArgument(mainClass, "mainClass");
+        Objects.requireNonNull(projectDir, "projectDir");
+        Objects.requireNonNull(mainClass, "mainClass");
 
         String packageName;
         String simpleClassName;
@@ -246,7 +246,7 @@ public final class NewProjectUtils {
     }
 
     public static void chooseProjectLocation(Component parent, JTextComponent jProjectEdit) {
-        ExceptionHelper.checkNotNullArgument(jProjectEdit, "jProjectEdit");
+        Objects.requireNonNull(jProjectEdit, "jProjectEdit");
 
         JFileChooser chooser = new JFileChooser();
         chooser.setCurrentDirectory(null);
@@ -271,10 +271,10 @@ public final class NewProjectUtils {
             final JTextComponent jProjectNameEdit,
             final JTextComponent jProjectFolderEdit,
             final JTextComponent jProjectLocationEdit) {
-        ExceptionHelper.checkNotNullArgument(bckgValidator, "bckgValidator");
-        ExceptionHelper.checkNotNullArgument(jProjectNameEdit, "jProjectNameEdit");
-        ExceptionHelper.checkNotNullArgument(jProjectFolderEdit, "jProjectFolderEdit");
-        ExceptionHelper.checkNotNullArgument(jProjectLocationEdit, "jProjectLocationEdit");
+        Objects.requireNonNull(bckgValidator, "bckgValidator");
+        Objects.requireNonNull(jProjectNameEdit, "jProjectNameEdit");
+        Objects.requireNonNull(jProjectFolderEdit, "jProjectFolderEdit");
+        Objects.requireNonNull(jProjectLocationEdit, "jProjectLocationEdit");
 
         PropertySource<String> projectName = Validators.trimmedText(jProjectNameEdit);
         PropertySource<String> projectFolder = Validators.trimmedText(jProjectFolderEdit);
@@ -299,7 +299,7 @@ public final class NewProjectUtils {
         refs.add(projectName.addChangeListener(projectFolderUpdater));
         refs.add(projectLocation.addChangeListener(projectFolderUpdater));
 
-        return ListenerRegistries.combineListenerRefs(refs.toArray(new ListenerRef[refs.size()]));
+        return ListenerRefs.combineListenerRefs(refs);
     }
 
     private NewProjectUtils() {

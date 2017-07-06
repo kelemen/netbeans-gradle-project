@@ -11,14 +11,14 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.executor.UpdateTaskExecutor;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
@@ -53,9 +53,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     }
 
     public GradleFilesClassPathProvider(ScriptFileProvider scriptProvider) {
-        ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
-
-        this.scriptProvider = scriptProvider;
+        this.scriptProvider = Objects.requireNonNull(scriptProvider, "scriptProvider");
         this.initLock = new ReentrantLock();
         this.initialized = false;
         this.classpaths = new EnumMap<>(ClassPathType.class);

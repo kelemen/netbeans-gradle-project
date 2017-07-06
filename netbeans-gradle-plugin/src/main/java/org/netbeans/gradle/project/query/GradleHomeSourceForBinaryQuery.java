@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.query;
 
 import java.io.File;
+import java.util.Objects;
 import javax.swing.event.ChangeListener;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.NbSupplier;
@@ -24,8 +24,7 @@ public final class GradleHomeSourceForBinaryQuery extends AbstractSourceForBinar
     }
 
     public GradleHomeSourceForBinaryQuery(NbSupplier<? extends FileObject> gradleHomeProvider) {
-        ExceptionHelper.checkNotNullArgument(gradleHomeProvider, "gradleHomeProvider");
-        this.gradleHomeProvider = gradleHomeProvider;
+        this.gradleHomeProvider = Objects.requireNonNull(gradleHomeProvider, "gradleHomeProvider");
     }
 
     @Override

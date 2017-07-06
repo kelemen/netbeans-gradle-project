@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.RandomAccess;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.CollectionsEx;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.SingleProfileSettings;
 import org.netbeans.gradle.project.api.config.ValueMerger;
@@ -29,7 +29,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
     public MultiProfileProperties(List<SingleProfileSettingsEx> initialProfiles) {
         this.currentProfileSettingsList = PropertyFactory.memPropertyConcurrent(
                 CollectionsEx.readOnlyCopy(copySettings(initialProfiles)),
-                SwingTaskExecutor.getStrictExecutor(false));
+                SwingExecutors.getStrictExecutor(false));
 
         this.currentProfileChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.currentProfileSettingsEx = new PropertySource<SingleProfileSettingsEx>() {
@@ -142,13 +142,13 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
             @Override
             public ListenerRef addChangeListener(Runnable listener) {
-                ExceptionHelper.checkNotNullArgument(listener, "listener");
+                Objects.requireNonNull(listener, "listener");
 
                 List<ListenerRef> refs = new ArrayList<>(properties.size());
                 for (PropertySource<ValueType> property: properties) {
                     refs.add(property.addChangeListener(listener));
                 }
-                return ListenerRegistries.combineListenerRefs(refs);
+                return ListenerRefs.combineListenerRefs(refs);
             }
         };
     }
@@ -163,9 +163,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         private volatile CachedMergedProperty<Value> cachedValue;
 
         public CachingPropertyMerger(PropertyDef<?, Value> propertyDef) {
-            ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
-
-            this.propertyDef = propertyDef;
+            this.propertyDef = Objects.requireNonNull(propertyDef, "propertyDef");
             this.cachedValue = null;
         }
 

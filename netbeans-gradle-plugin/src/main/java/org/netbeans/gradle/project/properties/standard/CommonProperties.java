@@ -9,12 +9,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.CollectionsEx;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.PropertyDef;
@@ -206,8 +206,7 @@ public final class CommonProperties {
         private final String entryName;
 
         public StringListKeyEncodingDef(String entryName) {
-            ExceptionHelper.checkNotNullArgument(entryName, "entryName");
-            this.entryName = entryName;
+            this.entryName = Objects.requireNonNull(entryName, "entryName");
         }
 
         @Override
@@ -267,9 +266,7 @@ public final class CommonProperties {
         private final Map<String, T> byNameValues;
 
         public EnumKeyEncodingDef(Class<T> enumType) {
-            ExceptionHelper.checkNotNullArgument(enumType, "enumType");
-
-            this.enumType = enumType;
+            this.enumType = Objects.requireNonNull(enumType, "enumType");
 
             T[] allValues = enumType.getEnumConstants();
             byNameValues = CollectionsEx.newHashMap(allValues.length);

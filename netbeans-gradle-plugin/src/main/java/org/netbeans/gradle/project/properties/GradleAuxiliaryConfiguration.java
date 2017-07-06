@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.spi.project.AuxiliaryConfiguration;
 import org.w3c.dom.Element;
@@ -13,9 +13,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
     private final AtomicReference<SingleProfileSettingsEx> privateConfigRef;
 
     public GradleAuxiliaryConfiguration(ProjectProfileLoader configManager) {
-        ExceptionHelper.checkNotNullArgument(configManager, "configManager");
-
-        this.configManager = configManager;
+        this.configManager = Objects.requireNonNull(configManager, "configManager");
 
         // This object is created before the lookup of the project is created
         // and therefore we cannot yet request the profiles because the profile
@@ -74,7 +72,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
     }
 
     private static DomElementKey keyFromElement(Element fragment) {
-        ExceptionHelper.checkNotNullArgument(fragment, "fragment");
+        Objects.requireNonNull(fragment, "fragment");
         return new DomElementKey(fragment.getTagName(), fragment.getNamespaceURI());
     }
 

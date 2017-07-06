@@ -6,14 +6,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -56,18 +56,15 @@ implements
     private volatile boolean createdOnce;
 
     public GradleProjectChildFactory(NbGradleProject project, GradleProjectLogicalViewProvider parent) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(parent, "parent");
-
-        this.project = project;
-        this.parent = parent;
+        this.project = Objects.requireNonNull(project, "project");
+        this.parent = Objects.requireNonNull(parent, "parent");
         this.nodeExtensionsRef = new AtomicReference<>(NodeExtensions.EMPTY);
         this.lastHasSubprojects = new AtomicBoolean(false);
         this.listenerRefs = new ListenerRegistrations();
         this.annotationChildNodes = new AnnotationChildNodes(project);
         this.createdOnce = false;
 
-        this.refreshNotifier = new GenericChangeListenerManager(SwingTaskExecutor.getStrictExecutor(false));
+        this.refreshNotifier = new GenericChangeListenerManager(SwingExecutors.getStrictExecutor(false));
         this.refreshNotifier.registerListener(() -> {
             if (createdOnce) {
                 refresh(false);

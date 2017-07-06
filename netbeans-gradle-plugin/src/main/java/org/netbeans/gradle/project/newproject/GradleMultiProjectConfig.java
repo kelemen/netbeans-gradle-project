@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.newproject;
 
 import java.nio.file.Path;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 
 public final class GradleMultiProjectConfig {
     private final String projectName;
@@ -14,11 +14,8 @@ public final class GradleMultiProjectConfig {
             Path projectFolder,
             String mavenGroupId,
             String mavenVersion) {
-        ExceptionHelper.checkNotNullArgument(projectName, "projectName");
-        ExceptionHelper.checkNotNullArgument(projectFolder, "projectFolder");
-
-        this.projectName = projectName;
-        this.projectFolder = projectFolder;
+        this.projectName = Objects.requireNonNull(projectName, "projectName");
+        this.projectFolder = Objects.requireNonNull(projectFolder, "projectFolder");
         this.mavenGroupId = mavenGroupId;
         this.mavenVersion = mavenVersion;
     }

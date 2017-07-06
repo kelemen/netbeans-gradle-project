@@ -3,11 +3,11 @@ package org.netbeans.gradle.project.properties;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.MutableProperty;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.api.config.ProfileKey;
@@ -22,7 +22,7 @@ final class ProjectProfileSettings implements LoadableSingleProfileSettingsEx {
     private final GenericProfileSettings impl;
 
     public ProjectProfileSettings(ProjectProfileSettingsKey key) {
-        ExceptionHelper.checkNotNullArgument(key, "key");
+        Objects.requireNonNull(key, "key");
 
         this.impl = new GenericProfileSettings(new ProjectProfileLocationProvider(key));
     }

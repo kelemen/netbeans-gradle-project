@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.event.ListenerRef;
+import org.jtrim2.event.ListenerRef;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.event.ChangeListenerManager;

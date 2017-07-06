@@ -15,9 +15,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.util.CloseableAction;
@@ -134,7 +133,7 @@ public final class RootProjectRegistry {
         private final Set<File> subprojects;
 
         public RegisteredProjects(NbGradleModel model) {
-            ExceptionHelper.checkNotNullArgument(model, "model");
+            Objects.requireNonNull(model, "model");
 
             this.id = new Object();
 
@@ -156,10 +155,8 @@ public final class RootProjectRegistry {
         }
 
         public RootProjectKey(Path settingsFile, Path projectDir) {
-            ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-
             this.settingsFile = settingsFile;
-            this.projectDir = projectDir;
+            this.projectDir = Objects.requireNonNull(projectDir, "projectDir");
         }
 
         @Override

@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.api.task;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 
 /**
@@ -26,9 +26,7 @@ public final class DaemonTaskContext {
      *   project rather than executing a Gradle command
      */
     public DaemonTaskContext(@Nonnull Project project, boolean modelLoading) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
         this.modelLoading = modelLoading;
     }
 

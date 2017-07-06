@@ -2,9 +2,8 @@ package org.netbeans.gradle.project.java.query;
 
 import java.util.Objects;
 import javax.swing.event.ChangeListener;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingPropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingPropertySource;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.property.GradleProperty;
@@ -21,7 +20,7 @@ implements
     private final Result result;
 
     public GradleSourceLevelQueryImplementation(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+        Objects.requireNonNull(javaExt, "javaExt");
 
         this.projectDir = javaExt.getProjectDirectory();
 

@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 
 public final class MemCustomVariables implements CustomVariables {
     public static final CustomVariables EMPTY = new MemCustomVariables(Collections.<CustomVariable>emptySet());

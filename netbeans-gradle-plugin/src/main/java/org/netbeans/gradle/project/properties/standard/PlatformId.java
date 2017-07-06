@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.properties.standard;
 
 import java.util.List;
 import java.util.Objects;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.api.config.ConfigTree;
@@ -27,11 +26,8 @@ public final class PlatformId implements PlatformSelector {
     }
 
     public PlatformId(String name, String version) {
-        ExceptionHelper.checkNotNullArgument(name, "name");
-        ExceptionHelper.checkNotNullArgument(version, "version");
-
-        this.name = name;
-        this.version = version;
+        this.name = Objects.requireNonNull(name, "name");
+        this.version = Objects.requireNonNull(version, "version");
     }
 
     public static PlatformId tryGetIdOfPlatform(JavaPlatform platform) {

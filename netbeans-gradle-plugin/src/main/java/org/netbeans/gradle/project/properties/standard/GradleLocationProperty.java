@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties.standard;
 
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.PropertyValueDef;

@@ -1,13 +1,14 @@
 package org.netbeans.gradle.project.api.config;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.event.ListenerRefs;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+
 
 /**
  * Defines a complete project property definition with every fallbacks.
@@ -54,12 +55,10 @@ public final class PropertyReference<ValueType> {
             @Nonnull PropertyDef<?, ValueType> propertyDef,
             @Nonnull ActiveSettingsQuery activeSettingsQuery,
             @Nonnull PropertySource<? extends ValueType> defaultValue) {
-        ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
-        ExceptionHelper.checkNotNullArgument(activeSettingsQuery, "activeSettingsQuery");
-        ExceptionHelper.checkNotNullArgument(defaultValue, "defaultValue");
+        Objects.requireNonNull(defaultValue, "defaultValue");
 
-        this.propertyDef = propertyDef;
-        this.activeSettingsQuery = activeSettingsQuery;
+        this.propertyDef = Objects.requireNonNull(propertyDef, "propertyDef");
+        this.activeSettingsQuery = Objects.requireNonNull(activeSettingsQuery, "activeSettingsQuery");
         this.activeSource = mergeProperties(
                 activeSettingsQuery.getProperty(propertyDef),
                 defaultValue,
@@ -87,7 +86,7 @@ public final class PropertyReference<ValueType> {
                 ListenerRef ref1 = src.addChangeListener(listener);
                 ListenerRef ref2 = fallback.addChangeListener(listener);
 
-                return ListenerRegistries.combineListenerRefs(ref1, ref2);
+                return ListenerRefs.combineListenerRefs(ref1, ref2);
             }
         };
     }

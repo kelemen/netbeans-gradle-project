@@ -11,12 +11,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
@@ -47,12 +46,11 @@ implements
     private NbGradleSingleProjectConfigProvider(
             NbGradleProject project,
             NbGradleConfigProvider multiProjectProvider) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(multiProjectProvider, "multiProjectProvider");
+        Objects.requireNonNull(multiProjectProvider, "multiProjectProvider");
 
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
         this.currentRootDir = new AtomicReference<>(multiProjectProvider.getRootDirectory());
-        this.commonConfigRef = PropertyFactory.memPropertyConcurrent(multiProjectProvider, SwingTaskExecutor.getStrictExecutor(false));
+        this.commonConfigRef = PropertyFactory.memPropertyConcurrent(multiProjectProvider, SwingExecutors.getStrictExecutor(false));
         this.extensionProfiles = Collections.emptySet();
 
         this.activeConfig = NbProperties.propertyOfProperty(commonConfigRef, NbGradleConfigProvider::activeConfiguration);

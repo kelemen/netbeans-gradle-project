@@ -2,12 +2,12 @@ package org.netbeans.gradle.project.properties;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerManager;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertySource;
+import org.jtrim2.event.CopyOnTriggerListenerManager;
+import org.jtrim2.event.EventListeners;
+import org.jtrim2.event.ListenerManager;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertySource;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

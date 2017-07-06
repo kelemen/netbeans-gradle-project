@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.tasks;
 
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.cancel.CancellationToken;
 
 public final class DaemonTaskDef {
     private final String caption;
@@ -9,12 +9,9 @@ public final class DaemonTaskDef {
     private final DaemonTask task;
 
     public DaemonTaskDef(String caption, boolean nonBlocking, DaemonTask task) {
-        ExceptionHelper.checkNotNullArgument(caption, "caption");
-        ExceptionHelper.checkNotNullArgument(task, "task");
-
-        this.caption = caption;
+        this.caption = Objects.requireNonNull(caption, "caption");
         this.nonBlocking = nonBlocking;
-        this.task = task;
+        this.task = Objects.requireNonNull(task, "task");
     }
 
     public String getCaption() {

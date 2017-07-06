@@ -9,17 +9,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingProperties;
-import org.jtrim.property.swing.SwingPropertySource;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingProperties;
+import org.jtrim2.property.swing.SwingPropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.FileOwnerQuery;
@@ -96,20 +96,18 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     private final AtomicReference<ProjectSettingsProvider.ExtensionSettings> extensionSettingsRef;
 
     private JavaExtension(Project project) throws IOException {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+        this.project = Objects.requireNonNull(project, "project");
 
         this.projectDirectoryAsFile = FileUtil.toFile(project.getProjectDirectory());
         if (projectDirectoryAsFile == null) {
             throw new IOException("Project directory does not exist: " + project.getProjectDirectory());
         }
 
-        this.project = project;
-
         NbJavaModel defaultModel = JavaParsingUtils.createEmptyModel(
                 project.getProjectDirectory(),
                 project.getLookup().lookup(ScriptFileProvider.class));
-        this.currentModel = PropertyFactory.memPropertyConcurrent(defaultModel, SwingTaskExecutor.getStrictExecutor(false));
 
+        this.currentModel = PropertyFactory.memPropertyConcurrent(defaultModel, SwingExecutors.getStrictExecutor(false));
         this.cpProvider = new GradleClassPathProvider(this);
         this.projectDependencies = new JavaProjectDependencies(this);
         this.projectLookupRef = new AtomicReference<>(null);
@@ -125,7 +123,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     }
 
     public static PropertySource<JavaExtension> extensionOfProject(Project project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+        Objects.requireNonNull(project, "project");
 
         PropertySource<JavaExtension> extRef = NbProperties.lookupProperty(project.getLookup(), JavaExtension.class);
         return NbProperties.cacheFirstNonNull(extRef);
@@ -471,7 +469,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
     @Override
     public void activateExtension(NbJavaModel parsedModel) {
-        ExceptionHelper.checkNotNullArgument(parsedModel, "parsedModel");
+        Objects.requireNonNull(parsedModel, "parsedModel");
 
         currentModel.setValue(parsedModel);
         hasEverBeenLoaded = true;

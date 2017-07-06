@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
@@ -165,9 +164,8 @@ public class AppearancePanel extends javax.swing.JPanel implements ProfileEditor
         String displayedValue = value != null
                 ? value
                 : (valueWitFallbacks != null ? valueWitFallbacks.getActiveValue() : null);
-        ExceptionHelper.checkNotNullArgument(displayedValue, "displayedValue");
 
-        defaultPatternValue = displayedValue;
+        defaultPatternValue = Objects.requireNonNull(displayedValue, "displayedValue");
         selectPattern(defaultPatternValue);
 
         if (allowInherit) {

@@ -9,9 +9,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.config.ProfileKey;
@@ -82,7 +82,7 @@ public final class SettingsFiles {
     }
 
     public static Path getSettingsDir(Path rootDir) {
-        ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
+        Objects.requireNonNull(rootDir, "rootDir");
         return rootDir.resolve(SETTINGS_DIR_NAME);
     }
 
@@ -91,7 +91,7 @@ public final class SettingsFiles {
     }
 
     public static Path getProfileFile(Path rootDir, ProfileKey profileKey) {
-        ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
+        Objects.requireNonNull(rootDir, "rootDir");
 
         if (profileKey != null) {
             Path profileFileDir = getProfileDirectory(rootDir);
@@ -112,7 +112,7 @@ public final class SettingsFiles {
     }
 
     public static Path[] getFilesForProfile(Path rootDir, ProfileKey profileKey) {
-        ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
+        Objects.requireNonNull(rootDir, "rootDir");
 
         Path mainFile = rootDir.resolve(DEFAULT_PROPERTIES_FILENAME);
 

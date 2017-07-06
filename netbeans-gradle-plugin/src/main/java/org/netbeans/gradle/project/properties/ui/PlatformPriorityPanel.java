@@ -16,9 +16,9 @@ import javax.swing.JList;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionListener;
-import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingProperties;
-import org.jtrim.property.swing.SwingPropertySource;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.property.swing.SwingProperties;
+import org.jtrim2.property.swing.SwingPropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
@@ -34,7 +34,7 @@ import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
-import static org.jtrim.property.swing.AutoDisplayState.*;
+import static org.jtrim2.property.swing.AutoDisplayState.*;
 
 @SuppressWarnings("serial")
 public class PlatformPriorityPanel extends javax.swing.JPanel implements ProfileEditorFactory {
@@ -162,7 +162,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements Profile
                 componentDisabler(jMoveDownButton));
     }
 
-    private static org.jtrim.property.PropertySource<Integer> selectedIndexProperty(JList<?> list) {
+    private static org.jtrim2.property.PropertySource<Integer> selectedIndexProperty(JList<?> list) {
         final ListSelectionModel selectionModel = list.getSelectionModel();
         SwingPropertySource<Integer, ListSelectionListener> swingSource = new SwingPropertySource<Integer, ListSelectionListener>() {
             @Override

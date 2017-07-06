@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.gradle.tooling.ProjectConnection;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -25,11 +25,7 @@ public interface NbModelLoader {
                 NbGradleModel mainModel,
                 Collection<NbGradleModel> otherModels,
                 Collection<? extends ModelLoadIssue> issues) {
-            ExceptionHelper.checkNotNullArgument(mainModel, "mainModel");
-            ExceptionHelper.checkNotNullArgument(otherModels, "otherModels");
-            ExceptionHelper.checkNotNullArgument(issues, "issues");
-
-            this.mainModel = mainModel;
+            this.mainModel = Objects.requireNonNull(mainModel, "mainModel");
             this.otherModels = CollectionUtils.copyNullSafeList(otherModels);
             this.issues = CollectionUtils.copyNullSafeList(issues);
         }

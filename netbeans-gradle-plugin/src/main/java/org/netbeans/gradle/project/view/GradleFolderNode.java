@@ -10,10 +10,10 @@ import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.concurrent.AsyncTasks;
+import org.jtrim2.executor.TaskExecutor;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -61,9 +61,8 @@ public final class GradleFolderNode extends AbstractNode {
             ChildFactoryImpl childFactory,
             Children children) {
         super(children, createLookup(childFactory, children));
-        ExceptionHelper.checkNotNullArgument(caption, "caption");
 
-        this.caption = caption;
+        this.caption = Objects.requireNonNull(caption, "caption");
         this.dir = dir;
 
         setName(dir.toString());
@@ -134,7 +133,7 @@ public final class GradleFolderNode extends AbstractNode {
                         });
                     }
                 }
-            }, null);
+            }).exceptionally(AsyncTasks::expectNoError);
         }
     }
 
@@ -149,11 +148,8 @@ public final class GradleFolderNode extends AbstractNode {
         private volatile boolean createdOnce;
 
         public ChildFactoryImpl(FileObject dir, ScriptFileProvider scriptProvider) {
-            ExceptionHelper.checkNotNullArgument(dir, "dir");
-            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
-
-            this.dir = dir;
-            this.scriptProvider = scriptProvider;
+            this.dir = Objects.requireNonNull(dir, "dir");
+            this.scriptProvider = Objects.requireNonNull(scriptProvider, "scriptProvider");
             this.listenerRegistrations = new ListenerRegistrations();
             this.createdOnce = false;
         }
@@ -212,13 +208,9 @@ public final class GradleFolderNode extends AbstractNode {
         private final ScriptFileProvider scriptProvider;
 
         public FactoryImpl(String caption, FileObject dir, ScriptFileProvider scriptProvider) {
-            ExceptionHelper.checkNotNullArgument(caption, "caption");
-            ExceptionHelper.checkNotNullArgument(dir, "dir");
-            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
-
-            this.caption = caption;
-            this.dir = dir;
-            this.scriptProvider = scriptProvider;
+            this.caption = Objects.requireNonNull(caption, "caption");
+            this.dir = Objects.requireNonNull(dir, "dir");
+            this.scriptProvider = Objects.requireNonNull(scriptProvider, "scriptProvider");
         }
 
         @Override

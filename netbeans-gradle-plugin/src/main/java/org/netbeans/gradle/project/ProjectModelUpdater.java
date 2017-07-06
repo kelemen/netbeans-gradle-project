@@ -1,12 +1,12 @@
 package org.netbeans.gradle.project;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.WaitableSignal;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.concurrent.WaitableSignal;
 import org.netbeans.gradle.project.model.ModelLoader;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
@@ -22,10 +22,9 @@ public final class ProjectModelUpdater<M> {
     public ProjectModelUpdater(
             ModelLoader<? extends M> modelLoader,
             final ModelRetrievedListener<? super M> modelUpdater) {
-        ExceptionHelper.checkNotNullArgument(modelLoader, "modelLoader");
-        ExceptionHelper.checkNotNullArgument(modelUpdater, "modelUpdater");
+        Objects.requireNonNull(modelUpdater, "modelUpdater");
 
-        this.modelLoader = modelLoader;
+        this.modelLoader = Objects.requireNonNull(modelLoader, "modelLoader");
         this.loadedAtLeastOnceSignal = new WaitableSignal();
 
         this.modelUpdaterWrapper = (M model, Throwable error) -> {

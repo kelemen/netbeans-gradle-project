@@ -1,14 +1,13 @@
 package org.netbeans.gradle.project.filesupport;
 
 import java.nio.file.Path;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 
 final class GradleTemplateWizardConfig {
     private final Path gradleFile;
 
     public GradleTemplateWizardConfig(Path gradleFile) {
-        ExceptionHelper.checkNotNullArgument(gradleFile, "gradleFile");
-        this.gradleFile = gradleFile;
+        this.gradleFile = Objects.requireNonNull(gradleFile, "gradleFile");
     }
 
     public Path getGradleFile() {

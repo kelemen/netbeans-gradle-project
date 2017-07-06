@@ -7,10 +7,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -41,8 +41,7 @@ public final class GradleCustomizer implements CustomizerProvider {
     private final NbGradleProject project;
 
     public GradleCustomizer(NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        this.project = project;
+        this.project = Objects.requireNonNull(project, "project");
     }
 
     private static ProjectCustomizer.CompositeCategoryProvider[] getExternalCustomizers() {

@@ -4,17 +4,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 
 public final class WriterOutputStream extends OutputStream {
     private final Writer writer;
     private final Charset encoding;
 
     public WriterOutputStream(Writer writer, Charset encoding) {
-        ExceptionHelper.checkNotNullArgument(writer, "writer");
-        ExceptionHelper.checkNotNullArgument(encoding, "encoding");
-        this.writer = writer;
-        this.encoding = encoding;
+        this.writer = Objects.requireNonNull(writer, "writer");
+        this.encoding = Objects.requireNonNull(encoding, "encoding");
     }
 
     public WriterOutputStream(Writer writer) {

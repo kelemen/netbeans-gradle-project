@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.util;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.jtrim.cancel.Cancellation;
+import org.jtrim2.cancel.Cancellation;
 import org.junit.Test;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

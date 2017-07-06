@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbFunction;
@@ -18,11 +18,8 @@ public final class MultiFileModelCache<T> implements PersistentModelCache<T> {
     public MultiFileModelCache(
             PersistentModelStore<T> modelPersister,
             NbFunction<? super T, ? extends PersistentModelKey> modelKeyFactory) {
-        ExceptionHelper.checkNotNullArgument(modelPersister, "modelPersister");
-        ExceptionHelper.checkNotNullArgument(modelKeyFactory, "modelKeyFactory");
-
-        this.modelPersister = modelPersister;
-        this.modelKeyFactory = modelKeyFactory;
+        this.modelPersister = Objects.requireNonNull(modelPersister, "modelPersister");
+        this.modelKeyFactory = Objects.requireNonNull(modelKeyFactory, "modelKeyFactory");
     }
 
     private static MessageDigest getMD5() {

@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.api.config;
 import java.util.Collection;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.cancel.CancellationToken;
+import org.jtrim2.cancel.CancellationToken;
 
 /**
  * Defines a provider for the project settings of extensions. Unlike the
@@ -84,7 +84,7 @@ public interface ProjectSettingsProvider {
          * @return the settings for the specified profile. This method never
          *   returns {@code null}.
          *
-         * @throws org.jtrim.cancel.OperationCanceledException thrown if
+         * @throws org.jtrim2.cancel.OperationCanceledException thrown if
          *   cancellation was requested and this operation was canceled
          */
         @Nonnull

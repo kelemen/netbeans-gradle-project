@@ -3,9 +3,9 @@ package org.netbeans.gradle.project.output;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.utils.ExceptionHelper;
 import org.openide.cookies.EditorCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -22,13 +22,12 @@ public final class OpenEditorOutputListener implements OutputListener, ActionLis
     private final int lineNumber;
 
     public OpenEditorOutputListener(EditorCookie editor, int lineNumber) {
-        ExceptionHelper.checkNotNullArgument(editor, "editor");
-        this.editor = editor;
+        this.editor = Objects.requireNonNull(editor, "editor");
         this.lineNumber = lineNumber;
     }
 
     public static OpenEditorOutputListener tryCreateListener(File file, int lineNumber) {
-        ExceptionHelper.checkNotNullArgument(file, "file");
+        Objects.requireNonNull(file, "file");
 
         File normFile = FileUtil.normalizeFile(file);
         if (normFile == null) {
@@ -40,7 +39,7 @@ public final class OpenEditorOutputListener implements OutputListener, ActionLis
     }
 
     public static OpenEditorOutputListener tryCreateListener(FileObject fileObj, int lineNumber) {
-        ExceptionHelper.checkNotNullArgument(fileObj, "fileObj");
+        Objects.requireNonNull(fileObj, "fileObj");
 
         try {
             DataObject dataObj = DataObject.find(fileObj);

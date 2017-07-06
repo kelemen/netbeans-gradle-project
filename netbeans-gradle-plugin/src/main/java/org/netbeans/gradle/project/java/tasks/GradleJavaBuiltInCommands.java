@@ -12,10 +12,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 import org.gradle.util.GradleVersion;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationSource;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationSource;
+import org.jtrim2.collections.CollectionsEx;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaTestTask;
@@ -281,9 +280,10 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             String command,
             final CommandSelector<? extends ChoiceType> selector,
             Collection<CommandChoice<ChoiceType>> choices) {
-        final List<CommandChoice<ChoiceType>> choicesCopy = CollectionsEx.readOnlyCopy(choices);
-        ExceptionHelper.checkNotNullArgument(selector, "selector");
-        ExceptionHelper.checkNotNullElements(choicesCopy, "choices");
+        Objects.requireNonNull(selector, "selector");
+        Objects.requireNonNull(choices, "choices");
+
+        List<CommandChoice<ChoiceType>> choicesCopy = CollectionsEx.readOnlyCopy(choices);
 
         DEFAULT_TASKS.put(command, (JavaExtension javaExt) -> {
             ChoiceType choice = selector.choose(javaExt);
@@ -353,9 +353,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private final Set<String> supportedCommands;
 
     public GradleJavaBuiltInCommands(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-
-        this.javaExt = javaExt;
+        this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
         this.supportedCommands = Collections.unmodifiableSet(DEFAULT_TASKS.keySet());
     }
 
@@ -637,11 +635,8 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         private final CommandWithActions commandWithActions;
 
         public CommandChoice(ChoiceType choice, CommandWithActions commandWithActions) {
-            ExceptionHelper.checkNotNullArgument(choice, "choice");
-            ExceptionHelper.checkNotNullArgument(commandWithActions, "commandWithActions");
-
-            this.choice = choice;
-            this.commandWithActions = commandWithActions;
+            this.choice = Objects.requireNonNull(choice, "choice");
+            this.commandWithActions = Objects.requireNonNull(commandWithActions, "commandWithActions");
         }
 
         public ChoiceType getChoice() {

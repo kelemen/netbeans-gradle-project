@@ -2,9 +2,9 @@ package org.netbeans.gradle.project.license;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 /**
@@ -35,10 +35,7 @@ public final class LicenseHeaderInfo {
             @Nonnull String licenseName,
             @Nonnull Map<String, String> properties,
             @Nullable Path licenseTemplateFile) {
-        ExceptionHelper.checkNotNullArgument(licenseName, "licenseName");
-        ExceptionHelper.checkNotNullArgument(properties, "properties");
-
-        this.licenseName = licenseName;
+        this.licenseName = Objects.requireNonNull(licenseName, "licenseName");
         this.properties = CollectionUtils.copyNullSafeHashMap(properties);
         this.licenseTemplateFile = licenseTemplateFile;
     }

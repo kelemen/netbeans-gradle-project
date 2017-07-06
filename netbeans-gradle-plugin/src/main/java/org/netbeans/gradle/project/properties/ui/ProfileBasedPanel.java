@@ -27,12 +27,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableFunction;
-import org.jtrim.property.PropertySource;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.concurrent.AsyncTasks;
+import org.jtrim2.executor.CancelableFunction;
+import org.jtrim2.property.PropertySource;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
@@ -53,9 +53,9 @@ import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 
-import static org.jtrim.property.PropertyFactory.*;
-import static org.jtrim.property.swing.AutoDisplayState.*;
-import static org.jtrim.property.swing.SwingProperties.*;
+import static org.jtrim2.property.PropertyFactory.*;
+import static org.jtrim2.property.swing.AutoDisplayState.*;
+import static org.jtrim2.property.swing.SwingProperties.*;
 import static org.netbeans.gradle.project.properties.NbProperties.*;
 
 @SuppressWarnings("serial")
@@ -77,15 +77,12 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             final JComponent customPanel,
             ProfileEditorFactory snapshotCreator) {
 
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(extensionSettings, "extensionSettings");
-        ExceptionHelper.checkNotNullArgument(customPanel, "customPanel");
-        ExceptionHelper.checkNotNullArgument(snapshotCreator, "snapshotCreator");
+        Objects.requireNonNull(customPanel, "customPanel");
 
-        this.project = project;
-        this.extensionSettings = extensionSettings;
-        this.snapshotCreator = snapshotCreator;
-        this.profileLoadCounter = new AtomicIntProperty(SwingTaskExecutor.getStrictExecutor(false));
+        this.project = Objects.requireNonNull(project, "project");
+        this.extensionSettings = Objects.requireNonNull(extensionSettings, "extensionSettings");
+        this.snapshotCreator = Objects.requireNonNull(snapshotCreator, "snapshotCreator");
+        this.profileLoadCounter = new AtomicIntProperty(SwingExecutors.getStrictExecutor(false));
         this.currentlyShownProfile = null;
         this.snapshots = new HashMap<>();
         this.customPanelLayer = new JLayer<>(customPanel);
@@ -219,10 +216,9 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
                     SwingUtilities.invokeLater(toReleaseTask(taskLock, uiUpdateTask));
                 }
             }
-        }, (boolean canceled, Throwable error) -> {
-            NbTaskExecutors.defaultCleanup(canceled, error);
+        }).whenComplete((result, error) -> {
             mainLockRef.release();
-        });
+        }).exceptionally(AsyncTasks::expectNoError);
     }
 
     private void fillProfileCombo(Collection<ProfileItem> profileItems) {

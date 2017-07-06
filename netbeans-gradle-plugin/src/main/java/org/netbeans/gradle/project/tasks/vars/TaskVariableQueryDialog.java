@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
@@ -23,7 +24,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -208,9 +208,7 @@ public final class TaskVariableQueryDialog extends JDialog {
         private final String[] possibleValues;
 
         public BoolVariable(DisplayedTaskVariable variable) {
-            ExceptionHelper.checkNotNullArgument(variable, "variable");
-
-            this.variable = variable;
+            this.variable = Objects.requireNonNull(variable, "variable");
             this.checkBox = new JCheckBox(variable.getDisplayName());
 
             String typeArguments = variable.getTypeDescription().getEscapedTypeArguments();
@@ -263,9 +261,7 @@ public final class TaskVariableQueryDialog extends JDialog {
         private final JComboBox<ComboValue> value;
 
         public EnumVariable(DisplayedTaskVariable variable) {
-            ExceptionHelper.checkNotNullArgument(variable, "variable");
-
-            this.variable = variable;
+            this.variable = Objects.requireNonNull(variable, "variable");
             this.label = new JLabel(variable.getDisplayName());
             this.value = new JComboBox<>();
 
@@ -340,9 +336,7 @@ public final class TaskVariableQueryDialog extends JDialog {
         private final JTextField value;
 
         public StringVariable(DisplayedTaskVariable variable) {
-            ExceptionHelper.checkNotNullArgument(variable, "variable");
-
-            this.variable = variable;
+            this.variable = Objects.requireNonNull(variable, "variable");
             this.label = new JLabel(variable.getDisplayName());
 
             String typeArguments = variable.getTypeDescription().getEscapedTypeArguments();

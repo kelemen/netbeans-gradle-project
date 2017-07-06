@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.output;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 import org.openide.windows.IOColorPrint;
 import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;

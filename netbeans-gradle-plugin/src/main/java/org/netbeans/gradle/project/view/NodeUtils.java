@@ -11,7 +11,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.NodeRefresher;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -36,8 +35,8 @@ public final class NodeUtils {
     public static NodeRefresher defaultNodeRefresher(
             final Children children,
             final RefreshableChildren childrenRefresher) {
-        ExceptionHelper.checkNotNullArgument(children, "children");
-        ExceptionHelper.checkNotNullArgument(childrenRefresher, "childrenRefresher");
+        Objects.requireNonNull(children, "children");
+        Objects.requireNonNull(childrenRefresher, "childrenRefresher");
 
         return () -> {
             childrenRefresher.refreshChildren();
@@ -49,15 +48,15 @@ public final class NodeUtils {
         return getRefreshNodeAction(node, NbStrings.getScanForChangesCaption());
     }
 
-    public static Action getRefreshNodeAction(final Node node, String caption) {
-        ExceptionHelper.checkNotNullArgument(node, "node");
-        ExceptionHelper.checkNotNullArgument(caption, "caption");
+    public static Action getRefreshNodeAction(Node node, String caption) {
+        Objects.requireNonNull(node, "node");
+        Objects.requireNonNull(caption, "caption");
 
         return new RefreshNodeAction(caption, node);
     }
 
     public static void refreshChildNodes(Children children) {
-        ExceptionHelper.checkNotNullArgument(children, "children");
+        Objects.requireNonNull(children, "children");
 
         for (Node child: children.getNodes(false)) {
             NodeRefresher refresher = child.getLookup().lookup(NodeRefresher.class);
@@ -80,8 +79,8 @@ public final class NodeUtils {
     }
 
     public static Node findFileChildNode(Children children, FileObject file) {
-        ExceptionHelper.checkNotNullArgument(children, "children");
-        ExceptionHelper.checkNotNullArgument(file, "file");
+        Objects.requireNonNull(children, "children");
+        Objects.requireNonNull(file, "file");
 
         for (Node child: children.getNodes(true)) {
             if (NodeUtils.isNodeOfFile(child, file)) {
@@ -93,8 +92,8 @@ public final class NodeUtils {
     }
 
     public static boolean isNodeOfFile(Node node, FileObject file) {
-        ExceptionHelper.checkNotNullArgument(node, "node");
-        ExceptionHelper.checkNotNullArgument(file, "file");
+        Objects.requireNonNull(node, "node");
+        Objects.requireNonNull(file, "file");
 
         for (FileObject nodeFile: node.getLookup().lookupAll(FileObject.class)) {
             if (file.equals(nodeFile)) {
@@ -105,8 +104,8 @@ public final class NodeUtils {
     }
 
     public static Node askChildrenPackageViewsForTarget(Children children, Object target) {
-        ExceptionHelper.checkNotNullArgument(children, "children");
-        ExceptionHelper.checkNotNullArgument(target, "target");
+        Objects.requireNonNull(children, "children");
+        Objects.requireNonNull(target, "target");
 
         for (Node child: children.getNodes(true)) {
             Node result = PackageView.findPath(child, target);
@@ -119,8 +118,8 @@ public final class NodeUtils {
     }
 
     public static Node askChildrenForTarget(Children children, Object target) {
-        ExceptionHelper.checkNotNullArgument(children, "children");
-        ExceptionHelper.checkNotNullArgument(target, "target");
+        Objects.requireNonNull(children, "children");
+        Objects.requireNonNull(target, "target");
 
         for (Node child: children.getNodes(true)) {
             for (PathFinder nodeFinder: child.getLookup().lookupAll(PathFinder.class)) {
@@ -147,8 +146,8 @@ public final class NodeUtils {
     }
 
     public static Node findChildFileOfFolderNode(Node folderNode, FileObject file) {
-        ExceptionHelper.checkNotNullArgument(folderNode, "folderNode");
-        ExceptionHelper.checkNotNullArgument(file, "file");
+        Objects.requireNonNull(folderNode, "folderNode");
+        Objects.requireNonNull(file, "file");
 
         // Copied from the LogicalViewProvider implementation of the Maven plugin
 

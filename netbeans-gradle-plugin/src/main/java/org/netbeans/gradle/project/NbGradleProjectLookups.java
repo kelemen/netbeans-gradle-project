@@ -3,7 +3,7 @@ package org.netbeans.gradle.project;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.lookups.DynamicLookup;
@@ -22,11 +22,8 @@ public final class NbGradleProjectLookups {
     private final DynamicLookup combinedExtensionLookup;
 
     public NbGradleProjectLookups(NbGradleProject project, Lookup defaultLookup) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(defaultLookup, "defaultLookup");
-
-        this.project = project;
-        this.defaultLookup = defaultLookup;
+        this.project = Objects.requireNonNull(project, "project");
+        this.defaultLookup = Objects.requireNonNull(defaultLookup, "defaultLookup");
         this.mainLookup = new DynamicLookup(defaultLookup);
         this.combinedExtensionLookup = new DynamicLookup();
     }
@@ -90,7 +87,7 @@ public final class NbGradleProjectLookups {
     }
 
     private static LookupProvider moveToLookupProvider(final Lookup lookup) {
-        ExceptionHelper.checkNotNullArgument(lookup, "lookup");
+        Objects.requireNonNull(lookup, "lookup");
         return (baseContext) -> lookup;
     }
 

@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.util;
 
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -11,9 +11,7 @@ public final class CustomGlobalSettingsRule implements TestRule {
     private final NbConsumer<? super CommonGlobalSettings> settingsProvider;
 
     public CustomGlobalSettingsRule(NbConsumer<? super CommonGlobalSettings> settingsProvider) {
-        ExceptionHelper.checkNotNullArgument(settingsProvider, "settingsProvider");
-
-        this.settingsProvider = settingsProvider;
+        this.settingsProvider = Objects.requireNonNull(settingsProvider, "settingsProvider");
     }
 
     @Override

@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.property.MutableProperty;
+import org.jtrim2.property.MutableProperty;
 
 /**
  * Defines the settings of particular profile without any value fallback rules.

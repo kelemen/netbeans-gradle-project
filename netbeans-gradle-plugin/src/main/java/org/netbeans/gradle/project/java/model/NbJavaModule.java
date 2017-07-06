@@ -13,10 +13,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.collections.CollectionsEx;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.collections.CollectionsEx;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.java.JavaCompatibilityModel;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
@@ -25,6 +25,7 @@ import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.java.test.TestTaskName;
+
 
 public final class NbJavaModule implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -58,21 +59,13 @@ public final class NbJavaModule implements Serializable {
             JavaTestModel testTasks,
             NbCodeCoverage codeCoverage) {
 
-        ExceptionHelper.checkNotNullArgument(properties, "properties");
-        ExceptionHelper.checkNotNullArgument(compatibilityModel, "compatibilityModel");
-        ExceptionHelper.checkNotNullElements(sources, "sources");
-        ExceptionHelper.checkNotNullElements(listedDirs, "listedDirs");
-        ExceptionHelper.checkNotNullElements(jarOutputs, "jarOutputs");
-        ExceptionHelper.checkNotNullArgument(testTasks, "testTasks");
-        ExceptionHelper.checkNotNullArgument(codeCoverage, "codeCoverage");
-
-        this.properties = properties;
-        this.compatibilityModel = compatibilityModel;
+        this.properties = Objects.requireNonNull(properties, "properties");
+        this.compatibilityModel = Objects.requireNonNull(compatibilityModel, "compatibilityModel");
         this.sources = CollectionUtils.copyNullSafeList(sources);
         this.listedDirs = CollectionUtils.copyNullSafeList(listedDirs);
         this.jarOutputs = CollectionUtils.copyNullSafeList(jarOutputs);
-        this.testTasks = testTasks;
-        this.codeCoverage = codeCoverage;
+        this.testTasks = Objects.requireNonNull(testTasks, "testTasks");
+        this.codeCoverage = Objects.requireNonNull(codeCoverage, "codeCoverage");
 
         this.mainSourceSetRef = new AtomicReference<>(null);
         this.testSourceSetRef = new AtomicReference<>(null);
@@ -327,8 +320,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     public JavaSourceSet tryGetSourceSetByName(String name) {
-        ExceptionHelper.checkNotNullArgument(name, "name");
-
+        Objects.requireNonNull(name, "name");
         return getNameToSourceSet().get(name);
     }
 
@@ -357,8 +349,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     public JavaTestTask tryGetTestModelByName(String name) {
-        ExceptionHelper.checkNotNullArgument(name, "name");
-
+        Objects.requireNonNull(name, "name");
         return getTestNameToModel().get(name);
     }
 
@@ -402,7 +393,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     public String findTestTaskForSourceSet(String sourceSetName) {
-        ExceptionHelper.checkNotNullArgument(sourceSetName, "sourceSetName");
+        Objects.requireNonNull(sourceSetName, "sourceSetName");
 
         String expectedName = getExpectedTestName(sourceSetName);
 

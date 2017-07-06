@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,7 +20,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -227,9 +228,10 @@ public final class ModelLoadIssueReporter {
         reportErrorNow(message, projectName, error);
     }
 
-    public static void reportBuildScriptError(final NbGradleProject project, final Throwable error) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(error, "error");
+    @SuppressWarnings("ThrowableResultIgnored")
+    public static void reportBuildScriptError(NbGradleProject project, Throwable error) {
+        Objects.requireNonNull(project, "project");
+        Objects.requireNonNull(error, "error");
 
         SwingUtilities.invokeLater(() -> {
             reportBuildScriptErrorNow(project, error);

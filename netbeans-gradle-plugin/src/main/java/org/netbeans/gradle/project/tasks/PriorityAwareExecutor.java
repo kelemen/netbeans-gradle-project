@@ -1,67 +1,49 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.collections.RefCollection;
-import org.jtrim.collections.RefLinkedList;
-import org.jtrim.concurrent.CancelableTask;
-import org.jtrim.concurrent.CleanupTask;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.event.InitLaterListenerRef;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.UnregisteredListenerRef;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.cancel.Cancellation;
+import org.jtrim2.cancel.CancellationToken;
+import org.jtrim2.cancel.OperationCanceledException;
+import org.jtrim2.collections.RefCollection;
+import org.jtrim2.collections.RefLinkedList;
+import org.jtrim2.event.InitLaterListenerRef;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.executor.CancelableFunction;
+import org.jtrim2.executor.TaskExecutor;
 
 public final class PriorityAwareExecutor {
     private final TaskExecutor wrapped;
     private final TaskQueue taskQueue;
 
     public PriorityAwareExecutor(TaskExecutor wrapped) {
-        ExceptionHelper.checkNotNullArgument(wrapped, "wrapped");
-
-        this.wrapped = wrapped;
+        this.wrapped = Objects.requireNonNull(wrapped, "wrapped");
         this.taskQueue = new TaskQueue();
     }
 
-    private void executeForPriority(
+    private <V> CompletionStage<V> executeForPriority(
             CancellationToken cancelToken,
             Priority priority,
-            CancelableTask task,
-            CleanupTask cleanupTask) {
+            CancelableFunction<? extends V> task) {
 
-        TaskDef taskDef = new TaskDef(cancelToken, task, cleanupTask);
+        TaskDef<V> taskDef = new TaskDef<>(cancelToken, task);
         RefCollection.ElementRef<?> queueRef = taskQueue.addTask(priority, taskDef);
         taskDef.init(queueRef);
 
-        AtomicReference<TaskDef> taskDefRef = new AtomicReference<>(null);
-
         wrapped.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken taskCancelToken) -> {
-            TaskDef nextTask = taskQueue.pollTask();
-            taskDefRef.set(nextTask);
+            TaskDef<?> nextTask = taskQueue.pollTask();
             nextTask.doTask(taskCancelToken);
-        }, (boolean canceled, Throwable error) -> {
-            TaskDef def = taskDefRef.get();
-            if (def != null) {
-                def.cleanup(canceled, error);
-            }
-            else if (canceled) {
-                // This means, that the executor has been terminated
-                // so poll one cleanup task and execute it.
-                TaskDef task1 = taskQueue.pollTask();
-                if (task1 != null) {
-                    task1.cleanup(canceled, error);
-                }
-            }
         });
+
+        return taskDef.future;
     }
 
-    private TaskExecutor getExecutor(final Priority priority) {
-        return (CancellationToken cancelToken, CancelableTask task, CleanupTask cleanupTask) -> {
-            executeForPriority(cancelToken, priority, task, cleanupTask);
-        };
+    private TaskExecutor getExecutor(Priority priority) {
+        return new PriorityExecutorImpl(priority);
     }
 
     public TaskExecutor getHighPriorityExecutor() {
@@ -75,8 +57,8 @@ public final class PriorityAwareExecutor {
     private static final class TaskQueue {
         private final Lock queueLock;
         // TODO: Allow arbitrary priority
-        private final RefLinkedList<TaskDef> queueHighPriority;
-        private final RefLinkedList<TaskDef> queueLowPriority;
+        private final RefLinkedList<TaskDef<?>> queueHighPriority;
+        private final RefLinkedList<TaskDef<?>> queueLowPriority;
 
         public TaskQueue() {
             this.queueLock = new ReentrantLock();
@@ -84,7 +66,7 @@ public final class PriorityAwareExecutor {
             this.queueHighPriority = new RefLinkedList<>();
         }
 
-        private RefLinkedList<TaskDef> getQueue(Priority priority) {
+        private RefLinkedList<TaskDef<?>> getQueue(Priority priority) {
             return priority == Priority.HIGH ? queueHighPriority : queueLowPriority;
         }
 
@@ -122,8 +104,8 @@ public final class PriorityAwareExecutor {
             };
         }
 
-        public RefCollection.ElementRef<?> addTask(Priority priority, TaskDef task) {
-            RefLinkedList<TaskDef> queue = getQueue(priority);
+        public RefCollection.ElementRef<?> addTask(Priority priority, TaskDef<?> task) {
+            RefLinkedList<TaskDef<?>> queue = getQueue(priority);
 
             queueLock.lock();
             try {
@@ -133,10 +115,10 @@ public final class PriorityAwareExecutor {
             }
         }
 
-        public TaskDef pollTask() {
+        public TaskDef<?> pollTask() {
             queueLock.lock();
             try {
-                TaskDef result = queueHighPriority.poll();
+                TaskDef<?> result = queueHighPriority.poll();
                 if (result == null) {
                     result = queueLowPriority.poll();
                 }
@@ -152,20 +134,18 @@ public final class PriorityAwareExecutor {
         LOW
     }
 
-    private static final class TaskDef {
+    private static final class TaskDef<V> {
         private volatile CancellationToken cancelToken;
-        private volatile CancelableTask task;
-        private volatile boolean skippedExecute;
-        private final CleanupTask cleanupTask;
+        private volatile CancelableFunction<? extends V> task;
+        private final CompletableFuture<V> future;
 
         private final AtomicReference<ListenerRef> cancelRef;
 
-        public TaskDef(CancellationToken cancelToken, CancelableTask task, CleanupTask cleanupTask) {
+        public TaskDef(CancellationToken cancelToken, CancelableFunction<? extends V> task) {
             this.cancelToken = cancelToken;
             this.task = task;
-            this.cleanupTask = cleanupTask;
+            this.future = new CompletableFuture<>();
             this.cancelRef = new AtomicReference<>(null);
-            this.skippedExecute = false;
         }
 
         public void init(final RefCollection.ElementRef<?> queueRef) {
@@ -174,9 +154,8 @@ public final class PriorityAwareExecutor {
             cancelRefRef.init(cancelToken.addCancellationListener(() -> {
                 removeTask();
 
-                if (cleanupTask == null) {
-                    queueRef.remove();
-                }
+                future.completeExceptionally(OperationCanceledException.withoutStackTrace());
+                queueRef.remove();
 
                 cancelRefRef.unregister();
             }));
@@ -192,31 +171,36 @@ public final class PriorityAwareExecutor {
         }
 
         public void doTask(CancellationToken executorCancelToken) throws Exception {
-            CancellationToken currentCancelToken = cancelToken;
-            currentCancelToken = currentCancelToken != null
-                    ? Cancellation.anyToken(executorCancelToken, currentCancelToken)
-                    : executorCancelToken;
+            try {
+                CancellationToken currentCancelToken = cancelToken;
+                currentCancelToken = currentCancelToken != null
+                        ? Cancellation.anyToken(executorCancelToken, currentCancelToken)
+                        : executorCancelToken;
 
-            CancelableTask currentTask = task;
-            if (currentTask != null) {
-                currentTask.execute(currentCancelToken);
-            }
-            else {
-                skippedExecute = true;
+                CancelableFunction<? extends V> currentTask = task;
+                if (currentTask == null) {
+                    future.completeExceptionally(OperationCanceledException.withoutStackTrace());
+                    return;
+                }
+
+                V result = currentTask.execute(currentCancelToken);
+                future.complete(result);
+            } catch (Throwable ex) {
+                future.completeExceptionally(ex);
             }
         }
+    }
 
-        public void cleanup(boolean canceled, Throwable error) throws Exception {
-            try {
-                ListenerRef currentCancelRef = cancelRef.getAndSet(UnregisteredListenerRef.INSTANCE);
-                if (currentCancelRef != null) {
-                    currentCancelRef.unregister();
-                }
-            } finally {
-                if (cleanupTask != null) {
-                    cleanupTask.cleanup(canceled || skippedExecute, error);
-                }
-            }
+    private final class PriorityExecutorImpl implements TaskExecutor {
+        private final Priority priority;
+
+        public PriorityExecutorImpl(Priority priority) {
+            this.priority = priority;
+        }
+
+        @Override
+        public <V> CompletionStage<V> executeFunction(CancellationToken cancelToken, CancelableFunction<? extends V> function) {
+            return executeForPriority(cancelToken, priority, function);
         }
     }
 }

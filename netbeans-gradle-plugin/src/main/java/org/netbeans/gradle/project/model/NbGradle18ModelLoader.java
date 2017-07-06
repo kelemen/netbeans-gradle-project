@@ -9,8 +9,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.gradle.tooling.ProjectConnection;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.BuilderResult;
@@ -43,13 +43,9 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
     private final OperationInitializer setup;
 
     public NbGradle18ModelLoader(SettingsGradleDef settingsGradleDef, OperationInitializer setup, GradleTarget gradleTarget) {
-        ExceptionHelper.checkNotNullArgument(settingsGradleDef, "settingsGradleDef");
-        ExceptionHelper.checkNotNullArgument(setup, "setup");
-        ExceptionHelper.checkNotNullArgument(gradleTarget, "gradleTarget");
-
-        this.settingsGradleDef = settingsGradleDef;
-        this.gradleTarget = gradleTarget;
-        this.setup = setup;
+        this.settingsGradleDef = Objects.requireNonNull(settingsGradleDef, "settingsGradleDef");
+        this.gradleTarget = Objects.requireNonNull(gradleTarget, "gradleTarget");
+        this.setup = Objects.requireNonNull(setup, "setup");
     }
 
     private static <E> void addAllNullSafe(Collection<? super E> collection, Collection<? extends E> toAdd) {

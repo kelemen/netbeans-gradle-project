@@ -10,8 +10,7 @@ import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.api.project.ui.OpenProjects;
@@ -97,10 +96,10 @@ public final class OpenProjectsAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (cancelToken) -> {
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(() -> {
             for (File projectDir: projectDirs) {
                 openProject(projectDir);
             }
-        }, null);
+        });
     }
 }

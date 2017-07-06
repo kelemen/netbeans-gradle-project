@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.List;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.utils.ExceptionHelper;
+import java.util.Objects;
+import org.jtrim2.event.ListenerRef;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileKey;
@@ -11,8 +11,7 @@ public final class ProjectProfileLoader {
     private final NbGradleSingleProjectConfigProvider configProvider;
 
     public ProjectProfileLoader(NbGradleSingleProjectConfigProvider configProvider) {
-        ExceptionHelper.checkNotNullArgument(configProvider, "configProvider");
-        this.configProvider = configProvider;
+        this.configProvider = Objects.requireNonNull(configProvider, "configProvider");
     }
 
     public NbGradleCommonProperties loadCommonPropertiesForProfile(ProfileKey profileKey) {
@@ -33,7 +32,7 @@ public final class ProjectProfileLoader {
     }
 
     public ListenerRef loadActiveSettingsForProfile(ProfileKey profileKey, final ActiveSettingsQueryListener listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
+        Objects.requireNonNull(listener, "listener");
 
         ProfileSettingsContainer settingsContainer = configProvider.getProfileSettingsContainer();
         List<ProfileSettingsKey> combinedKeys = keysWithFallbacks(profileKey);

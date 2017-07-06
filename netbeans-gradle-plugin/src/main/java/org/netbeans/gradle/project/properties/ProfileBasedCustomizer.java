@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
+import java.util.Objects;
 import javax.swing.JComponent;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.ui.ProfileBasedPanel;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 import org.openide.util.Lookup;
@@ -14,17 +14,13 @@ public final class ProfileBasedCustomizer implements ProjectCustomizer.Composite
     public ProfileBasedCustomizer(String categoryName, String displayName, final ProfileBasedPanel panel) {
         this(categoryName, displayName, () -> panel);
 
-        ExceptionHelper.checkNotNullArgument(panel, "panel");
+        Objects.requireNonNull(panel, "panel");
     }
 
     public ProfileBasedCustomizer(String categoryName, String displayName, PanelFactory panelFactory) {
-        ExceptionHelper.checkNotNullArgument(categoryName, "categoryName");
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-        ExceptionHelper.checkNotNullArgument(panelFactory, "panelFactory");
-
-        this.categoryName = categoryName;
-        this.displayName = displayName;
-        this.panelFactory = panelFactory;
+        this.categoryName = Objects.requireNonNull(categoryName, "categoryName");
+        this.displayName = Objects.requireNonNull(displayName, "displayName");
+        this.panelFactory = Objects.requireNonNull(panelFactory, "panelFactory");
     }
 
     @Override

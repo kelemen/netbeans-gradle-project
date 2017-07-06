@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
@@ -17,9 +17,7 @@ public final class MergedBuiltInGradleCommandQuery implements BuiltInGradleComma
     private final NbSupplier<? extends Collection<? extends BuiltInGradleCommandQuery>> extraQueries;
 
     public MergedBuiltInGradleCommandQuery(NbSupplier<? extends Collection<? extends BuiltInGradleCommandQuery>> extraQueries) {
-        ExceptionHelper.checkNotNullArgument(extraQueries, "extraQueries");
-
-        this.extraQueries = extraQueries;
+        this.extraQueries = Objects.requireNonNull(extraQueries, "extraQueries");
         this.defaultBuiltInTasks = new DefaultBuiltInTasks();
     }
 

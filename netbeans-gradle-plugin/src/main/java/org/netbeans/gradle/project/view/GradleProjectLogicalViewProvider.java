@@ -6,15 +6,15 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import javax.swing.Action;
-import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.ListenerManager;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim2.event.CopyOnTriggerListenerManager;
+import org.jtrim2.event.ListenerManager;
+import org.jtrim2.event.ListenerRef;
+import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -51,18 +51,14 @@ implements
     private final AtomicReference<Collection<ModelRefreshListener>> listenersToFinalize;
 
     public GradleProjectLogicalViewProvider(NbGradleProject project, ContextActionProvider actionProvider) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(actionProvider, "actionProvider");
-
-        this.project = project;
-        this.actionProvider = actionProvider;
+        this.project = Objects.requireNonNull(project, "project");
+        this.actionProvider = Objects.requireNonNull(actionProvider, "actionProvider");
         this.childRefreshListeners = new CopyOnTriggerListenerManager<>();
         this.listenersToFinalize = new AtomicReference<>(null);
     }
 
     public ListenerRef addChildModelRefreshListener(final ModelRefreshListener listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
+        Objects.requireNonNull(listener, "listener");
         return childRefreshListeners.registerListener(listener);
     }
 
@@ -154,10 +150,10 @@ implements
             this.actionProvider = actionProvider;
             // TODO: It would be nicer to lazily initialize this list.
             this.actions = actionProvider.getActions();
-            this.modelChanges = new SwingUpdateTaskExecutor(true);
-            this.displayNameChanges = new SwingUpdateTaskExecutor(true);
-            this.descriptionChanges = new SwingUpdateTaskExecutor(true);
-            this.iconChanges = new SwingUpdateTaskExecutor(true);
+            this.modelChanges = SwingExecutors.getSwingUpdateExecutor(true);
+            this.displayNameChanges = SwingExecutors.getSwingUpdateExecutor(true);
+            this.descriptionChanges = SwingExecutors.getSwingUpdateExecutor(true);
+            this.iconChanges = SwingExecutors.getSwingUpdateExecutor(true);
         }
 
         private void updateActionsList() {

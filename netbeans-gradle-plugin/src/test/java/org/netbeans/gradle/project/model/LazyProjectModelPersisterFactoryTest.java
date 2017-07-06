@@ -2,10 +2,10 @@ package org.netbeans.gradle.project.model;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.jtrim.concurrent.ContextAwareWrapper;
-import org.jtrim.concurrent.ManualTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.concurrent.TaskExecutors;
+import org.jtrim2.executor.ContextAwareWrapper;
+import org.jtrim2.executor.ManualTaskExecutor;
+import org.jtrim2.executor.TaskExecutor;
+import org.jtrim2.executor.TaskExecutors;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.netbeans.gradle.project.util.NbConsumer;
