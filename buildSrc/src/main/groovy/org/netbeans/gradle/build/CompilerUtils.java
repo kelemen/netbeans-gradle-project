@@ -1,10 +1,6 @@
 package org.netbeans.gradle.build;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,44 +14,11 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.compile.CompileOptions;
-import org.gradle.api.tasks.compile.ForkOptions;
 import org.gradle.api.tasks.compile.GroovyCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.jvm.toolchain.JavaToolChain;
 
 public final class CompilerUtils {
-    private static final String JAVAC_VERSION_PREFIX = "javac";
-
-    private static String tryGetCompilerVersion(ForkOptions forkOptions) {
-        String executable = forkOptions.getExecutable();
-        if (executable == null || executable.isEmpty()) {
-            return null;
-        }
-
-        ProcessBuilder processBuilder = new ProcessBuilder(executable, "-version");
-        processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-
-        try {
-            Process process = processBuilder.start();
-
-            InputStream input = process.getErrorStream();
-            BufferedReader inputReader = new BufferedReader(new InputStreamReader(input, "ISO-8859-1"), 4096);
-
-            String result = null;
-            String line = inputReader.readLine();
-            while (line != null) {
-                if (line.startsWith(JAVAC_VERSION_PREFIX)) {
-                    result = line.substring(JAVAC_VERSION_PREFIX.length()).trim();
-                    // Continue reading to prevent dead-locking the process if it
-                    // prints something else.
-                }
-                line = inputReader.readLine();
-            }
-            return result;
-        } catch (IOException ex) {
-            return null;
-        }
-    }
-
     public static JavaVersion getTargetCompatibility(Project project) {
         JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
         return javaPlugin.getTargetCompatibility();
@@ -86,14 +49,8 @@ public final class CompilerUtils {
     }
 
     public static String tryGetCompilerVersion(JavaCompile compileTask) {
-        CompileOptions options = compileTask.getOptions();
-        if (options.isFork()) {
-            ForkOptions forkOptions = options.getForkOptions();
-            return tryGetCompilerVersion(forkOptions);
-        }
-        else {
-            return System.getProperty("java.version");
-        }
+        JavaToolChain toolChain = compileTask.getToolChain();
+        return toolChain.getVersion();
     }
 
     public static void configureJavaCompilers(Project project) {
