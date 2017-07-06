@@ -13,7 +13,7 @@ dependencies {
     compile localGroovy()
     compile "org.gradle:gradle-tooling-api:1.11"
     compile "org.apache.maven.shared:maven-dependency-analyzer:1.6"
-    compile "cz.kubacki.gradle.plugins:gradle-nbm-plugin:1.16.0"
+    compile "cz.kubacki.gradle.plugins:gradle-nbm-plugin:1.17.0"
     runtime 'org.slf4j:slf4j-simple:1.7.5'
 }
 
