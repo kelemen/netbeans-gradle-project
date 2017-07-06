@@ -994,8 +994,8 @@ public class MultiLevelJavaProjectTest {
             File projectDir,
             String name) throws IOException {
 
-        File classesDir = getSubPath(projectDir, "build", "classes", name);
-        File resourcesDir = getSubPath(projectDir, "build", "resources", name);
+        File classesDir = getSubPath(projectDir, "build", "myclasses", name);
+        File resourcesDir = getSubPath(projectDir, "build", "myresources", name);
         return new JavaOutputDirs(classesDir, resourcesDir, Collections.<File>emptySet());
     }
 
