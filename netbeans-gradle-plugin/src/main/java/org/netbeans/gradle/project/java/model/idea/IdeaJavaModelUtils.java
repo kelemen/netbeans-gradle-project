@@ -216,7 +216,7 @@ public final class IdeaJavaModelUtils {
                     nextProjectsToSkip.add(uniqueProjectName);
                 }
 
-                IdeaModule moduleDep = ((IdeaModuleDependency)dependency).getDependencyModule();
+                IdeaModule moduleDep = moduleOf((IdeaModuleDependency)dependency);
 
                 IdeaDependencyBuilder subDependencies = new IdeaDependencyBuilder();
                 fetchAllDependencies(moduleDep, subDependencies, nextProjectsToSkip, cache);
@@ -237,6 +237,11 @@ public final class IdeaJavaModelUtils {
         }
 
         cache.put(uniqueProjectName, result);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static IdeaModule moduleOf(IdeaModuleDependency dependency) {
+        return dependency.getDependencyModule();
     }
 
     private static NbListedDir findWebAppDir(Collection<JavaSourceSet> sources) {
