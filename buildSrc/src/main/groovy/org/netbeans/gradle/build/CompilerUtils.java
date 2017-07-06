@@ -31,9 +31,9 @@ public final class CompilerUtils {
         }
 
         String foundToolsJar = null;
-        String explicitJavaCompiler = tryGetExplicitJdkCompiler(project, javaVersion);
-        if (explicitJavaCompiler != null) {
-            foundToolsJar = extractToolsJarFromCompiler(explicitJavaCompiler);
+        File explicitJdkHome = tryGetExplicitJdkHome(project, javaVersion);
+        if (explicitJdkHome != null) {
+            foundToolsJar = extractToolsJarFromJDKHome(explicitJdkHome.toPath());
         }
 
         if (foundToolsJar == null) {
@@ -105,16 +105,16 @@ public final class CompilerUtils {
         }
 
         final Project project = compileTask.getProject();
-        String explicitJavaCompiler = tryGetExplicitJdkCompiler(project, targetCompatibility);
-        if (explicitJavaCompiler != null) {
+        File explicitJavaHome = tryGetExplicitJdkHome(project, targetCompatibility);
+        if (explicitJavaHome != null) {
             compilerOptions.setFork(true);
-            compilerOptions.getForkOptions().setExecutable(explicitJavaCompiler);
+            compilerOptions.getForkOptions().setJavaHome(explicitJavaHome);
         }
         else {
             compileTask.doFirst(new Action<Task>() {
                 @Override
                 public void execute(Task t) {
-                    String jdkProperty = getJdkPropertyName(targetCompatibility);
+                    String jdkProperty = getJdkHomePropertyName(targetCompatibility);
                     project.getLogger().warn("Warning: " + jdkProperty + " property is missing and"
                             + " not compiling with Java " + targetCompatibility
                             + ". Using " + JavaVersion.current());
@@ -165,27 +165,21 @@ public final class CompilerUtils {
         return extractToolsJarFromJDKHome(jdkHome);
     }
 
-    private static String extractToolsJarFromCompiler(String javac) {
-        if (javac == null) {
-            return null;
-        }
-
-        Path jdkHome = getParent(Paths.get(javac), 2);
-        return extractToolsJarFromJDKHome(jdkHome);
+    private static String getJdkHomePropertyName(JavaVersion javaVersion) {
+        return "jdk" + javaVersion.getMajorVersion() + "Home";
     }
 
-    private static String getJdkPropertyName(JavaVersion javaVersion) {
-        return "jdk" + javaVersion.getMajorVersion() + "Compiler";
-    }
-
-    private static String tryGetExplicitJdkCompiler(Project project, JavaVersion javaVersion) {
-        String jdkProperty = getJdkPropertyName(javaVersion);
+    private static File tryGetExplicitJdkHome(Project project, JavaVersion javaVersion) {
+        String jdkProperty = getJdkHomePropertyName(javaVersion);
+        String javaHomeStr;
         if (project.hasProperty(jdkProperty)) {
-            return project.property(jdkProperty).toString().trim();
+            javaHomeStr = project.property(jdkProperty).toString().trim();
         }
         else {
-            return null;
+            javaHomeStr = null;
         }
+
+        return javaHomeStr != null ? new File(javaHomeStr) : null;
     }
 
     private CompilerUtils() {
