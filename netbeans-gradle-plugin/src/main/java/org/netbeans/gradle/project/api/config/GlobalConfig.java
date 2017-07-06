@@ -1,20 +1,19 @@
 package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
-import org.netbeans.gradle.project.api.property.NbPropertySource;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
-import org.netbeans.gradle.project.properties.NbPropertySourceWrapper;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 
 /**
  * Contains the values of some of the properties set in the global settings.
  */
 public final class GlobalConfig {
-    private static final NbPropertySource<Boolean> SKIP_TESTS
-            = new NbPropertySourceWrapper<>(CommonGlobalSettings.getDefault().skipTests().getActiveSource());
+    private static final PropertySource<Boolean> SKIP_TESTS
+            = CommonGlobalSettings.getDefault().skipTests().getActiveSource();
 
-    private static final NbPropertySource<Boolean> SKIP_CHECK
-            = new NbPropertySourceWrapper<>(CommonGlobalSettings.getDefault().skipCheck().getActiveSource());
+    private static final PropertySource<Boolean> SKIP_CHECK
+            = CommonGlobalSettings.getDefault().skipCheck().getActiveSource();
 
     /**
      * Returns a settings container for global settings associated with the specified extension
@@ -48,7 +47,7 @@ public final class GlobalConfig {
      *   never returns {@code null}.
      */
     @Nonnull
-    public static NbPropertySource<Boolean> skipTests() {
+    public static PropertySource<Boolean> skipTests() {
         return SKIP_TESTS;
     }
 
@@ -65,7 +64,7 @@ public final class GlobalConfig {
      *   never returns {@code null}.
      */
     @Nonnull
-    public static NbPropertySource<Boolean> skipCheck() {
+    public static PropertySource<Boolean> skipCheck() {
       return SKIP_CHECK;
     }
 

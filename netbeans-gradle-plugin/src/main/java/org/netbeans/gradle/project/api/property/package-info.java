@@ -1,6 +1,5 @@
 /**
- * Contains interfaces related to property handling. Parts of this package
- * is just a copy from the {@code JTrim} library and will effectively be
- * replaced by <B>JTrim</B> interfaces in the future (in NetBeans 7.4).
+ * Contains utilities to access some generic project properties.
+ * This API will be replaced in the future.
  */
 package org.netbeans.gradle.project.api.property;

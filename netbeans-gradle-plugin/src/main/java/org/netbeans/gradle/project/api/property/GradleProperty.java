@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.api.property;
 
 import java.nio.charset.Charset;
+import org.jtrim2.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 
@@ -24,7 +25,7 @@ public final class GradleProperty {
      * <P>
      * The value of this property is never {@code null}.
      */
-    public interface SourceEncoding extends NbPropertySource<Charset> {
+    public interface SourceEncoding extends PropertySource<Charset> {
     }
 
     /**
@@ -36,7 +37,7 @@ public final class GradleProperty {
      * returns {@code null}. Note however, that in this case something is
      * seriously wrong.
      */
-    public interface ScriptPlatform extends NbPropertySource<JavaPlatform> {
+    public interface ScriptPlatform extends PropertySource<JavaPlatform> {
     }
 
     /**
@@ -48,7 +49,7 @@ public final class GradleProperty {
      * <P>
      * The value of this property is never {@code null}.
      */
-    public interface SourceLevel extends NbPropertySource<String> {
+    public interface SourceLevel extends PropertySource<String> {
     }
 
     /**
@@ -61,7 +62,7 @@ public final class GradleProperty {
      *
      * @see org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery
      */
-    public interface BuildPlatform extends NbPropertySource<ProjectPlatform> {
+    public interface BuildPlatform extends PropertySource<ProjectPlatform> {
     }
 
     private GradleProperty() {
