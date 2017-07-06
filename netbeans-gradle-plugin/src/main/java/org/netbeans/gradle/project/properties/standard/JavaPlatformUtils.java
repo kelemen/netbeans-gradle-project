@@ -14,9 +14,9 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.JavaProjectPlatform;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
+import org.netbeans.gradle.project.util.EventUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.modules.SpecificationVersion;
 
@@ -182,7 +182,7 @@ public final class JavaPlatformUtils {
             };
 
             JavaPlatformManager.getDefault().addPropertyChangeListener(propertyChangeListener);
-            return NbListenerRefs.fromRunnable(() -> {
+            return EventUtils.asSafeListenerRef(() -> {
                 JavaPlatformManager.getDefault().removePropertyChangeListener(propertyChangeListener);
             });
         }

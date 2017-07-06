@@ -26,9 +26,9 @@ import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.NbProperties;
+import org.netbeans.gradle.project.util.EventUtils;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.project.ui.support.NodeFactory;
 import org.netbeans.spi.project.ui.support.NodeList;
@@ -288,7 +288,7 @@ public final class AnnotationChildNodes {
 
             final Lookup.Result<NodeFactory> nodeLists = getNodeListsResult();
             nodeLists.addLookupListener(wrapper);
-            return NbListenerRefs.fromRunnable(() -> {
+            return EventUtils.asSafeListenerRef(() -> {
                 nodeLists.removeLookupListener(wrapper);
             });
         }

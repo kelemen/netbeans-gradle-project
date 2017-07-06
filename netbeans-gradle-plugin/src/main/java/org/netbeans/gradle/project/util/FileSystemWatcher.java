@@ -38,7 +38,6 @@ import org.jtrim2.executor.MonitorableTaskExecutorService;
 import org.jtrim2.executor.TaskExecutor;
 import org.jtrim2.executor.UpdateTaskExecutor;
 import org.jtrim2.swing.concurrent.SwingExecutors;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 
 public final class FileSystemWatcher {
     private static final Logger LOGGER = Logger.getLogger(FileSystemWatcher.class.getName());
@@ -273,7 +272,7 @@ public final class FileSystemWatcher {
 
         startWatching(currentWatchService, path, listeners);
 
-        return NbListenerRefs.fromRunnable(() -> {
+        return EventUtils.asSafeListenerRef(() -> {
             unregisterPath(path, listenerRemover);
         });
     }

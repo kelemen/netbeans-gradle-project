@@ -10,8 +10,6 @@ import org.jtrim2.event.ListenerRef;
 import org.jtrim2.event.ListenerRefs;
 import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.model.java.JavaSourceSet;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.ManualRefreshedNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -60,12 +58,12 @@ implements
     }
 
     @Override
-    public NbListenerRef addNodeChangeListener(Runnable listener) {
+    public ListenerRef addNodeChangeListener(Runnable listener) {
         ListenerRef ref1 = javaExt.addModelChangeListener(listener);
         ListenerRef ref2 = javaExt.getSourceDirsHandler().addDirsCreatedListener(listener);
         ListenerRef ref3 = javaSourcesDisplayMode().addChangeListener(listener);
         ListenerRef ref4 = addDirectoryChangeListener(listener);
-        return NbListenerRefs.asNbRef(ListenerRefs.combineListenerRefs(ref1, ref2, ref3, ref4));
+        return ListenerRefs.combineListenerRefs(ref1, ref2, ref3, ref4);
     }
 
     private void addListedDirs(List<SingleNodeFactory> toPopulate) {

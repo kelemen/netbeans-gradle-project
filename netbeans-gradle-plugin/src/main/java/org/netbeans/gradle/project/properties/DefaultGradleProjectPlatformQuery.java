@@ -8,14 +8,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import org.jtrim2.event.ListenerRef;
 import org.jtrim2.event.ListenerRefs;
 import org.jtrim2.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
@@ -36,12 +35,12 @@ implements
     }
 
     @Override
-    public NbListenerRef addPlatformChangeListener(Runnable listener) {
+    public ListenerRef addPlatformChangeListener(Runnable listener) {
         Objects.requireNonNull(listener, "listener");
 
-        return NbListenerRefs.asNbRef(ListenerRefs.combineListenerRefs(
+        return ListenerRefs.combineListenerRefs(
                 JavaPlatformUtils.installedPlatforms().addChangeListener(listener),
-                orderProperty().addChangeListener(listener)));
+                orderProperty().addChangeListener(listener));
     }
 
     @Override

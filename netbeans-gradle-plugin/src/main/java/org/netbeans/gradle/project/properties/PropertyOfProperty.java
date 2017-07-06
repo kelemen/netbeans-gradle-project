@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim2.event.ListenerRef;
 import org.jtrim2.event.ListenerRefs;
 import org.jtrim2.property.PropertySource;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbFunction;
 
 final class PropertyOfProperty<RootValue, SubValue> implements PropertySource<SubValue> {
@@ -57,12 +56,12 @@ final class PropertyOfProperty<RootValue, SubValue> implements PropertySource<Su
 
         registerWithSubListener(listener, subListenerRef);
 
-        return NbListenerRefs.fromRunnable(() -> {
+        return () -> {
             listenerRef.unregister();
             ListenerRef subRef = subListenerRef.getAndSet(null);
             if (subRef != null) {
                 subRef.unregister();
             }
-        });
+        };
     }
 }

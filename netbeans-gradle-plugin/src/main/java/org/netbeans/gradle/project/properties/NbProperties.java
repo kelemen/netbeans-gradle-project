@@ -15,7 +15,7 @@ import org.jtrim2.property.PropertyFactory;
 import org.jtrim2.property.PropertySource;
 import org.jtrim2.property.swing.SwingProperties;
 import org.jtrim2.property.swing.SwingPropertySource;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
+import org.netbeans.gradle.project.util.EventUtils;
 import org.netbeans.gradle.project.util.NbBiFunction;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.openide.util.Lookup;
@@ -105,7 +105,7 @@ public final class NbProperties {
                 ListSelectionListener swingListener = e -> listener.run();
 
                 list.addListSelectionListener(swingListener);
-                return NbListenerRefs.fromRunnable(() -> {
+                return EventUtils.asSafeListenerRef(() -> {
                     list.removeListSelectionListener(swingListener);
                 });
             }

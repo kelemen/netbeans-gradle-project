@@ -23,7 +23,6 @@ import org.jtrim2.cancel.CancellationToken;
 import org.jtrim2.event.ListenerRef;
 import org.jtrim2.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.openide.filesystems.FileChangeAdapter;
 import org.openide.filesystems.FileChangeListener;
@@ -149,7 +148,7 @@ public final class NbFileUtils {
             }
         };
         dir.addFileChangeListener(fileChangeListener);
-        return NbListenerRefs.fromRunnable(() -> {
+        return EventUtils.asSafeListenerRef(() -> {
             dir.removeFileChangeListener(fileChangeListener);
         });
     }

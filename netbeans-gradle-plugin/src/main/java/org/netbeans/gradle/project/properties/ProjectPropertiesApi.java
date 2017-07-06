@@ -2,11 +2,10 @@ package org.netbeans.gradle.project.properties;
 
 import java.nio.charset.Charset;
 import java.util.Objects;
+import org.jtrim2.event.ListenerRef;
 import org.jtrim2.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 
 public final class ProjectPropertiesApi {
@@ -19,8 +18,8 @@ public final class ProjectPropertiesApi {
             }
 
             @Override
-            public NbListenerRef addChangeListener(Runnable listener) {
-                return NbListenerRefs.asNbRef(property.addChangeListener(listener));
+            public ListenerRef addChangeListener(Runnable listener) {
+                return property.addChangeListener(listener);
             }
         };
     }
@@ -35,8 +34,8 @@ public final class ProjectPropertiesApi {
             }
 
             @Override
-            public NbListenerRef addChangeListener(Runnable listener) {
-                return NbListenerRefs.asNbRef(property.addChangeListener(listener));
+            public ListenerRef addChangeListener(Runnable listener) {
+                return property.addChangeListener(listener);
             }
         };
     }
@@ -50,8 +49,8 @@ public final class ProjectPropertiesApi {
             }
 
             @Override
-            public NbListenerRef addChangeListener(Runnable listener) {
-                return NbListenerRefs.asNbRef(property.addChangeListener(listener));
+            public ListenerRef addChangeListener(Runnable listener) {
+                return property.addChangeListener(listener);
             }
         };
     }
@@ -65,8 +64,8 @@ public final class ProjectPropertiesApi {
             }
 
             @Override
-            public NbListenerRef addChangeListener(Runnable listener) {
-                return NbListenerRefs.asNbRef(property.addChangeListener(listener));
+            public ListenerRef addChangeListener(Runnable listener) {
+                return property.addChangeListener(listener);
             }
         };
     }

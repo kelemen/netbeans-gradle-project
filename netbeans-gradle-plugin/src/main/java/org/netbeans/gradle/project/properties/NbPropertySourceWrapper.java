@@ -1,9 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.Objects;
+import org.jtrim2.event.ListenerRef;
 import org.jtrim2.property.PropertySource;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.property.NbPropertySource;
 
 public final class NbPropertySourceWrapper<ValueType>
@@ -21,7 +20,7 @@ implements
     }
 
     @Override
-    public NbListenerRef addChangeListener(Runnable listener) {
-        return NbListenerRefs.asNbRef(source.addChangeListener(listener));
+    public ListenerRef addChangeListener(Runnable listener) {
+        return source.addChangeListener(listener);
     }
 }

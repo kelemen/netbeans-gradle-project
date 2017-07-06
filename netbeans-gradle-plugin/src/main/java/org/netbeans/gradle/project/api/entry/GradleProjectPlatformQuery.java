@@ -4,7 +4,7 @@ import java.net.URI;
 import java.util.Collection;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
+import org.jtrim2.event.ListenerRef;
 
 /**
  * Defines a query which can find a platform for a Gradle project. The platform
@@ -36,7 +36,7 @@ public interface GradleProjectPlatformQuery {
      *   method never returns {@code null}.
      */
     @Nonnull
-    public NbListenerRef addPlatformChangeListener(@Nonnull Runnable listener);
+    public ListenerRef addPlatformChangeListener(@Nonnull Runnable listener);
 
     /**
      * Returns {@code true} if platforms with the specified name are to be

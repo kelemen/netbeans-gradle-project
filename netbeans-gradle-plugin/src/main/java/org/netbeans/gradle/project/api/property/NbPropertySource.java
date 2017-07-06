@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.api.property;
 
 import javax.annotation.Nonnull;
+import org.jtrim2.event.ListenerRef;
 import org.jtrim2.property.PropertySource;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
  * Defines the value of an arbitrary property. The value of this property might
@@ -37,5 +37,5 @@ public interface NbPropertySource<ValueType> extends PropertySource<ValueType> {
      */
     @Nonnull
     @Override
-    public NbListenerRef addChangeListener(@Nonnull Runnable listener);
+    public ListenerRef addChangeListener(@Nonnull Runnable listener);
 }

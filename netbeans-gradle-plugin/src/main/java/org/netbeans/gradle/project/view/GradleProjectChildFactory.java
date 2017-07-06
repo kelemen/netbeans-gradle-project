@@ -17,8 +17,6 @@ import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.ManualRefreshedNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -27,6 +25,7 @@ import org.netbeans.gradle.project.event.PausableChangeListenerManager;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
+import org.netbeans.gradle.project.util.EventUtils;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.openide.loaders.DataFolder;
@@ -163,7 +162,7 @@ implements
             updateNodesIfNeeded(newNodeExtensions);
         }));
 
-        listenerRefs.add(NbListenerRefs.fromRunnable(() -> {
+        listenerRefs.add(EventUtils.asSafeListenerRef(() -> {
             tryReplaceNodeExtensionAndClose(null);
         }));
 
@@ -317,12 +316,12 @@ implements
         private static final NodeExtensions EMPTY = createEmpty();
 
         private final List<GradleProjectExtensionNodes> nodeFactories;
-        private final List<NbListenerRef> listenerRefs;
+        private final List<ListenerRef> listenerRefs;
         private final boolean needRefreshOnProjectReload;
 
         private NodeExtensions(
                 Collection<? extends GradleProjectExtensionNodes> nodeFactories,
-                List<NbListenerRef> listenerRefs) {
+                List<ListenerRef> listenerRefs) {
             this.nodeFactories = Collections.unmodifiableList(
                     new ArrayList<>(nodeFactories));
 
@@ -342,7 +341,7 @@ implements
                 Collection<? extends GradleProjectExtensionNodes> nodeFactories,
                 Runnable changeListener) {
 
-            List<NbListenerRef> listenerRefs = new ArrayList<>(nodeFactories.size());
+            List<ListenerRef> listenerRefs = new ArrayList<>(nodeFactories.size());
             for (GradleProjectExtensionNodes nodeFactory: nodeFactories) {
                 listenerRefs.add(nodeFactory.addNodeChangeListener(changeListener));
             }
@@ -367,9 +366,7 @@ implements
         }
 
         public void close() {
-            for (NbListenerRef ref: listenerRefs) {
-                ref.unregister();
-            }
+            listenerRefs.forEach(ListenerRef::unregister);
         }
     }
 }

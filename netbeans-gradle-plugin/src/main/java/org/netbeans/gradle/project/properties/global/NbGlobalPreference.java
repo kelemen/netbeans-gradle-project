@@ -4,7 +4,7 @@ import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.jtrim2.event.ListenerRef;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
+import org.netbeans.gradle.project.util.EventUtils;
 import org.openide.util.NbPreferences;
 
 public enum NbGlobalPreference implements BasicPreference {
@@ -34,7 +34,7 @@ public enum NbGlobalPreference implements BasicPreference {
         final Preferences preferences = getPreferences();
         // To be super safe, we could wrap the listener
         preferences.addPreferenceChangeListener(pcl);
-        return NbListenerRefs.fromRunnable(() -> {
+        return EventUtils.asSafeListenerRef(() -> {
             preferences.removePreferenceChangeListener(pcl);
         });
     }
