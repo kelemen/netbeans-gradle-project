@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.BuildException;
@@ -62,7 +63,6 @@ import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.netbeans.gradle.project.tasks.vars.StringResolver;
 import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.util.GradleVersions;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
 import org.openide.util.Lookup;
@@ -87,7 +87,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     private final MonitorableTaskExecutorService modelLoadNotifier;
     private final LoadedProjectManager loadedProjectManager;
     private final PersistentModelCache<NbGradleModel> persistentCache;
-    private final NbSupplier<? extends GradleModelCache> cacheRef;
+    private final Supplier<? extends GradleModelCache> cacheRef;
     private final CacheSizeIncreaser cacheSizeIncreaser;
 
     private final AtomicBoolean modelWasSetOnce;
@@ -654,7 +654,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         private MonitorableTaskExecutorService modelLoadNotifier;
         private LoadedProjectManager loadedProjectManager;
         private PersistentModelCache<NbGradleModel> persistentCache;
-        private NbSupplier<? extends GradleModelCache> cacheRef;
+        private Supplier<? extends GradleModelCache> cacheRef;
         private CacheSizeIncreaser cacheSizeIncreaser;
 
         public Builder(NbGradleProject project) {

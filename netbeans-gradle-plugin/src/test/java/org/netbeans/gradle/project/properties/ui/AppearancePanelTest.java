@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties.ui;
 
+import java.util.function.Supplier;
 import org.junit.Test;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
@@ -10,14 +11,13 @@ import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public class AppearancePanelTest {
     private static PropertyReference<String> displayNamePattern(CommonGlobalSettings input) {
         return NbGradleCommonProperties.displayNamePattern(input.getActiveSettingsQuery());
     }
 
-    private static NbSupplier<GlobalSettingsPage> settingsPageFactory() {
+    private static Supplier<GlobalSettingsPage> settingsPageFactory() {
         return () -> AppearancePanel.createSettingsPage(false);
     }
 

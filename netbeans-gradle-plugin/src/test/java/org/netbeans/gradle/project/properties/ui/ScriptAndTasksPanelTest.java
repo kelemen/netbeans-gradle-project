@@ -2,13 +2,13 @@ package org.netbeans.gradle.project.properties.ui;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.function.Supplier;
 import org.junit.Test;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public class ScriptAndTasksPanelTest {
-    private static NbSupplier<GlobalSettingsPage> settingsPageFactory() {
+    private static Supplier<GlobalSettingsPage> settingsPageFactory() {
         return ScriptAndTasksPanel::createSettingsPage;
     }
 

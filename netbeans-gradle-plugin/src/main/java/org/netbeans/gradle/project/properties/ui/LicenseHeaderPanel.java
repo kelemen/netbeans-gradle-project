@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 import javax.swing.DefaultComboBoxModel;
 import org.jtrim2.cancel.CancellationToken;
 import org.jtrim2.executor.CancelableFunction;
@@ -32,7 +33,6 @@ import org.netbeans.gradle.project.license.LicenseRef;
 import org.netbeans.gradle.project.license.LicenseSource;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileChooserBuilder;
 
@@ -47,13 +47,13 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
 
     private static final String ORGANIZATION_PROPERTY_NAME = "organization";
 
-    private final NbSupplier<? extends Path> defaultDirProvider;
+    private final Supplier<? extends Path> defaultDirProvider;
     private final LicenseSource licenseSource;
     private String lastDisplayedCustomName;
     private LicenseHeaderInfo unknownLicense;
 
     private LicenseHeaderPanel(
-            NbSupplier<? extends Path> defaultDirProvider,
+            Supplier<? extends Path> defaultDirProvider,
             LicenseSource licenseSource) {
         this.defaultDirProvider = Objects.requireNonNull(defaultDirProvider, "defaultDirProvider");
         this.licenseSource = Objects.requireNonNull(licenseSource, "licenseSource");
@@ -82,7 +82,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
     }
 
     public static ProfileBasedSettingsCategory createSettingsCategory(
-            final NbSupplier<? extends Path> defaultDirProvider,
+            final Supplier<? extends Path> defaultDirProvider,
             final LicenseSource licenseSource) {
         Objects.requireNonNull(defaultDirProvider, "defaultDirProvider");
         Objects.requireNonNull(licenseSource, "licenseSource");
@@ -93,13 +93,13 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
     }
 
     public static ProfileBasedSettingsPage createSettingsPage(
-            NbSupplier<? extends Path> defaultDirProvider,
+            Supplier<? extends Path> defaultDirProvider,
             LicenseSource licenseSource) {
         LicenseHeaderPanel result = new LicenseHeaderPanel(defaultDirProvider, licenseSource);
         return new ProfileBasedSettingsPage(result, result, result.asyncInitTask());
     }
 
-    private static NbSupplier<? extends Path> toDefaultDirProvider(final NbGradleProject project) {
+    private static Supplier<? extends Path> toDefaultDirProvider(final NbGradleProject project) {
         Objects.requireNonNull(project, "project");
         return () -> project.currentModel().getValue().getSettingsDir();
     }

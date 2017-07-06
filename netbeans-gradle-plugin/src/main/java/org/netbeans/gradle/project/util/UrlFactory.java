@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 import org.netbeans.gradle.model.util.ConstructableWeakRef;
 import org.netbeans.gradle.model.util.NbSupplier5;
 import org.openide.filesystems.FileUtil;
@@ -12,14 +13,14 @@ import org.openide.filesystems.FileUtil;
 public final class UrlFactory {
     private static final NbSupplier5<UrlFactory> DEFAULT_REF = new ConstructableWeakRef<>(UrlFactory::new);
 
-    private final NbFunction<? super File, ? extends URL> urlCreator;
+    private final Function<? super File, ? extends URL> urlCreator;
     private final ConcurrentMap<File, URL> cache;
 
     public UrlFactory() {
         this(FileUtil::urlForArchiveOrDir);
     }
 
-    public UrlFactory(NbFunction<? super File, ? extends URL> urlCreator) {
+    public UrlFactory(Function<? super File, ? extends URL> urlCreator) {
         this.urlCreator = Objects.requireNonNull(urlCreator, "urlCreator");
         this.cache = new ConcurrentHashMap<>(256);
     }

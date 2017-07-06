@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.function.Supplier;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
@@ -16,7 +17,6 @@ import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.util.JavaModelTestUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.SafeTmpFolder;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
 import org.openide.util.Utilities;
@@ -28,7 +28,7 @@ public class GradleBinaryForSourceQueryTest {
     @ClassRule
     public static final SafeTmpFolder TMP_DIR_ROOT = new SafeTmpFolder();
 
-    private NbSupplier<NbJavaModule> testModule(File rootDir) throws IOException {
+    private Supplier<NbJavaModule> testModule(File rootDir) throws IOException {
         NbJavaModule module = JavaModelTestUtils.createModule(rootDir);
         return () -> module;
     }
@@ -80,7 +80,7 @@ public class GradleBinaryForSourceQueryTest {
     @Test
     public void testOutputOfSourceFiles() throws IOException {
         File rootDir = TMP_DIR_ROOT.newFolder();
-        NbSupplier<NbJavaModule> moduleRef = testModule(rootDir);
+        Supplier<NbJavaModule> moduleRef = testModule(rootDir);
         NbJavaModule module = moduleRef.get();
 
         GradleBinaryForSourceQuery query = new GradleBinaryForSourceQuery(moduleRef);
@@ -100,7 +100,7 @@ public class GradleBinaryForSourceQueryTest {
     @Test
     public void verifyDoesNotHaveBinaryRoot() throws IOException {
         File rootDir = TMP_DIR_ROOT.newFolder();
-        NbSupplier<NbJavaModule> moduleRef = testModule(rootDir);
+        Supplier<NbJavaModule> moduleRef = testModule(rootDir);
         NbJavaModule module = moduleRef.get();
 
         GradleBinaryForSourceQuery query = new GradleBinaryForSourceQuery(moduleRef);

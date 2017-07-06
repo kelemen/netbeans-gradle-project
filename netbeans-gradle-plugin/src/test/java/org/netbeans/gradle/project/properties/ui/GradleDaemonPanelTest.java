@@ -1,12 +1,12 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import org.junit.Test;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public class GradleDaemonPanelTest {
-    private static NbSupplier<GlobalSettingsPage> settingsPageFactory() {
+    private static Supplier<GlobalSettingsPage> settingsPageFactory() {
         return GradleDaemonPanel::createSettingsPage;
     }
 

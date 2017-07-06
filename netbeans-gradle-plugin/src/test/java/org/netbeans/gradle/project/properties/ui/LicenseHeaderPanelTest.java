@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 import org.junit.Test;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
@@ -13,10 +14,9 @@ import org.netbeans.gradle.project.license.LicenseRef;
 import org.netbeans.gradle.project.license.LicenseSource;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public class LicenseHeaderPanelTest {
-    private static final NbSupplier<Path> NULL_PATH = () -> null;
+    private static final Supplier<Path> NULL_PATH = () -> null;
 
     private static final LicenseSource EMPTY_LICENSE_SOURCE = licenseSource(Collections.<LicenseRef>emptyList());
 
@@ -24,11 +24,11 @@ public class LicenseHeaderPanelTest {
         return () -> licenses;
     }
 
-    private static NbSupplier<ProfileBasedSettingsPage> settingsPageFactory(final LicenseSource licenseSource) {
+    private static Supplier<ProfileBasedSettingsPage> settingsPageFactory(final LicenseSource licenseSource) {
         return () -> LicenseHeaderPanel.createSettingsPage(NULL_PATH, licenseSource);
     }
 
-    private static NbSupplier<ProfileBasedSettingsPage> settingsPageFactory() {
+    private static Supplier<ProfileBasedSettingsPage> settingsPageFactory() {
         return settingsPageFactory(EMPTY_LICENSE_SOURCE);
     }
 

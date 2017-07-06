@@ -3,8 +3,8 @@ package org.netbeans.gradle.project;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.function.Consumer;
 import org.netbeans.gradle.project.properties.WeakValueHashMap;
-import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class LoadedProjectManager {
@@ -25,7 +25,7 @@ public final class LoadedProjectManager {
         projects.put(projectDir, project);
     }
 
-    public void forProjects(NbConsumer<? super NbGradleProject> action) {
+    public void forProjects(Consumer<? super NbGradleProject> action) {
         Objects.requireNonNull(action, "action");
         for (NbGradleProject project: projects.values()) {
             action.accept(project);

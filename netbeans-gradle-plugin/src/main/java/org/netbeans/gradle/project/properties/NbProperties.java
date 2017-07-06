@@ -4,6 +4,8 @@ import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import javax.swing.JList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -16,8 +18,6 @@ import org.jtrim2.property.PropertySource;
 import org.jtrim2.property.swing.SwingProperties;
 import org.jtrim2.property.swing.SwingPropertySource;
 import org.netbeans.gradle.project.util.EventUtils;
-import org.netbeans.gradle.project.util.NbBiFunction;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.openide.util.Lookup;
 import org.openide.util.LookupListener;
 
@@ -74,7 +74,7 @@ public final class NbProperties {
 
     public static <RootValue, SubValue> PropertySource<SubValue> propertyOfProperty(
             PropertySource<? extends RootValue> rootSrc,
-            NbFunction<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter) {
+            Function<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter) {
         return new PropertyOfProperty<>(rootSrc, subPropertyGetter);
     }
 
@@ -85,7 +85,7 @@ public final class NbProperties {
     public static <T, U, R> PropertySource<R> combine(
             PropertySource<? extends T> src1,
             PropertySource<? extends U> src2,
-            NbBiFunction<? super T, ? super U, ? extends R> valueCombiner) {
+            BiFunction<? super T, ? super U, ? extends R> valueCombiner) {
         return new CombinedProperties<>(src1, src2, valueCombiner);
     }
 
@@ -274,7 +274,7 @@ public final class NbProperties {
         public <T, U> CombinedProperties(
                 PropertySource<? extends T> src1,
                 PropertySource<? extends U> src2,
-                NbBiFunction<? super T, ? super U, ? extends R> valueCombiner) {
+                BiFunction<? super T, ? super U, ? extends R> valueCombiner) {
             Objects.requireNonNull(valueCombiner, "valueCombiner");
 
             this.src1 = Objects.requireNonNull(src1, "src1");
@@ -298,12 +298,12 @@ public final class NbProperties {
     private static final class CombinedValues<T, U, R> {
         private final PropertySource<? extends T> src1;
         private final PropertySource<? extends U> src2;
-        private final NbBiFunction<? super T, ? super U, ? extends R> valueCombiner;
+        private final BiFunction<? super T, ? super U, ? extends R> valueCombiner;
 
         public CombinedValues(
                 PropertySource<? extends T> src1,
                 PropertySource<? extends U> src2,
-                NbBiFunction<? super T, ? super U, ? extends R> valueCombiner) {
+                BiFunction<? super T, ? super U, ? extends R> valueCombiner) {
             this.src1 = src1;
             this.src2 = src2;
             this.valueCombiner = valueCombiner;

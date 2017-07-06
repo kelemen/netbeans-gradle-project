@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties.ui;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.ListModel;
@@ -19,7 +20,6 @@ import org.netbeans.gradle.project.java.JavaExtensionDef;
 import org.netbeans.gradle.project.java.properties.JavaDebuggingPanel;
 import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.openide.awt.HtmlBrowser;
 
 import static org.jtrim2.property.swing.AutoDisplayState.*;
@@ -105,7 +105,7 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Pro
 
     private StoredSettings combineSettings(
             List<ProfileEditor> editors,
-            final NbFunction<? super ProfileEditor, ? extends StoredSettings> settingsGetter) {
+            final Function<? super ProfileEditor, ? extends StoredSettings> settingsGetter) {
 
         final List<StoredSettings> allSettings = new ArrayList<>(editors.size());
         for (ProfileEditor profileEditor: editors) {

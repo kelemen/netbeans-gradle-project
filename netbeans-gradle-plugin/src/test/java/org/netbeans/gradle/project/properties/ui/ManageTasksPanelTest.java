@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties.ui;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 import org.junit.Test;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
@@ -9,10 +10,9 @@ import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public class ManageTasksPanelTest {
-    private static NbSupplier<ProfileBasedSettingsPage> settingsPageFactory() {
+    private static Supplier<ProfileBasedSettingsPage> settingsPageFactory() {
         return ManageTasksPanel::createSettingsPage;
     }
 

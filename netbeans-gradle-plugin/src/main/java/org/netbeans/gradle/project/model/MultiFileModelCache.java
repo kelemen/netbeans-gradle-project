@@ -6,18 +6,18 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Function;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.NbFileUtils;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.StringUtils;
 
 public final class MultiFileModelCache<T> implements PersistentModelCache<T> {
     private final PersistentModelStore<T> modelPersister;
-    private final NbFunction<? super T, ? extends PersistentModelKey> modelKeyFactory;
+    private final Function<? super T, ? extends PersistentModelKey> modelKeyFactory;
 
     public MultiFileModelCache(
             PersistentModelStore<T> modelPersister,
-            NbFunction<? super T, ? extends PersistentModelKey> modelKeyFactory) {
+            Function<? super T, ? extends PersistentModelKey> modelKeyFactory) {
         this.modelPersister = Objects.requireNonNull(modelPersister, "modelPersister");
         this.modelKeyFactory = Objects.requireNonNull(modelKeyFactory, "modelKeyFactory");
     }

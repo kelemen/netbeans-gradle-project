@@ -8,11 +8,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import org.jtrim2.concurrent.Tasks;
 import org.jtrim2.event.ListenerRef;
 import org.jtrim2.event.ListenerRefs;
 import org.jtrim2.utils.ExceptionHelper;
-import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.TestDetectUtils;
 
 public final class ProfileSettingsContainer {
@@ -85,7 +85,7 @@ public final class ProfileSettingsContainer {
 
     public ListenerRef loadProfileSettings(
             ProfileSettingsKey key,
-            NbConsumer<? super SingleProfileSettingsEx> listener) {
+            Consumer<? super SingleProfileSettingsEx> listener) {
         Objects.requireNonNull(listener, "listener");
 
         LoadableSingleProfileSettingsEx result = getUnloadedProfileSettings(key);
@@ -97,7 +97,7 @@ public final class ProfileSettingsContainer {
 
     public ListenerRef loadAllProfileSettings(
             Collection<ProfileSettingsKey> keys,
-            NbConsumer<? super List<SingleProfileSettingsEx>> listener) {
+            Consumer<? super List<SingleProfileSettingsEx>> listener) {
         ExceptionHelper.checkNotNullElements(keys, "keys");
         Objects.requireNonNull(listener, "listener");
 

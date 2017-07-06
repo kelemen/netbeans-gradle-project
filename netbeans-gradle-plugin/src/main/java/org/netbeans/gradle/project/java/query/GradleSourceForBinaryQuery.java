@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
@@ -15,7 +16,6 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.AbstractSourceForBinaryQuery;
 import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.netbeans.gradle.project.util.NbFileUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -41,7 +41,7 @@ implements
 
     private static final FileObject[] NO_ROOTS = new FileObject[0];
 
-    private final NbSupplier<? extends NbJavaModule> moduleProvider;
+    private final Supplier<? extends NbJavaModule> moduleProvider;
     private final LazyChangeSupport changes;
 
     public GradleSourceForBinaryQuery(final JavaExtension javaExt) {
@@ -50,7 +50,7 @@ implements
         Objects.requireNonNull(javaExt, "javaExt");
     }
 
-    public GradleSourceForBinaryQuery(NbSupplier<? extends NbJavaModule> moduleProvider) {
+    public GradleSourceForBinaryQuery(Supplier<? extends NbJavaModule> moduleProvider) {
         this.moduleProvider = Objects.requireNonNull(moduleProvider, "moduleProvider");
         this.changes = LazyChangeSupport.createSwing(new EventSource());
     }

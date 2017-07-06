@@ -6,17 +6,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public final class MergedBuiltInGradleCommandQuery implements BuiltInGradleCommandQuery {
     private final BuiltInGradleCommandQuery defaultBuiltInTasks;
-    private final NbSupplier<? extends Collection<? extends BuiltInGradleCommandQuery>> extraQueries;
+    private final Supplier<? extends Collection<? extends BuiltInGradleCommandQuery>> extraQueries;
 
-    public MergedBuiltInGradleCommandQuery(NbSupplier<? extends Collection<? extends BuiltInGradleCommandQuery>> extraQueries) {
+    public MergedBuiltInGradleCommandQuery(Supplier<? extends Collection<? extends BuiltInGradleCommandQuery>> extraQueries) {
         this.extraQueries = Objects.requireNonNull(extraQueries, "extraQueries");
         this.defaultBuiltInTasks = new DefaultBuiltInTasks();
     }

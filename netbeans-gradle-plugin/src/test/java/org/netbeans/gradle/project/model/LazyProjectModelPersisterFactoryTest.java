@@ -2,13 +2,13 @@ package org.netbeans.gradle.project.model;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 import org.jtrim2.executor.ContextAwareWrapper;
 import org.jtrim2.executor.ManualTaskExecutor;
 import org.jtrim2.executor.TaskExecutor;
 import org.jtrim2.executor.TaskExecutors;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
-import org.netbeans.gradle.project.util.NbConsumer;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
@@ -50,7 +50,7 @@ public class LazyProjectModelPersisterFactoryTest {
         final ContextAwareWrapper contextAwareExecutor = TaskExecutors.contextAware(executor);
 
         @SuppressWarnings("unchecked")
-        final NbConsumer<Boolean> modelStorePersistModel = (NbConsumer<Boolean>)mock(NbConsumer.class);
+        final Consumer<Boolean> modelStorePersistModel = (Consumer<Boolean>)mock(Consumer.class);
 
         @SuppressWarnings("unchecked")
         PersistentModelStore<Object> modelStore = (PersistentModelStore<Object>)mock(PersistentModelStore.class);

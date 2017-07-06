@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import org.jtrim2.executor.GenericUpdateTaskExecutor;
 import org.jtrim2.executor.TaskExecutor;
 import org.jtrim2.executor.UpdateTaskExecutor;
@@ -15,7 +16,6 @@ import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleMultiProjectDef;
 import org.netbeans.gradle.project.model.ProjectModelChangeListener;
-import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 
 public final class ModelCacheSizeAutoUpdater implements ProjectModelChangeListener {
@@ -24,13 +24,13 @@ public final class ModelCacheSizeAutoUpdater implements ProjectModelChangeListen
             DefaultGradleModelLoader::ensureCacheSize);
 
     private final UpdateTaskExecutor cacheSizeCheckExecutor;
-    private final NbConsumer<? super Integer> cacheSizeUpdater;
+    private final Consumer<? super Integer> cacheSizeUpdater;
 
-    public ModelCacheSizeAutoUpdater(TaskExecutor cacheSizeCheckExecutor, NbConsumer<? super Integer> cacheSizeUpdater) {
+    public ModelCacheSizeAutoUpdater(TaskExecutor cacheSizeCheckExecutor, Consumer<? super Integer> cacheSizeUpdater) {
         this(new GenericUpdateTaskExecutor(cacheSizeCheckExecutor), cacheSizeUpdater);
     }
 
-    public ModelCacheSizeAutoUpdater(UpdateTaskExecutor cacheSizeCheckExecutor, NbConsumer<? super Integer> cacheSizeUpdater) {
+    public ModelCacheSizeAutoUpdater(UpdateTaskExecutor cacheSizeCheckExecutor, Consumer<? super Integer> cacheSizeUpdater) {
         this.cacheSizeCheckExecutor = Objects.requireNonNull(cacheSizeCheckExecutor, "cacheSizeCheckExecutor");
         this.cacheSizeUpdater = Objects.requireNonNull(cacheSizeUpdater, "cacheSizeUpdater");
     }

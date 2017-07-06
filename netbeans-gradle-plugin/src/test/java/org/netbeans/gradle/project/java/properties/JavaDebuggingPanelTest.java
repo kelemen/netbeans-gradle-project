@@ -1,14 +1,14 @@
 package org.netbeans.gradle.project.java.properties;
 
+import java.util.function.Supplier;
 import org.junit.Test;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.ui.GlobalSettingsPanelTestUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public class JavaDebuggingPanelTest {
-    private static NbSupplier<ProfileBasedSettingsPage> settingsPageFactory(final boolean allowInherit) {
+    private static Supplier<ProfileBasedSettingsPage> settingsPageFactory(final boolean allowInherit) {
         return () -> JavaDebuggingPanel.createSettingsPage(allowInherit);
     }
 

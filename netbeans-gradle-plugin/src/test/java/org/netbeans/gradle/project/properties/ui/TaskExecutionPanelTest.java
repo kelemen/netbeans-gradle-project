@@ -1,12 +1,12 @@
 package org.netbeans.gradle.project.properties.ui;
 
+import java.util.function.Supplier;
 import org.junit.Test;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.properties.global.SelfMaintainedTasks;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public class TaskExecutionPanelTest {
-    private static NbSupplier<GlobalSettingsPage> settingsPageFactory() {
+    private static Supplier<GlobalSettingsPage> settingsPageFactory() {
         return TaskExecutionPanel::createSettingsPage;
     }
 

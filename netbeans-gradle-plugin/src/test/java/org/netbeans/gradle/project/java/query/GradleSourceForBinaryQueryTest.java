@@ -5,13 +5,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.util.JavaModelTestUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.SafeTmpFolder;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
@@ -27,7 +27,7 @@ public class GradleSourceForBinaryQueryTest {
     public GradleSourceForBinaryQueryTest() {
     }
 
-    private NbSupplier<NbJavaModule> testModule(File rootDir) throws IOException {
+    private Supplier<NbJavaModule> testModule(File rootDir) throws IOException {
         NbJavaModule module = JavaModelTestUtils.createModule(rootDir);
         return () -> module;
     }
@@ -82,7 +82,7 @@ public class GradleSourceForBinaryQueryTest {
     @Test
     public void testSourcesForClassesDirs() throws IOException {
         File rootDir = TMP_DIR_ROOT.newFolder();
-        NbSupplier<NbJavaModule> moduleRef = testModule(rootDir);
+        Supplier<NbJavaModule> moduleRef = testModule(rootDir);
         NbJavaModule module = moduleRef.get();
 
         GradleSourceForBinaryQuery query = new GradleSourceForBinaryQuery(moduleRef);
@@ -105,7 +105,7 @@ public class GradleSourceForBinaryQueryTest {
     @Test
     public void verifyDoesNotHaveSourceRoot() throws IOException {
         File rootDir = TMP_DIR_ROOT.newFolder();
-        NbSupplier<NbJavaModule> moduleRef = testModule(rootDir);
+        Supplier<NbJavaModule> moduleRef = testModule(rootDir);
         NbJavaModule module = moduleRef.get();
 
         GradleSourceForBinaryQuery query = new GradleSourceForBinaryQuery(moduleRef);

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.function.Supplier;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -13,14 +14,13 @@ import org.netbeans.gradle.project.output.OpenEditorOutputListener;
 import org.netbeans.gradle.project.script.CommonScripts;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.NbFileUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 @SuppressWarnings("serial")
 public final class OpenAlwaysFileAction extends AbstractAction {
-    private final NbSupplier<? extends Path> fileRef;
+    private final Supplier<? extends Path> fileRef;
 
     public OpenAlwaysFileAction(Path file) {
         this(NbStrings.getOpenFileCaption(NbFileUtils.getFileNameStr(file)), file);
@@ -32,7 +32,7 @@ public final class OpenAlwaysFileAction extends AbstractAction {
         Objects.requireNonNull(file, "file");
     }
 
-    public OpenAlwaysFileAction(String name, NbSupplier<? extends Path> fileRef) {
+    public OpenAlwaysFileAction(String name, Supplier<? extends Path> fileRef) {
         super(name);
 
         this.fileRef = Objects.requireNonNull(fileRef, "fileRef");

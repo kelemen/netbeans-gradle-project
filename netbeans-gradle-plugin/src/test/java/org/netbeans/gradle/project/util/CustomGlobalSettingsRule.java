@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.util;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -8,9 +9,9 @@ import org.netbeans.gradle.project.properties.GenericProfileSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 
 public final class CustomGlobalSettingsRule implements TestRule {
-    private final NbConsumer<? super CommonGlobalSettings> settingsProvider;
+    private final Consumer<? super CommonGlobalSettings> settingsProvider;
 
-    public CustomGlobalSettingsRule(NbConsumer<? super CommonGlobalSettings> settingsProvider) {
+    public CustomGlobalSettingsRule(Consumer<? super CommonGlobalSettings> settingsProvider) {
         this.settingsProvider = Objects.requireNonNull(settingsProvider, "settingsProvider");
     }
 
@@ -36,7 +37,7 @@ public final class CustomGlobalSettingsRule implements TestRule {
         });
     }
 
-    private static void withCleanMemorySettings(NbConsumer<GenericProfileSettings> task) throws Throwable {
+    private static void withCleanMemorySettings(Consumer<GenericProfileSettings> task) throws Throwable {
         try {
             CommonGlobalSettings.withCleanMemorySettings(task);
         } catch (TestExceptionWrapper ex) {

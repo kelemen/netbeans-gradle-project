@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
@@ -17,7 +18,6 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.AbstractBinaryForSourceQuery;
 import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.netbeans.gradle.project.util.NbFileUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.openide.util.Utilities;
 
 public final class GradleBinaryForSourceQuery
@@ -29,7 +29,7 @@ implements
 
     private static final URL[] NO_ROOTS = new URL[0];
 
-    private final NbSupplier<? extends NbJavaModule> moduleProvider;
+    private final Supplier<? extends NbJavaModule> moduleProvider;
     private final LazyChangeSupport changes;
 
     public GradleBinaryForSourceQuery(JavaExtension javaExt) {
@@ -38,7 +38,7 @@ implements
         Objects.requireNonNull(javaExt, "javaExt");
     }
 
-    public GradleBinaryForSourceQuery(NbSupplier<? extends NbJavaModule> moduleProvider) {
+    public GradleBinaryForSourceQuery(Supplier<? extends NbJavaModule> moduleProvider) {
         this.moduleProvider = Objects.requireNonNull(moduleProvider, "moduleProvider");
         this.changes = LazyChangeSupport.createSwing(new EventSource());
     }

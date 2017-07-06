@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
@@ -29,7 +30,6 @@ import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.EventUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.project.ui.support.NodeFactory;
 import org.netbeans.spi.project.ui.support.NodeList;
 import org.openide.nodes.Node;
@@ -56,7 +56,7 @@ public final class AnnotationChildNodes {
         this(project, () -> Lookups.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Nodes"));
     }
 
-    public AnnotationChildNodes(Project project, NbSupplier<? extends Lookup> factoryLookupProvider) {
+    public AnnotationChildNodes(Project project, Supplier<? extends Lookup> factoryLookupProvider) {
         Objects.requireNonNull(factoryLookupProvider, "factoryLookupProvider");
 
         this.project = Objects.requireNonNull(project, "project");
@@ -254,10 +254,10 @@ public final class AnnotationChildNodes {
 
     private static class NodeFactories implements PropertySource<Collection<? extends NodeFactory>> {
         private final AtomicReference<Lookup.Result<NodeFactory>> nodeListsRef;
-        private final NbSupplier<? extends Lookup> factoryLookupProvider;
+        private final Supplier<? extends Lookup> factoryLookupProvider;
         private final UpdateTaskExecutor listenerExecutor;
 
-        public NodeFactories(NbSupplier<? extends Lookup> factoryLookupProvider) {
+        public NodeFactories(Supplier<? extends Lookup> factoryLookupProvider) {
             assert factoryLookupProvider != null;
 
             this.factoryLookupProvider = factoryLookupProvider;

@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.query;
 
 import java.io.File;
+import java.util.function.Supplier;
 import org.netbeans.gradle.project.util.GradleFileUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.util.lookup.ServiceProvider;
@@ -18,7 +18,7 @@ public final class GradleCacheSourceForBinaryQuery extends AbstractSourceForBina
         this(GradleFileUtils.GRADLE_USER_HOME_PROVIDER);
     }
 
-    public GradleCacheSourceForBinaryQuery(NbSupplier<File> gradleUserHomeProvider) {
+    public GradleCacheSourceForBinaryQuery(Supplier<File> gradleUserHomeProvider) {
         this.sourceLookup = new GradleCacheByBinaryLookup(
                 GradleFileUtils.SOURCE_DIR_NAME,
                 gradleUserHomeProvider,

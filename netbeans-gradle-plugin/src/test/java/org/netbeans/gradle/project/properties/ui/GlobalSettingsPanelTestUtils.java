@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.properties.ui;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.swing.SwingUtilities;
 import org.jtrim2.utils.ExceptionHelper;
 import org.junit.Assert;
@@ -16,8 +18,6 @@ import org.netbeans.gradle.project.properties.MultiProfileProperties;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
-import org.netbeans.gradle.project.util.NbConsumer;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public final class GlobalSettingsPanelTestUtils {
     private static CommonGlobalSettings toGlobalSettings(SingleProfileSettingsEx rawSettings) {
@@ -25,9 +25,9 @@ public final class GlobalSettingsPanelTestUtils {
     }
 
     private static <T extends ProfileBasedSettingsPage> void testInitAndReadBackNow(
-            final NbSupplier<? extends T> pageFactory,
-            final NbConsumer<? super CommonGlobalSettings> initializer,
-            final NbConsumer<? super T> check) {
+            final Supplier<? extends T> pageFactory,
+            final Consumer<? super CommonGlobalSettings> initializer,
+            final Consumer<? super T> check) {
         if (!SwingUtilities.isEventDispatchThread()) {
             throw new IllegalStateException("Expected EDT");
         }
@@ -76,23 +76,23 @@ public final class GlobalSettingsPanelTestUtils {
     }
 
     public static <T extends ProfileBasedSettingsPage> void testInitAndReadBack(
-            final NbSupplier<? extends T> panelFactory,
-            final NbConsumer<? super CommonGlobalSettings> initializer,
-            final NbConsumer<? super T> check) throws Exception {
+            final Supplier<? extends T> panelFactory,
+            final Consumer<? super CommonGlobalSettings> initializer,
+            final Consumer<? super T> check) throws Exception {
         invokeAndWait(() -> {
             testInitAndReadBackNow(panelFactory, initializer, check);
         });
     }
 
     public static void testGenericInitAndReadBack(
-            final NbSupplier<? extends ProfileBasedSettingsPage> pageFactory,
-            final NbConsumer<? super CommonGlobalSettings> initializer) throws Exception {
+            final Supplier<? extends ProfileBasedSettingsPage> pageFactory,
+            final Consumer<? super CommonGlobalSettings> initializer) throws Exception {
         testInitAndReadBack(pageFactory, initializer, page -> { });
     }
 
     public static void testGlobalInitAndReadBack(
-            final NbSupplier<? extends GlobalSettingsPage> pageFactory,
-            final NbConsumer<? super CommonGlobalSettings> initializer) throws Exception {
+            final Supplier<? extends GlobalSettingsPage> pageFactory,
+            final Consumer<? super CommonGlobalSettings> initializer) throws Exception {
         testInitAndReadBack(pageFactory, initializer, (GlobalSettingsPage page) -> {
             Assert.assertTrue("Initial form must be valid.", page.valid().getValue());
         });

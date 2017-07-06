@@ -24,7 +24,6 @@ import org.netbeans.gradle.project.license.LicenseHeaderInfo;
 import org.netbeans.gradle.project.license.LicenseManager;
 import org.netbeans.gradle.project.license.LicenseManagers;
 import org.netbeans.gradle.project.license.LicenseSource;
-import org.netbeans.gradle.project.lookups.LookupsEx;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
@@ -370,8 +369,8 @@ public final class NbGradleProject implements Project {
             this.projectLookups = new NbGradleProjectLookups(project, services);
             this.extensions = new UpdatableProjectExtensions(projectLookups.getCombinedExtensionLookup());
 
-            this.mergedCommandQuery = new MergedBuiltInGradleCommandQuery(
-                    LookupsEx.asSupplier(extensions.getCombinedExtensionLookup(), BuiltInGradleCommandQuery.class));
+            Lookup extLookup = extensions.getCombinedExtensionLookup();
+            this.mergedCommandQuery = new MergedBuiltInGradleCommandQuery(() -> extLookup.lookupAll(BuiltInGradleCommandQuery.class));
         }
 
         public void updateExtensions(Collection<? extends NbGradleExtensionRef> newExtensions) {

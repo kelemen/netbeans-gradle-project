@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import org.jtrim2.utils.ExceptionHelper;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -22,7 +23,6 @@ import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.CustomGlobalSettingsRule;
 import org.netbeans.gradle.project.util.MockServicesRule;
-import org.netbeans.gradle.project.util.NbConsumer;
 import org.openide.filesystems.FileObject;
 
 public final class SampleProjectRule implements TestRule {
@@ -48,10 +48,10 @@ public final class SampleProjectRule implements TestRule {
 
     public static SampleProjectRule getStandardRule(
             String resourceName,
-            final NbConsumer<CommonGlobalSettings> additionalConfig,
+            Consumer<CommonGlobalSettings> additionalConfig,
             Class<?>... services) {
 
-        NbConsumer<CommonGlobalSettings> settingsConfigurer = (CommonGlobalSettings settings) -> {
+        Consumer<CommonGlobalSettings> settingsConfigurer = (CommonGlobalSettings settings) -> {
             settings.gradleLocation().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
             settings.gradleJvmArgs().setValue(Arrays.asList("-Xmx256m"));
             settings.defaultJdk().setValue(ScriptPlatform.getDefault());

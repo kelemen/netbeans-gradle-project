@@ -2,18 +2,18 @@ package org.netbeans.gradle.project.properties;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import org.jtrim2.event.ListenerRef;
 import org.jtrim2.event.ListenerRefs;
 import org.jtrim2.property.PropertySource;
-import org.netbeans.gradle.project.util.NbFunction;
 
 final class PropertyOfProperty<RootValue, SubValue> implements PropertySource<SubValue> {
     private final PropertySource<? extends RootValue> rootSrc;
-    private final NbFunction<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter;
+    private final Function<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter;
 
     public PropertyOfProperty(
             PropertySource<? extends RootValue> rootSrc,
-            NbFunction<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter) {
+            Function<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter) {
         this.rootSrc = Objects.requireNonNull(rootSrc, "rootSrc");
         this.subPropertyGetter = Objects.requireNonNull(subPropertyGetter, "subPropertyGetter");
     }

@@ -1,14 +1,14 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import java.io.File;
+import java.util.function.Supplier;
 import org.junit.Test;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public class GradleInstallationPanelTest {
-    private static NbSupplier<GlobalSettingsPage> settingsPageFactory() {
+    private static Supplier<GlobalSettingsPage> settingsPageFactory() {
         return GradleInstallationPanel::createSettingsPage;
     }
 

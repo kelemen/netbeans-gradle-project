@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim2.cancel.Cancellation;
@@ -16,7 +17,6 @@ import org.jtrim2.executor.TaskExecutors;
 import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.CloseableAction;
-import org.netbeans.gradle.project.util.NbBiFunction;
 
 public final class LicenseManager<T> {
     private static final Logger LOGGER = Logger.getLogger(LicenseManager.class.getName());
@@ -26,8 +26,8 @@ public final class LicenseManager<T> {
     public <LK, LD extends LicenseDef> LicenseManager(
             TaskExecutor executor,
             LicenseStore<LD> licenseStore,
-            NbBiFunction<? super T, ? super LicenseHeaderInfo, ? extends LK> licenseKeyFactory,
-            NbBiFunction<? super T, ? super LK, ? extends LD> licenseDefFactory) {
+            BiFunction<? super T, ? super LicenseHeaderInfo, ? extends LK> licenseKeyFactory,
+            BiFunction<? super T, ? super LK, ? extends LD> licenseDefFactory) {
         this.impl = new Impl<>(executor, licenseStore, licenseKeyFactory, licenseDefFactory);
     }
 
@@ -52,16 +52,16 @@ public final class LicenseManager<T> {
         private final MonitorableTaskExecutor syncExecutor;
 
         private final LicenseStore<LD> licenseStore;
-        private final NbBiFunction<? super T, ? super LicenseHeaderInfo, ? extends LK> licenseKeyFactory;
-        private final NbBiFunction<? super T, ? super LK, ? extends LD> licenseDefFactory;
+        private final BiFunction<? super T, ? super LicenseHeaderInfo, ? extends LK> licenseKeyFactory;
+        private final BiFunction<? super T, ? super LK, ? extends LD> licenseDefFactory;
 
         private final Map<LK, RegisteredLicense<LD>> licenseRegistartions;
 
         public Impl(
                 TaskExecutor executor,
                 LicenseStore<LD> licenseStore,
-                NbBiFunction<? super T, ? super LicenseHeaderInfo, ? extends LK> licenseKeyFactory,
-                NbBiFunction<? super T, ? super LK, ? extends LD> licenseDefFactory) {
+                BiFunction<? super T, ? super LicenseHeaderInfo, ? extends LK> licenseKeyFactory,
+                BiFunction<? super T, ? super LK, ? extends LD> licenseDefFactory) {
             this.syncExecutor = TaskExecutors.inOrderExecutor(executor);
             this.licenseStore = Objects.requireNonNull(licenseStore, "licenseStore");
             this.licenseKeyFactory = Objects.requireNonNull(licenseKeyFactory, "licenseKeyFactory");

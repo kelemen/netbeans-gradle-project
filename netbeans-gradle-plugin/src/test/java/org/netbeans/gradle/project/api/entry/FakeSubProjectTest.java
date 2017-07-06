@@ -1,17 +1,17 @@
 package org.netbeans.gradle.project.api.entry;
 
+import java.util.function.Consumer;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.util.NbConsumer;
 
 import static org.junit.Assert.*;
 
 public final class FakeSubProjectTest {
-    private static final NbConsumer<CommonGlobalSettings> EXTRA_SETTINGS = (CommonGlobalSettings settings) -> {
+    private static final Consumer<CommonGlobalSettings> EXTRA_SETTINGS = (CommonGlobalSettings settings) -> {
         settings.loadRootProjectFirst().setValue(true);
     };
 

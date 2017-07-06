@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.RandomAccess;
+import java.util.function.Function;
 import org.jtrim2.collections.CollectionsEx;
 import org.jtrim2.event.ListenerRef;
 import org.jtrim2.event.ListenerRefs;
@@ -17,7 +18,6 @@ import org.netbeans.gradle.project.api.config.SingleProfileSettings;
 import org.netbeans.gradle.project.api.config.ValueMerger;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.w3c.dom.Element;
 
 public final class MultiProfileProperties implements ActiveSettingsQueryEx {
@@ -158,7 +158,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         return NbProperties.propertyOfProperty(currentProfileSettingsList, new CachingPropertyMerger<>(propertyDef));
     }
 
-    private static class CachingPropertyMerger<Value> implements NbFunction<List<SingleProfileSettingsEx>, PropertySource<Value>> {
+    private static class CachingPropertyMerger<Value> implements Function<List<SingleProfileSettingsEx>, PropertySource<Value>> {
         private final PropertyDef<?, Value> propertyDef;
         private volatile CachedMergedProperty<Value> cachedValue;
 

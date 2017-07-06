@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import org.jtrim2.property.PropertyFactory;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ConfigPath;
@@ -24,7 +25,6 @@ import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.standard.CommonProperties;
 import org.netbeans.gradle.project.tasks.vars.StringResolvers;
-import org.netbeans.gradle.project.util.NbConsumer;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -270,7 +270,7 @@ public final class CommonGlobalSettings {
     }
 
     // For testing purposes
-    public static void withCleanMemorySettings(NbConsumer<? super GenericProfileSettings> task) {
+    public static void withCleanMemorySettings(Consumer<? super GenericProfileSettings> task) {
         DefaultHolder.withCleanMemorySettings(task);
     }
 
@@ -332,7 +332,7 @@ public final class CommonGlobalSettings {
         private static final CommonGlobalSettings DEFAULT_STORED = new CommonGlobalSettings(DEFAULT_ACTIVE_SETTINGS);
         private static volatile CommonGlobalSettings DEFAULT = DEFAULT_STORED;
 
-        public static void withCleanMemorySettings(NbConsumer<? super GenericProfileSettings> task) {
+        public static void withCleanMemorySettings(Consumer<? super GenericProfileSettings> task) {
             Objects.requireNonNull(task, "task");
             try {
                 GenericProfileSettings settings = GenericProfileSettings.createTestMemorySettings();

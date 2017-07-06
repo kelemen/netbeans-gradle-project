@@ -7,12 +7,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import javax.swing.JTextArea;
 import org.jtrim2.property.BoolProperties;
 import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.validate.Validators;
 
@@ -157,7 +157,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
 
     public PredefinedTask tryGetPredefinedTask(
             String displayName,
-            NbSupplier<? extends List<PredefinedTask.Name>> fallbackNames) {
+            Supplier<? extends List<PredefinedTask.Name>> fallbackNames) {
         Objects.requireNonNull(displayName, "displayName");
         Objects.requireNonNull(fallbackNames, "fallbackNames");
 

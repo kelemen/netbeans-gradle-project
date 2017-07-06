@@ -10,9 +10,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import org.netbeans.gradle.project.util.NbConsumer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import org.netbeans.gradle.project.util.NbFileUtils;
-import org.netbeans.gradle.project.util.NbPredicate;
 
 public final class DefaultScriptFileProvider implements ScriptFileProvider {
     private static final String[] EXTENSIONS = {".gradle", ".gradle.kts"};
@@ -57,7 +57,7 @@ public final class DefaultScriptFileProvider implements ScriptFileProvider {
     @Override
     public Collection<Path> findScriptFiles(
             Path baseDir,
-            NbPredicate<? super String> baseNameFilter) throws IOException {
+            Predicate<? super String> baseNameFilter) throws IOException {
 
         List<Path> result = new ArrayList<>();
         findScriptFiles(baseDir, baseNameFilter, result::add);
@@ -67,8 +67,8 @@ public final class DefaultScriptFileProvider implements ScriptFileProvider {
     @Override
     public void findScriptFiles(
             Path baseDir,
-            NbPredicate<? super String> baseNameFilter,
-            NbConsumer<Path> fileProcessor) throws IOException {
+            Predicate<? super String> baseNameFilter,
+            Consumer<Path> fileProcessor) throws IOException {
         Objects.requireNonNull(baseDir, "baseDir");
         Objects.requireNonNull(baseNameFilter, "baseNameFilter");
         Objects.requireNonNull(fileProcessor, "fileProcessor");

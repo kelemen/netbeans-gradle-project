@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import org.jtrim2.event.ListenerRef;
 import org.jtrim2.event.ListenerRefs;
 import org.jtrim2.executor.GenericUpdateTaskExecutor;
@@ -26,7 +27,6 @@ import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.NbProperties;
-import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.openide.util.Utilities;
 
@@ -98,7 +98,7 @@ public final class JavaProjectDependencies {
         return translatedJavaDependenciesMap.getValue().get(output);
     }
 
-    public void forAllCandidates(NbConsumer<? super ProjectDependencyCandidate> task) {
+    public void forAllCandidates(Consumer<? super ProjectDependencyCandidate> task) {
         TranslatedDependencies value = translatedDependencies.getValue();
         if (value != null) {
             for (ProjectDependencyCandidate candidate: value.translatedDependencies.values()) {

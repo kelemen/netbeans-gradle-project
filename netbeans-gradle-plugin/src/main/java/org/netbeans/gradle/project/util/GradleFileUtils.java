@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim2.event.ListenerRef;
@@ -23,7 +24,7 @@ public final class GradleFileUtils {
     private static final File NORM_USER_HOME = getUserHome();
 
     public static final PropertySource<File> GRADLE_USER_HOME = getGradleUserHome();
-    public static final NbSupplier<File> GRADLE_USER_HOME_PROVIDER = GRADLE_USER_HOME::getValue;
+    public static final Supplier<File> GRADLE_USER_HOME_PROVIDER = GRADLE_USER_HOME::getValue;
 
     public static final Set<String> BINARY_DIR_NAMES =  Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList("jar", "bundle")));
