@@ -4,9 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.netbeans.gradle.project.util.LazyValue;
+import org.jtrim2.utils.LazyValues;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.modules.Places;
@@ -14,12 +15,12 @@ import org.openide.modules.Places;
 public final class GlobalSettingsUtils {
     private static final Logger LOGGER = Logger.getLogger(GlobalSettingsUtils.class.getName());
 
-    private static final LazyValue<Path> CONFIG_ROOT_REF = new LazyValue<>(() -> {
+    private static final Supplier<Path> CONFIG_ROOT_REF = LazyValues.lazyValue(() -> {
         File rootFile = tryGetConfigRoot();
         return rootFile != null ? rootFile.toPath() : null;
     });
 
-    private static final LazyValue<Path> CACHE_ROOT_REF = new LazyValue<>(GlobalSettingsUtils::tryGetCacheRoot);
+    private static final Supplier<Path> CACHE_ROOT_REF = LazyValues.lazyValue(GlobalSettingsUtils::tryGetCacheRoot);
 
     public static Path tryGetGlobalConfigPath(List<String> subPaths) {
         Path result = tryGetGlobalConfigPath0();

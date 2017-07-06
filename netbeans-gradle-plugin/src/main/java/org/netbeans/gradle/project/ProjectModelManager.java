@@ -6,12 +6,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jtrim2.executor.UpdateTaskExecutor;
 import org.jtrim2.property.PropertySource;
 import org.jtrim2.swing.concurrent.SwingExecutors;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
@@ -22,7 +24,6 @@ import org.netbeans.gradle.project.model.ProjectModelChangeListener;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheByBinaryLookup;
-import org.netbeans.gradle.project.util.LazyValue;
 
 final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel> {
     private static final Logger LOGGER = Logger.getLogger(ProjectModelManager.class.getName());
@@ -31,7 +32,7 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
     private final ChangeListenerManager modelChangeListeners;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final PropertySource<NbGradleModel> currentModel;
-    private final LazyValue<ProjectIssueRef> loadErrorRef;
+    private final Supplier<ProjectIssueRef> loadErrorRef;
     private final UpdateTaskExecutor modelUpdater;
     private final Runnable modelUpdateDispatcher;
 
@@ -42,7 +43,7 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
         this.modelUpdater = SwingExecutors.getSwingUpdateExecutor(true);
         this.modelUpdateDispatcher = this::onModelChange;
-        this.loadErrorRef = new LazyValue<>(() -> project.getProjectIssueManager().createIssueRef());
+        this.loadErrorRef = LazyValues.lazyValue(() -> project.getProjectIssueManager().createIssueRef());
     }
 
     private void onModelChange() {

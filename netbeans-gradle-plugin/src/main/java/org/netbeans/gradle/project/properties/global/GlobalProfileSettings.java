@@ -3,8 +3,10 @@ package org.netbeans.gradle.project.properties.global;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.function.Supplier;
 import org.jtrim2.event.ListenerRef;
 import org.jtrim2.property.MutableProperty;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.properties.ConfigSaveOptions;
@@ -13,7 +15,6 @@ import org.netbeans.gradle.project.properties.GenericProfileSettings;
 import org.netbeans.gradle.project.properties.LoadableSingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.ProfileFileDef;
 import org.netbeans.gradle.project.properties.ProfileLocationProvider;
-import org.netbeans.gradle.project.util.LazyValue;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.w3c.dom.Element;
 
@@ -78,10 +79,10 @@ final class GlobalProfileSettings implements LoadableSingleProfileSettingsEx {
     private static final class GlobalProfileLocationProvider implements ProfileLocationProvider {
         private static final String BASE_FILE_NAME = ProfileKey.GLOBAL_PROFILE.getFileName() + ".xml";
 
-        private final LazyValue<Path> outputPathRef;
+        private final Supplier<Path> outputPathRef;
 
         public GlobalProfileLocationProvider() {
-            this.outputPathRef = new LazyValue<>(() -> GlobalSettingsUtils.tryGetGlobalConfigPath(BASE_FILE_NAME));
+            this.outputPathRef = LazyValues.lazyValue(() -> GlobalSettingsUtils.tryGetGlobalConfigPath(BASE_FILE_NAME));
         }
 
         @Override

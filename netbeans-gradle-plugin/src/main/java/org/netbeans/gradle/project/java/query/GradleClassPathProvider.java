@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import org.jtrim2.executor.GenericUpdateTaskExecutor;
 import org.jtrim2.executor.TaskExecutor;
 import org.jtrim2.executor.TaskExecutors;
@@ -21,6 +22,7 @@ import org.jtrim2.executor.UpdateTaskExecutor;
 import org.jtrim2.property.PropertyFactory;
 import org.jtrim2.property.PropertySource;
 import org.jtrim2.swing.concurrent.SwingExecutors;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
@@ -50,7 +52,6 @@ import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
-import org.netbeans.gradle.project.util.LazyValue;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
@@ -86,14 +87,14 @@ implements
 
     private final ListenerRegistrations propertyListenerRefs;
 
-    private final LazyValue<ScriptFileProvider> scriptFileProviderRef;
+    private final Supplier<ScriptFileProvider> scriptFileProviderRef;
 
     public GradleClassPathProvider(JavaExtension javaExt) {
         this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
         this.currentPlatformRef = new AtomicReference<>(null);
         this.infoRefRef = new AtomicReference<>(null);
         this.loadedOnce = false;
-        this.scriptFileProviderRef = new LazyValue<>(() -> javaExt.getProject().getLookup().lookup(ScriptFileProvider.class));
+        this.scriptFileProviderRef = LazyValues.lazyValue(() -> javaExt.getProject().getLookup().lookup(ScriptFileProvider.class));
 
         this.classpathResourcesRef = new AtomicReference<>(Collections.<ClassPathKey, List<PathResourceImplementation>>emptyMap());
         this.classpaths = new ConcurrentHashMap<>();
