@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -54,18 +53,8 @@ public final class CompilerUtils {
     }
 
     public static void configureJavaCompilers(Project project) {
-        project.getTasks().withType(JavaCompile.class, new Action<JavaCompile>() {
-            @Override
-            public void execute(JavaCompile compileTask) {
-                configureJavaCompiler(compileTask);
-            }
-        });
-        project.getTasks().withType(GroovyCompile.class, new Action<GroovyCompile>() {
-            @Override
-            public void execute(GroovyCompile compileTask) {
-                configureJavaCompiler(compileTask);
-            }
-        });
+        project.getTasks().withType(JavaCompile.class, CompilerUtils::configureJavaCompiler);
+        project.getTasks().withType(GroovyCompile.class, CompilerUtils::configureJavaCompiler);
     }
 
     private static void configureJavaCompiler(final JavaCompile compileTask) {
@@ -80,11 +69,8 @@ public final class CompilerUtils {
         compilerOptions.setEncoding("UTF-8");
         addCompilerArgs(compilerOptions, "-Xlint");
 
-        TaskConfigurations.lazilyConfiguredTask(compileTask, new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                configureJavacNow(compileTask, compilerOptions);
-            }
+        TaskConfigurations.lazilyConfiguredTask(compileTask, (Task task) -> {
+            configureJavacNow(compileTask, compilerOptions);
         });
     }
 
@@ -111,14 +97,11 @@ public final class CompilerUtils {
             compilerOptions.getForkOptions().setJavaHome(explicitJavaHome);
         }
         else {
-            compileTask.doFirst(new Action<Task>() {
-                @Override
-                public void execute(Task t) {
-                    String jdkProperty = getJdkHomePropertyName(targetCompatibility);
-                    project.getLogger().warn("Warning: " + jdkProperty + " property is missing and"
-                            + " not compiling with Java " + targetCompatibility
-                            + ". Using " + JavaVersion.current());
-                }
+            compileTask.doFirst(t -> {
+                String jdkProperty = getJdkHomePropertyName(targetCompatibility);
+                project.getLogger().warn("Warning: " + jdkProperty + " property is missing and"
+                        + " not compiling with Java " + targetCompatibility
+                        + ". Using " + JavaVersion.current());
             });
         }
     }

@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import org.apache.maven.shared.dependency.analyzer.asm.ASMDependencyAnalyzer;
-import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -40,12 +39,9 @@ public final class NbmDependencyVerifierPlugin implements Plugin<Project> {
         verifyTask.dependsOn("jar");
         project.getTasks().getByName("check").dependsOn(verifyTask);
 
-        verifyTask.doLast(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                Jar jar = (Jar)project.getTasks().getByName("jar");
-                verifyDependencies(project, jar.getArchivePath());
-            }
+        verifyTask.doLast(task -> {
+            Jar jar = (Jar)project.getTasks().getByName("jar");
+            verifyDependencies(project, jar.getArchivePath());
         });
     }
 

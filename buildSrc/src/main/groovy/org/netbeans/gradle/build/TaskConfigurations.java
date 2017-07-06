@@ -17,11 +17,8 @@ public final class TaskConfigurations {
             task.dependsOn(configTask);
         }
 
-        configTask.doLast(new Action<Task>() {
-            @Override
-            public void execute(Task t) {
-                taskConfiguration.execute(task);
-            }
+        configTask.doLast(t -> {
+            taskConfiguration.execute(task);
         });
 
         return task;
@@ -30,13 +27,10 @@ public final class TaskConfigurations {
     public static Task lazilyConfiguredTask(Task task, final Closure<?> taskConfiguration) {
         Objects.requireNonNull(taskConfiguration, "taskConfiguration");
 
-        return lazilyConfiguredTask(task, new Action<Task>() {
-            @Override
-            public void execute(Task configuredTask) {
-                taskConfiguration.setDelegate(configuredTask);
-                taskConfiguration.setResolveStrategy(Closure.DELEGATE_FIRST);
-                taskConfiguration.call(configuredTask);
-            }
+        return lazilyConfiguredTask(task, (Task configuredTask) -> {
+            taskConfiguration.setDelegate(configuredTask);
+            taskConfiguration.setResolveStrategy(Closure.DELEGATE_FIRST);
+            taskConfiguration.call(configuredTask);
         });
     }
 
