@@ -1,3 +1,11 @@
+Current changes
+---------------
+
+The release notes for all versions (since 1.1.1) can now be viewed in the *release-notes* directory.
+Also, there is a list of changes applied but not yet released in
+[not-released-changes.md](https://github.com/kelemen/netbeans-gradle-project/blob/master/release-notes/not-released-changes.md).
+
+
 Downloads
 ---------
 
