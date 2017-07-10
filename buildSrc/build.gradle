@@ -18,9 +18,8 @@ dependencies {
 }
 
 repositories {
-    mavenCentral()
+    jcenter()
     maven {
         url 'http://repo.gradle.org/gradle/libs-releases-local'
     }
-    jcenter()
 }
