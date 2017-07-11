@@ -20,6 +20,7 @@ public final class NbGradleNbmPlugin implements Plugin<Project> {
         });
 
         tasks.create("releaseToGithub", ReleaseToGithubTask.class);
+        tasks.create("uploadDeployedToGitHub", UploadDeployedToGitHubTask.class);
     }
 
     private static String getCompilerVersion(Project project) {
