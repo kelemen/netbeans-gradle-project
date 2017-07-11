@@ -5,7 +5,6 @@ import com.vladsch.flexmark.ast.Heading;
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.options.MutableDataSet;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -46,15 +45,6 @@ public final class ReleaseNotes {
         }
 
         throw new IOException("Missing header for readme: " + version);
-    }
-
-    private static String readTitle(BufferedReader src) throws IOException {
-        for (String line = src.readLine(); line != null; line = src.readLine()) {
-            if (line.startsWith("# ")) {
-                return line.substring(1).trim();
-            }
-        }
-        throw new IOException("Missing title in readme.");
     }
 
     public String getVersion() {
