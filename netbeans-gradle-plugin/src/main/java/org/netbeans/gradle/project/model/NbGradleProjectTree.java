@@ -96,20 +96,6 @@ public final class NbGradleProjectTree implements Serializable {
         }
     }
 
-    private static NbGradleProjectTree findParent(NbGradleProjectTree root, NbGradleProjectTree project) {
-        // TODO: We could optimize this by first guessing by the project path.
-        for (NbGradleProjectTree child: root.getChildren()) {
-            if (child == project) {
-                return root;
-            }
-            NbGradleProjectTree candidate = findParent(child, project);
-            if (candidate != null) {
-                return candidate;
-            }
-        }
-        return null;
-    }
-
     private static Collection<NbGradleProjectTree> fromModels(Collection<GradleProjectTree> models) {
         List<NbGradleProjectTree> result = new ArrayList<>(models.size());
         for (GradleProjectTree model: models) {
