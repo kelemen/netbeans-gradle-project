@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
@@ -30,7 +32,7 @@ public final class NbGradleProjectTree implements Serializable {
 
     private final AtomicReference<NbGradleProjectTree> parentRef;
 
-    private final AtomicReference<Map<String, NbGradleProjectTree>> childrenMap;
+    private final Supplier<Map<String, NbGradleProjectTree>> childrenMap;
     private final AtomicInteger numberOfSubprojectsRef;
 
     public NbGradleProjectTree(
@@ -41,7 +43,7 @@ public final class NbGradleProjectTree implements Serializable {
         this.tasks = CollectionUtils.copyNullSafeList(tasks);
         this.children = CollectionUtils.copyNullSafeList(children);
 
-        this.childrenMap = new AtomicReference<>(null);
+        this.childrenMap = LazyValues.lazyValue(this::createChildrenMap);
         this.parentRef = new AtomicReference<>(null);
         this.numberOfSubprojectsRef = new AtomicInteger(-1);
     }
@@ -53,7 +55,7 @@ public final class NbGradleProjectTree implements Serializable {
         this.tasks = tree.getTasks();
         this.children = fromModels(tree.getChildren());
 
-        this.childrenMap = new AtomicReference<>(null);
+        this.childrenMap = LazyValues.lazyValue(this::createChildrenMap);
         this.parentRef = new AtomicReference<>(null);
         this.numberOfSubprojectsRef = new AtomicInteger(-1);
     }
@@ -145,12 +147,7 @@ public final class NbGradleProjectTree implements Serializable {
     }
 
     private Map<String, NbGradleProjectTree> getChildrenMap() {
-        Map<String, NbGradleProjectTree> result = childrenMap.get();
-        if (result == null) {
-            childrenMap.set(createChildrenMap());
-            result = childrenMap.get();
-        }
-        return result;
+        return childrenMap.get();
     }
 
     public NbGradleProjectTree findByPath(String path) {

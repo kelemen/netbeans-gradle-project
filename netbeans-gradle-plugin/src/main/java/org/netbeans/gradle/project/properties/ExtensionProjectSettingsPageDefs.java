@@ -3,9 +3,10 @@ package org.netbeans.gradle.project.properties;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import org.jtrim2.utils.ExceptionHelper;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
@@ -19,20 +20,23 @@ import org.openide.util.Lookup;
 
 public final class ExtensionProjectSettingsPageDefs {
     private final NbGradleProject project;
-    private final String extensionName;
     private final Lookup[] extensionLookups;
 
     // Lazily initialize to avoid too early project access.
-    private final AtomicReference<ProjectSettingsProvider.ExtensionSettings> extensionSettingsRef;
+    private final Supplier<ProjectSettingsProvider.ExtensionSettings> extensionSettingsRef;
 
     public ExtensionProjectSettingsPageDefs(
             NbGradleProject project,
             String extensionName,
             Lookup... extensionLookups) {
         this.project = Objects.requireNonNull(project, "project");
-        this.extensionName = Objects.requireNonNull(extensionName, "extensionName");
         this.extensionLookups = extensionLookups.clone();
-        this.extensionSettingsRef = new AtomicReference<>(null);
+
+        Objects.requireNonNull(extensionName, "extensionName");
+        this.extensionSettingsRef = LazyValues.lazyValue(() -> {
+            ProjectSettingsProvider projectSettingsProvider = project.getProjectSettingsProvider();
+            return projectSettingsProvider.getExtensionSettings(extensionName);
+        });
 
         ExceptionHelper.checkNotNullElements(this.extensionLookups, "extensionLookups");
     }
@@ -55,15 +59,7 @@ public final class ExtensionProjectSettingsPageDefs {
     }
 
     private ProjectSettingsProvider.ExtensionSettings getExtensionSettings() {
-        ProjectSettingsProvider.ExtensionSettings result = extensionSettingsRef.get();
-        if (result == null) {
-            ProjectSettingsProvider projectSettingsProvider = project.getProjectSettingsProvider();
-            result = projectSettingsProvider.getExtensionSettings(extensionName);
-            if (!extensionSettingsRef.compareAndSet(null, result)) {
-                result = extensionSettingsRef.get();
-            }
-        }
-        return result;
+        return extensionSettingsRef.get();
     }
 
     public void addAllExplicitProviders(List<ProjectCustomizer.CompositeCategoryProvider> result) {

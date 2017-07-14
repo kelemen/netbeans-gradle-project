@@ -1,26 +1,21 @@
 package org.netbeans.gradle.project.others;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import org.jtrim2.utils.LazyValues;
 
 public final class PluginClass implements ClassFinder {
-    private final PluginClassFactory classFactory;
-    private final String className;
-    private final AtomicReference<Class<?>> loadedClass;
+    private final Supplier<Class<?>> loadedClass;
 
     public PluginClass(PluginClassFactory classFactory, String className) {
-        this.classFactory = Objects.requireNonNull(classFactory, "classFactory");
-        this.className = Objects.requireNonNull(className, "className");
-        this.loadedClass = new AtomicReference<>();
+        Objects.requireNonNull(classFactory, "classFactory");
+        Objects.requireNonNull(className, "className");
+
+        this.loadedClass = LazyValues.lazyValue(() -> classFactory.tryFindClass(className));
     }
 
     @Override
     public Class<?> tryGetClass() {
-        Class<?> result = loadedClass.get();
-        if (result == null) {
-            loadedClass.compareAndSet(null, classFactory.tryFindClass(className));
-            result = loadedClass.get();
-        }
-        return result;
+        return loadedClass.get();
     }
 }

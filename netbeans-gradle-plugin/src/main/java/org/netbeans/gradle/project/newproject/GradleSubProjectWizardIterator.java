@@ -114,7 +114,7 @@ implements
         uninitialize(wizard);
 
         descriptorIndex = 0;
-        descriptors.add(new GradleSubProjectConfigPanel(configRef, wizard));
+        descriptors.add(new GradleSubProjectConfigPanel(wizard, configRef::set));
         wizard.putProperty ("NewProjectWizard_Title", "Gradle Subproject"); // NOI18N
         JComponent c = (JComponent) descriptors.get(0).getComponent();
         c.putClientProperty(WizardDescriptor.PROP_CONTENT_SELECTED_INDEX, 0);

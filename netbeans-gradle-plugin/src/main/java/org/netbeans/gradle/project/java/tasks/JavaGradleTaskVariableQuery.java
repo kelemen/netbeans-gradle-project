@@ -6,7 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
@@ -37,8 +38,8 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
 
     public static final TaskVariable COVERAGE_REPORT_TASK_NAME = new TaskVariable("coverage-report-task");
 
-    private static final AtomicReference<VariableDefMap<JavaExtension>> VARIABLE_DEF_MAP_REF
-            = new AtomicReference<>(null);
+    private static final Supplier<VariableDefMap<JavaExtension>> VARIABLE_DEF_MAP_REF
+            = LazyValues.lazyValue(JavaGradleTaskVariableQuery::createVariableDefMap);
 
     private final JavaExtension javaExt;
 
@@ -118,12 +119,7 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
     }
 
     private static VariableDefMap<JavaExtension> getVariableDefMap() {
-        VariableDefMap<JavaExtension> result = VARIABLE_DEF_MAP_REF.get();
-        if (result == null) {
-            VARIABLE_DEF_MAP_REF.compareAndSet(null, createVariableDefMap());
-            result = VARIABLE_DEF_MAP_REF.get();
-        }
-        return result;
+        return VARIABLE_DEF_MAP_REF.get();
     }
 
     private static VariableDefMap<JavaExtension> createVariableDefMap() {

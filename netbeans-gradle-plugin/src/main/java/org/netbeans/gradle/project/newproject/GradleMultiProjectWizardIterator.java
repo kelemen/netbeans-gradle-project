@@ -125,7 +125,7 @@ implements
         uninitialize(wizard);
 
         descriptorIndex = 0;
-        descriptors.add(new GradleMultiProjectConfigPanel(configRef, wizard));
+        descriptors.add(new GradleMultiProjectConfigPanel(wizard, configRef::set));
         wizard.putProperty ("NewProjectWizard_Title", "Gradle Project"); // NOI18N
         JComponent c = (JComponent) descriptors.get(0).getComponent();
         c.putClientProperty(WizardDescriptor.PROP_CONTENT_SELECTED_INDEX, 0);

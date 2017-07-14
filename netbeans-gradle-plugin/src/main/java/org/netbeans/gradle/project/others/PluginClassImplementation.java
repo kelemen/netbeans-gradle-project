@@ -5,13 +5,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class PluginClassImplementation {
-    private final ClassFinder type;
-    private final InvocationHandler invocationHandler;
-    private final AtomicReference<Object> instanceRef;
+    private final Supplier<Object> instanceRef;
 
     public PluginClassImplementation(
             ClassFinder type,
@@ -29,21 +28,17 @@ public final class PluginClassImplementation {
     private PluginClassImplementation(
             ClassFinder type,
             InvocationHandler invocationHandler) {
-        this.type = Objects.requireNonNull(type, "type");
-        this.invocationHandler = Objects.requireNonNull(invocationHandler, "invocationHandler");
-        this.instanceRef = new AtomicReference<>(null);
+        Objects.requireNonNull(type, "type");
+        Objects.requireNonNull(invocationHandler, "invocationHandler");
+
+        this.instanceRef = LazyValues.lazyValue(() -> tryCreateProxyInstance(type, invocationHandler));
     }
 
     public Object tryGetAsPluginClass() {
-        Object result = instanceRef.get();
-        if (result == null) {
-            instanceRef.compareAndSet(null, tryCreateProxyInstance());
-            result = instanceRef.get();
-        }
-        return result;
+        return instanceRef.get();
     }
 
-    private Object tryCreateProxyInstance() {
+    private static Object tryCreateProxyInstance(ClassFinder type, InvocationHandler invocationHandler) {
         Class<?> pluginClass = type.tryGetClass();
         if (pluginClass == null) {
             return null;

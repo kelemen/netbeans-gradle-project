@@ -183,14 +183,12 @@ public final class ReaderInputStream extends InputStream {
     }
 
     private void appendToCache(byte[] newBytes) {
-        byte[] oldCache;
-        byte[] newCache;
-        do {
-            oldCache = cacheRef.get();
-            newCache = new byte[oldCache.length + newBytes.length];
+        cacheRef.updateAndGet(oldCache -> {
+            byte[] newCache = new byte[oldCache.length + newBytes.length];
             System.arraycopy(oldCache, 0, newCache, 0, oldCache.length);
             System.arraycopy(newBytes, 0, newCache, oldCache.length, newBytes.length);
-        } while (!cacheRef.compareAndSet(oldCache, newCache));
+            return newCache;
+        });
     }
 
     @Override

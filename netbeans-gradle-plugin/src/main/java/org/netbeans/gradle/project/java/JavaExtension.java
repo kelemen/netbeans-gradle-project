@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim2.event.ListenerRef;
@@ -20,6 +20,7 @@ import org.jtrim2.property.PropertySource;
 import org.jtrim2.property.swing.SwingProperties;
 import org.jtrim2.property.swing.SwingPropertySource;
 import org.jtrim2.swing.concurrent.SwingExecutors;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.FileOwnerQuery;
@@ -82,18 +83,18 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     private volatile boolean hasEverBeenLoaded;
 
     private final GradleClassPathProvider cpProvider;
-    private final AtomicReference<JavaSourceDirHandler> sourceDirsHandlerRef;
+    private final Supplier<JavaSourceDirHandler> sourceDirsHandlerRef;
     private final ProjectIssueRef dependencyResolutionFailureRef;
     private final JavaProjectDependencies projectDependencies;
 
-    private final AtomicReference<Lookup> projectLookupRef;
-    private final AtomicReference<Lookup> permanentLookupRef;
-    private final AtomicReference<Lookup> extensionLookupRef;
-    private final AtomicReference<Lookup> combinedLookupRef;
+    private final Supplier<Lookup> projectLookupRef;
+    private final Supplier<Lookup> permanentLookupRef;
+    private final Supplier<Lookup> extensionLookupRef;
+    private final Supplier<Lookup> combinedLookupRef;
 
     private final ChangeListenerManager modelChangeListeners;
-    private final AtomicReference<JavaProjectProperties> projectPropertiesRef;
-    private final AtomicReference<ProjectSettingsProvider.ExtensionSettings> extensionSettingsRef;
+    private final Supplier<JavaProjectProperties> projectPropertiesRef;
+    private final Supplier<ProjectSettingsProvider.ExtensionSettings> extensionSettingsRef;
 
     private JavaExtension(Project project) throws IOException {
         this.project = Objects.requireNonNull(project, "project");
@@ -110,16 +111,58 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.currentModel = PropertyFactory.memPropertyConcurrent(defaultModel, SwingExecutors.getStrictExecutor(false));
         this.cpProvider = new GradleClassPathProvider(this);
         this.projectDependencies = new JavaProjectDependencies(this);
-        this.projectLookupRef = new AtomicReference<>(null);
-        this.permanentLookupRef = new AtomicReference<>(null);
-        this.extensionLookupRef = new AtomicReference<>(null);
-        this.combinedLookupRef = new AtomicReference<>(null);
         this.hasEverBeenLoaded = false;
-        this.sourceDirsHandlerRef = new AtomicReference<>(null);
+
         this.dependencyResolutionFailureRef = getProjectInfoManager(project).createIssueRef();
         this.modelChangeListeners = new GenericChangeListenerManager();
-        this.projectPropertiesRef = new AtomicReference<>(null);
-        this.extensionSettingsRef = new AtomicReference<>(null);
+
+        this.projectLookupRef = LazyValues.lazyValue(() -> {
+            return Lookups.fixed(
+                    LookupProviderSupport.createSourcesMerger(),
+                    new GradleProjectSources(this),
+                    cpProvider,
+                    new GradleCoverageProvider(this),
+                    new GradleSourceLevelQueryImplementation(this),
+                    new GradleUnitTestFinder(this),
+                    new GradleAnnotationProcessingQuery(),
+                    new GradleSourceForBinaryQuery(this),
+                    new GradleBinaryForSourceQuery(this),
+                    new GradleProjectTemplates(),
+                    new JavaGradleTaskVariableQuery(this),
+                    new J2SEPlatformFromScriptQueryImpl(this) // internal use only
+            );
+        });
+        this.permanentLookupRef = LazyValues.lazyValue(() -> {
+            return Lookups.fixed(
+                    this,
+                    new OpenHook(this));
+        });
+        this.extensionLookupRef = LazyValues.lazyValue(() -> {
+            return Lookups.fixed(
+                    new JavaExtensionNodes(this),
+                    new JavaProjectContextActions(this),
+                    new GradleJavaBuiltInCommands(this),
+                    new JavaInitScriptQuery(),
+                    JavaDebuggingPanel.createDebuggingCustomizer(true));
+        });
+        this.combinedLookupRef = LazyValues.lazyValue(() -> {
+            return new ProxyLookup(
+                    getPermanentProjectLookup(),
+                    getProjectLookup(),
+                    getExtensionLookup());
+        });
+        this.sourceDirsHandlerRef = LazyValues.lazyValue(() -> new JavaSourceDirHandler(this));
+        this.projectPropertiesRef = LazyValues.lazyValue(() -> {
+            ProjectSettingsProvider.ExtensionSettings extensionSettings = getExtensionSettings();
+            return new JavaProjectProperties(extensionSettings.getActiveSettings());
+        });
+        this.extensionSettingsRef = LazyValues.lazyValue(() -> {
+            ProjectSettingsProvider settingsProvider = project.getLookup().lookup(ProjectSettingsProvider.class);
+            if (settingsProvider == null) {
+                throw new IllegalArgumentException("Not a Gradle project.");
+            }
+            return settingsProvider.getExtensionSettings(JavaExtensionDef.EXTENSION_NAME);
+        });
     }
 
     public static PropertySource<JavaExtension> extensionOfProject(Project project) {
@@ -140,32 +183,11 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     }
 
     public ProjectSettingsProvider.ExtensionSettings getExtensionSettings() {
-        ProjectSettingsProvider.ExtensionSettings result = extensionSettingsRef.get();
-        if (result == null) {
-            ProjectSettingsProvider settingsProvider = project.getLookup().lookup(ProjectSettingsProvider.class);
-            if (settingsProvider == null) {
-                throw new IllegalArgumentException("Not a Gradle project.");
-            }
-
-            result = settingsProvider.getExtensionSettings(JavaExtensionDef.EXTENSION_NAME);
-
-            if (!extensionSettingsRef.compareAndSet(null, result)) {
-                result = extensionSettingsRef.get();
-            }
-        }
-        return result;
+        return extensionSettingsRef.get();
     }
 
     public JavaProjectProperties getProjectProperties() {
-        JavaProjectProperties result = projectPropertiesRef.get();
-        if (result == null) {
-            ProjectSettingsProvider.ExtensionSettings extensionSettings = getExtensionSettings();
-            result = new JavaProjectProperties(extensionSettings.getActiveSettings());
-            if (!projectPropertiesRef.compareAndSet(null, result)) {
-                result = projectPropertiesRef.get();
-            }
-        }
-        return result;
+        return projectPropertiesRef.get();
     }
 
     public static JavaExtension getJavaExtensionOfProject(Project project) {
@@ -190,12 +212,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     }
 
     public JavaSourceDirHandler getSourceDirsHandler() {
-        JavaSourceDirHandler result = sourceDirsHandlerRef.get();
-        if (result == null) {
-            sourceDirsHandlerRef.compareAndSet(null, new JavaSourceDirHandler(this));
-            result = sourceDirsHandlerRef.get();
-        }
-        return result;
+        return sourceDirsHandlerRef.get();
     }
 
     public static JavaExtension create(Project project) throws IOException {
@@ -249,61 +266,17 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     // These classes are on the lookup always.
     @Override
     public Lookup getPermanentProjectLookup() {
-        Lookup lookup = permanentLookupRef.get();
-        if (lookup == null) {
-            lookup = Lookups.fixed(this, new OpenHook(this));
-
-            if (permanentLookupRef.compareAndSet(null, lookup)) {
-                initLookup(lookup);
-            }
-            lookup = permanentLookupRef.get();
-        }
-        return lookup;
+        return permanentLookupRef.get();
     }
 
     @Override
     public Lookup getProjectLookup() {
-        Lookup lookup = projectLookupRef.get();
-        if (lookup == null) {
-            lookup = Lookups.fixed(
-                    LookupProviderSupport.createSourcesMerger(),
-                    new GradleProjectSources(this),
-                    cpProvider,
-                    new GradleCoverageProvider(this),
-                    new GradleSourceLevelQueryImplementation(this),
-                    new GradleUnitTestFinder(this),
-                    new GradleAnnotationProcessingQuery(),
-                    new GradleSourceForBinaryQuery(this),
-                    new GradleBinaryForSourceQuery(this),
-                    new GradleProjectTemplates(),
-                    new JavaGradleTaskVariableQuery(this),
-                    new J2SEPlatformFromScriptQueryImpl(this) // internal use only
-                    );
-
-            if (projectLookupRef.compareAndSet(null, lookup)) {
-                initLookup(lookup);
-            }
-            lookup = projectLookupRef.get();
-        }
-        return lookup;
+        return projectLookupRef.get();
     }
 
     @Override
     public Lookup getExtensionLookup() {
-        Lookup lookup = extensionLookupRef.get();
-        if (lookup == null) {
-            lookup = Lookups.fixed(new JavaExtensionNodes(this),
-                    new JavaProjectContextActions(this),
-                    new GradleJavaBuiltInCommands(this),
-                    new JavaInitScriptQuery(),
-                    JavaDebuggingPanel.createDebuggingCustomizer(true));
-
-            if (extensionLookupRef.compareAndSet(null, lookup)) {
-                initLookup(lookup);
-            }
-            lookup = extensionLookupRef.get();
-        }
-        return lookup;
+        return extensionLookupRef.get();
     }
 
     public Project getProject() {
@@ -331,16 +304,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     }
 
     private Lookup getCombinedLookup() {
-        Lookup lookup = combinedLookupRef.get();
-        if (lookup == null) {
-            lookup = new ProxyLookup(
-                    getPermanentProjectLookup(),
-                    getProjectLookup(),
-                    getExtensionLookup());
-            combinedLookupRef.compareAndSet(null, lookup);
-            lookup = combinedLookupRef.get();
-        }
-        return lookup;
+        return combinedLookupRef.get();
     }
 
     private void fireModelChange() {

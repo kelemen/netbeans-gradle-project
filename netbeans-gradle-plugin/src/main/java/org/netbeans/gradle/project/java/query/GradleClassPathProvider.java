@@ -75,9 +75,9 @@ implements
     private final PropertyChangeSupport changes;
     private final AtomicReference<ProjectPlatform> currentPlatformRef;
 
-    private final AtomicReference<ProjectIssueRef> infoRefRef;
+    private final Supplier<ProjectIssueRef> infoRefRef;
 
-    private final AtomicReference<ClassPath> allSourcesClassPathRef;
+    private final Supplier<ClassPath> allSourcesClassPathRef;
     private volatile List<PathResourceImplementation> allSources;
 
     private volatile boolean loadedOnce;
@@ -92,14 +92,19 @@ implements
     public GradleClassPathProvider(JavaExtension javaExt) {
         this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
         this.currentPlatformRef = new AtomicReference<>(null);
-        this.infoRefRef = new AtomicReference<>(null);
+        this.infoRefRef = LazyValues.lazyValue(() -> {
+            ProjectIssueManager infoManager = javaExt.getOwnerProjectLookup().lookup(ProjectIssueManager.class);
+            return infoManager.createIssueRef();
+        });
         this.loadedOnce = false;
         this.scriptFileProviderRef = LazyValues.lazyValue(() -> javaExt.getProject().getLookup().lookup(ScriptFileProvider.class));
 
         this.classpathResourcesRef = new AtomicReference<>(Collections.<ClassPathKey, List<PathResourceImplementation>>emptyMap());
         this.classpaths = new ConcurrentHashMap<>();
         this.allSources = Collections.emptyList();
-        this.allSourcesClassPathRef = new AtomicReference<>(null);
+        this.allSourcesClassPathRef = LazyValues.lazyValue(() -> {
+            return ClassPathFactory.createClassPath(new AllSourcesClassPaths());
+        });
 
         TaskExecutor pathUpdater = TaskExecutors.inOrderSimpleExecutor(NbTaskExecutors.DEFAULT_EXECUTOR);
         this.classpathUpdateExecutor = new GenericUpdateTaskExecutor(pathUpdater);
@@ -112,13 +117,7 @@ implements
     }
 
     private ProjectIssueRef getInfoRef() {
-        ProjectIssueRef result = infoRefRef.get();
-        if (result == null) {
-            ProjectIssueManager infoManager = javaExt.getOwnerProjectLookup().lookup(ProjectIssueManager.class);
-            infoRefRef.compareAndSet(null, infoManager.createIssueRef());
-            result = infoRefRef.get();
-        }
-        return result;
+        return infoRefRef.get();
     }
 
     private ClassPath getPaths(ClassPathKey classPathType) {
@@ -144,13 +143,7 @@ implements
 
         switch (type) {
             case ClassPath.SOURCE:
-                ClassPath result = allSourcesClassPathRef.get();
-                if (result == null) {
-                    result = ClassPathFactory.createClassPath(new AllSourcesClassPaths());
-                    allSourcesClassPathRef.compareAndSet(null, result);
-                    result = allSourcesClassPathRef.get();
-                }
-                return result;
+                return allSourcesClassPathRef.get();
             case ClassPath.BOOT:
                 return getPaths(SpecialClassPath.BOOT);
             case ClassPath.COMPILE:

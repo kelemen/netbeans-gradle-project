@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.io.File;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.script.CommonScripts;
 import org.netbeans.gradle.project.script.GroovyScripts;
@@ -16,10 +17,10 @@ public final class GradleSubProjectConfigPanel implements WizardDescriptor.Panel
     private static final String EXTENSION = GroovyScripts.EXTENSION;
 
     private final AtomicReference<GradleSingleProjectPropertiesPanel> panel;
-    private final AtomicReference<GradleSingleProjectConfig> configRef;
+    private final Consumer<? super GradleSingleProjectConfig> configRef;
     private final WizardDescriptor wizard;
 
-    public GradleSubProjectConfigPanel(AtomicReference<GradleSingleProjectConfig> configRef, WizardDescriptor wizard) {
+    public GradleSubProjectConfigPanel(WizardDescriptor wizard, Consumer<? super GradleSingleProjectConfig> configRef) {
         this.configRef = Objects.requireNonNull(configRef, "configRef");
         this.wizard = wizard;
         this.panel = new AtomicReference<>();
@@ -91,7 +92,7 @@ public final class GradleSubProjectConfigPanel implements WizardDescriptor.Panel
 
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        configRef.set(getPanel().getConfig());
+        configRef.accept(getPanel().getConfig());
     }
 
     @Override

@@ -2,36 +2,29 @@ package org.netbeans.gradle.project.newproject;
 
 import java.awt.Component;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.swing.event.ChangeListener;
+import org.jtrim2.utils.LazyValues;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 
 public final class GradleSingleProjectConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
-    private final AtomicReference<GradleSingleProjectPropertiesPanel> panel;
-    private final AtomicReference<GradleSingleProjectConfig> configRef;
-    private final WizardDescriptor wizard;
+    private final Supplier<GradleSingleProjectPropertiesPanel> panelRef;
+    private final Consumer<? super GradleSingleProjectConfig> configRef;
 
     public GradleSingleProjectConfigPanel(
-            AtomicReference<GradleSingleProjectConfig> configRef,
-            WizardDescriptor wizard) {
+            WizardDescriptor wizard,
+            Consumer<? super GradleSingleProjectConfig> configRef) {
         this.configRef = Objects.requireNonNull(configRef, "configRef");
-        this.wizard = wizard;
-        this.panel = new AtomicReference<>();
-    }
 
-    private GradleSingleProjectPropertiesPanel getPanel() {
-        GradleSingleProjectPropertiesPanel result = panel.get();
-        if (result == null) {
-            panel.compareAndSet(null, new GradleSingleProjectPropertiesPanel(wizard));
-            result = panel.get();
-        }
-        return result;
+        Objects.requireNonNull(wizard, "wizard");
+        this.panelRef = LazyValues.lazyValue(() -> new GradleSingleProjectPropertiesPanel(wizard));
     }
 
     @Override
     public Component getComponent() {
-        return getPanel();
+        return panelRef.get();
     }
 
     @Override
@@ -41,26 +34,26 @@ public final class GradleSingleProjectConfigPanel implements WizardDescriptor.Pa
 
     @Override
     public void readSettings(WizardDescriptor settings) {
-        getPanel().startValidation();
+        panelRef.get().startValidation();
     }
 
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        configRef.set(getPanel().getConfig());
+        configRef.accept(panelRef.get().getConfig());
     }
 
     @Override
     public boolean isValid() {
-        return getPanel().containsValidData();
+        return panelRef.get().containsValidData();
     }
 
     @Override
     public void addChangeListener(ChangeListener listener) {
-        getPanel().addChangeListener(listener);
+        panelRef.get().addChangeListener(listener);
     }
 
     @Override
     public void removeChangeListener(ChangeListener listener) {
-        getPanel().removeChangeListener(listener);
+        panelRef.get().removeChangeListener(listener);
     }
 }

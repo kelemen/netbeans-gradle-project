@@ -5,9 +5,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import org.jtrim2.property.PropertyFactory;
 import org.jtrim2.property.PropertySource;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.PropertyDef;
@@ -82,30 +83,21 @@ public final class CustomVariablesProperty {
 
     private static final class MergedCustomVariables implements CustomVariables {
         private final CustomVariables child;
-        private final ValueReference<CustomVariables> parentRef;
-        private final AtomicReference<CustomVariables> parentCache;
+        private final Supplier<CustomVariables> parentCache;
 
         public MergedCustomVariables(CustomVariables child, ValueReference<CustomVariables> parentRef) {
             assert child != null;
             assert parentRef != null;
 
             this.child = child;
-            this.parentRef = parentRef;
-            this.parentCache = new AtomicReference<>(null);
+            this.parentCache = LazyValues.lazyValue(() -> {
+                CustomVariables result = parentRef.getValue();
+                return result != null ? result : MemCustomVariables.EMPTY;
+            });
         }
 
         private CustomVariables getParent() {
-            CustomVariables result = parentCache.get();
-            if (result == null) {
-                result = parentRef.getValue();
-                if (result == null) {
-                    result = MemCustomVariables.EMPTY;
-                }
-                if (!parentCache.compareAndSet(null, result)) {
-                    result = parentCache.get();
-                }
-            }
-            return result;
+            return parentCache.get();
         }
 
         @Override

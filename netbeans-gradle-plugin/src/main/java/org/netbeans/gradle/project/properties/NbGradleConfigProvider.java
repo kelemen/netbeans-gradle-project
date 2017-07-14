@@ -166,31 +166,24 @@ public final class NbGradleConfigProvider {
     }
 
     private void removeFromConfig(NbGradleConfiguration config) {
-        List<NbGradleConfiguration> currentList;
-        List<NbGradleConfiguration> newList;
-
-        do {
+        configs.updateAndGet(currentList -> {
             currentList = configs.get();
-            newList = new ArrayList<>(currentList);
+            List<NbGradleConfiguration> newList = new ArrayList<>(currentList);
             newList.remove(config);
-            newList = Collections.unmodifiableList(newList);
-        } while (!configs.compareAndSet(currentList, newList));
+            return Collections.unmodifiableList(newList);
+        });
     }
 
     private void addToConfig(Collection<NbGradleConfiguration> toAdd) {
-        List<NbGradleConfiguration> currentList;
-        List<NbGradleConfiguration> newList;
-
-        do {
-            currentList = configs.get();
+        configs.updateAndGet(currentList -> {
             Set<NbGradleConfiguration> configSet = new HashSet<>(currentList);
             configSet.addAll(toAdd);
 
-            newList = new ArrayList<>(configSet);
+            List<NbGradleConfiguration> newList = new ArrayList<>(configSet);
             NbGradleConfiguration.sortProfiles(newList);
 
-            newList = Collections.unmodifiableList(newList);
-        } while (!configs.compareAndSet(currentList, newList));
+            return Collections.unmodifiableList(newList);
+        });
     }
 
     public void removeConfiguration(final NbGradleConfiguration config) {

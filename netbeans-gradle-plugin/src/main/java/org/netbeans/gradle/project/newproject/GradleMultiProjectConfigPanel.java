@@ -2,29 +2,26 @@ package org.netbeans.gradle.project.newproject;
 
 import java.awt.Component;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.swing.event.ChangeListener;
+import org.jtrim2.utils.LazyValues;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 
 public final class GradleMultiProjectConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
-    private final AtomicReference<GradleMultiProjectPropertiesPanel> panel;
-    private final AtomicReference<GradleMultiProjectConfig> configRef;
-    private final WizardDescriptor wizard;
+    private final Supplier<GradleMultiProjectPropertiesPanel> panel;
+    private final Consumer<? super GradleMultiProjectConfig> configRef;
 
-    public GradleMultiProjectConfigPanel(AtomicReference<GradleMultiProjectConfig> configRef, WizardDescriptor wizard) {
+    public GradleMultiProjectConfigPanel(WizardDescriptor wizard, Consumer<? super GradleMultiProjectConfig> configRef) {
         this.configRef = Objects.requireNonNull(configRef, "configRef");
-        this.panel = new AtomicReference<>();
-        this.wizard = wizard;
+
+        Objects.requireNonNull(wizard, "wizard");
+        this.panel = LazyValues.lazyValue(() -> new GradleMultiProjectPropertiesPanel(wizard));
     }
 
     private GradleMultiProjectPropertiesPanel getPanel() {
-        GradleMultiProjectPropertiesPanel result = panel.get();
-        if (result == null) {
-            panel.compareAndSet(null, new GradleMultiProjectPropertiesPanel(wizard));
-            result = panel.get();
-        }
-        return result;
+        return panel.get();
     }
 
     @Override
@@ -44,7 +41,7 @@ public final class GradleMultiProjectConfigPanel implements WizardDescriptor.Pan
 
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        configRef.set(getPanel().getConfig());
+        configRef.accept(getPanel().getConfig());
     }
 
     @Override

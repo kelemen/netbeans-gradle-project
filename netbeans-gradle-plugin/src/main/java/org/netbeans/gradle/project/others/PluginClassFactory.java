@@ -1,18 +1,19 @@
 package org.netbeans.gradle.project.others;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.gradle.project.util.TestDetectUtils;
 import org.openide.modules.ModuleInfo;
 import org.openide.util.Lookup;
 
 public final class PluginClassFactory {
     private final String moduleNamePrefix;
-    private final AtomicReference<ModuleInfo> moduleInfoRef;
+    private final Supplier<ModuleInfo> moduleInfoRef;
 
     public PluginClassFactory(String moduleNamePrefix) {
         this.moduleNamePrefix = Objects.requireNonNull(moduleNamePrefix, "moduleNamePrefix");
-        this.moduleInfoRef = new AtomicReference<>(null);
+        this.moduleInfoRef = LazyValues.lazyValue(this::tryFindModuleInfo);
     }
 
     private ModuleInfo tryFindModuleInfo() {
@@ -31,17 +32,8 @@ public final class PluginClassFactory {
         return null;
     }
 
-    private ModuleInfo tryGetModuleInfo() {
-        ModuleInfo result = moduleInfoRef.get();
-        if (result == null) {
-            moduleInfoRef.compareAndSet(null, tryFindModuleInfo());
-            result = moduleInfoRef.get();
-        }
-        return result;
-    }
-
-    public ClassLoader tryGetModuleClassLoader() {
-        ModuleInfo moduleInfo = tryGetModuleInfo();
+    private ClassLoader tryGetModuleClassLoader() {
+        ModuleInfo moduleInfo = moduleInfoRef.get();
         if (moduleInfo == null) {
             return null;
         }

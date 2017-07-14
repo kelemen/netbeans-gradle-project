@@ -10,13 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.jtrim2.executor.UpdateTaskExecutor;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
@@ -250,7 +251,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         private final PropertyChangeSupport changes;
         private final String displayName;
 
-        private final AtomicReference<Path> locationPathRef;
+        private final Supplier<Path> locationPathRef;
 
         public GradleSourceGroup(FileObject location) {
             this(location, NbStrings.getSrcPackageCaption());
@@ -265,18 +266,11 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
             this.location = location;
             this.displayName = displayName;
             this.changes = new PropertyChangeSupport(this);
-            this.locationPathRef = new AtomicReference<>(null);
+            this.locationPathRef = LazyValues.lazyValue(() -> GradleFileUtils.toPath(location));
         }
 
         public Path getRootPath() {
-            Path result = locationPathRef.get();
-            if (result == null) {
-                result = GradleFileUtils.toPath(location);
-                if (!locationPathRef.compareAndSet(null, result)) {
-                    result = locationPathRef.get();
-                }
-            }
-            return result;
+            return locationPathRef.get();
         }
 
         @Override

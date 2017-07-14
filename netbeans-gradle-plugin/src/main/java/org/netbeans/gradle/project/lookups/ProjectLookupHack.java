@@ -7,9 +7,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -37,8 +38,17 @@ import org.openide.util.lookup.ProxyLookup;
 public final class ProjectLookupHack extends ProxyLookup {
     private static final Logger LOGGER = Logger.getLogger(ProjectLookupHack.class.getName());
 
-    private static final AtomicReference<Collection<Class<?>>> NOT_IMPLEMENTED_SERVICES
-            = new AtomicReference<>();
+    private static final Supplier<Collection<Class<?>>> NOT_IMPLEMENTED_SERVICES = LazyValues.lazyValue(() -> {
+        Collection<Class<?>> result = new ArrayList<>();
+
+        // We could implement these interfaces but do not want to
+        // because for this information we need to parse the build script
+        // which is too slow to be useful in the project open dialog.
+        result.add(SubprojectProvider.class);
+        tryAddClass("org.netbeans.spi.project.ProjectContainerProvider", result);
+        tryAddClass("org.netbeans.spi.project.DependencyProjectProvider", result);
+        return Collections.unmodifiableCollection(result);
+    });
 
     public interface LookupContainer {
         public NbGradleProject getProject();
@@ -76,20 +86,7 @@ public final class ProjectLookupHack extends ProxyLookup {
     }
 
     private static Collection<Class<?>> getNotImplementedServices() {
-        Collection<Class<?>> result = NOT_IMPLEMENTED_SERVICES.get();
-        if (result == null) {
-            result = new ArrayList<>();
-
-            // We could implement these interfaces but do not want to
-            // because for this information we need to parse the build script
-            // which is too slow to be useful in the project open dialog.
-            result.add(SubprojectProvider.class);
-            tryAddClass("org.netbeans.spi.project.ProjectContainerProvider", result);
-            tryAddClass("org.netbeans.spi.project.DependencyProjectProvider", result);
-            NOT_IMPLEMENTED_SERVICES.set(Collections.unmodifiableCollection(result));
-            result = NOT_IMPLEMENTED_SERVICES.get();
-        }
-        return result;
+        return NOT_IMPLEMENTED_SERVICES.get();
     }
 
     private class AccessPreventerLookup extends Lookup {

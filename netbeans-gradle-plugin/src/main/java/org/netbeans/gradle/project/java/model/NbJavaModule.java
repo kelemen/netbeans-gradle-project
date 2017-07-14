@@ -15,8 +15,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import org.jtrim2.collections.CollectionsEx;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.java.JavaCompatibilityModel;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
@@ -25,7 +26,6 @@ import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.java.test.TestTaskName;
-
 
 public final class NbJavaModule implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -38,17 +38,17 @@ public final class NbJavaModule implements Serializable {
     private final JavaTestModel testTasks;
     private final NbCodeCoverage codeCoverage;
 
-    private final AtomicReference<JavaSourceSet> mainSourceSetRef;
-    private final AtomicReference<JavaSourceSet> testSourceSetRef;
-    private final AtomicReference<List<JavaSourceSet>> testSourceSetsRef;
-    private final AtomicReference<List<JavaSourceSet>> nonTestSourceSetsRef;
-    private final AtomicReference<List<NamedSourceRoot>> namedSourceRootsRef;
-    private final AtomicReference<Map<String, JavaSourceSet>> nameToSourceSetRef;
-    private final AtomicReference<Map<String, JavaTestTask>> testNameToModelRef;
-    private final AtomicReference<Set<File>> allBuildOutputRefs;
-    private final AtomicReference<Map<File, List<JavaSourceSet>>> outputsToSourceSets;
-    private final AtomicReference<Map<File, List<JavaSourceSet>>> buildOutputToSourceSets;
-    private final AtomicReference<Map<File, List<JavaSourceSet>>> jarOutputsToSourceSets;
+    private final Supplier<JavaSourceSet> mainSourceSetRef;
+    private final Supplier<JavaSourceSet> testSourceSetRef;
+    private final Supplier<List<JavaSourceSet>> testSourceSetsRef;
+    private final Supplier<List<JavaSourceSet>> nonTestSourceSetsRef;
+    private final Supplier<List<NamedSourceRoot>> namedSourceRootsRef;
+    private final Supplier<Map<String, JavaSourceSet>> nameToSourceSetRef;
+    private final Supplier<Map<String, JavaTestTask>> testNameToModelRef;
+    private final Supplier<Set<File>> allBuildOutputRefs;
+    private final Supplier<Map<File, List<JavaSourceSet>>> outputsToSourceSets;
+    private final Supplier<Map<File, List<JavaSourceSet>>> buildOutputToSourceSets;
+    private final Supplier<Map<File, List<JavaSourceSet>>> jarOutputsToSourceSets;
 
     public NbJavaModule(
             GenericProjectProperties properties,
@@ -67,17 +67,19 @@ public final class NbJavaModule implements Serializable {
         this.testTasks = Objects.requireNonNull(testTasks, "testTasks");
         this.codeCoverage = Objects.requireNonNull(codeCoverage, "codeCoverage");
 
-        this.mainSourceSetRef = new AtomicReference<>(null);
-        this.testSourceSetRef = new AtomicReference<>(null);
-        this.testSourceSetsRef = new AtomicReference<>(null);
-        this.nonTestSourceSetsRef = new AtomicReference<>(null);
-        this.namedSourceRootsRef = new AtomicReference<>(null);
-        this.nameToSourceSetRef = new AtomicReference<>(null);
-        this.testNameToModelRef = new AtomicReference<>(null);
-        this.allBuildOutputRefs = new AtomicReference<>(null);
-        this.outputsToSourceSets = new AtomicReference<>(null);
-        this.buildOutputToSourceSets = new AtomicReference<>(null);
-        this.jarOutputsToSourceSets = new AtomicReference<>(null);
+        this.mainSourceSetRef = LazyValues.lazyValue(() -> findByNameOrEmpty(JavaSourceSet.NAME_MAIN));
+        this.testSourceSetRef = LazyValues.lazyValue(() -> findByNameOrEmpty(JavaSourceSet.NAME_TEST));
+        this.testSourceSetsRef = LazyValues.lazyValue(this::findTestSourceSets);
+        this.nonTestSourceSetsRef = LazyValues.lazyValue(this::findNonTestSourceSets);
+        this.namedSourceRootsRef = LazyValues.lazyValue(() -> {
+            return Collections.unmodifiableList(NamedSourceRoot.getAllSourceRoots(this));
+        });
+        this.nameToSourceSetRef = LazyValues.lazyValue(this::createNameToSourceSet);
+        this.testNameToModelRef = LazyValues.lazyValue(this::createTestNameToModel);
+        this.allBuildOutputRefs = LazyValues.lazyValue(this::createAllBuildOutputs);
+        this.outputsToSourceSets = LazyValues.lazyValue(this::createOutputsToSourceSets);
+        this.buildOutputToSourceSets = LazyValues.lazyValue(this::createBuildOutputsToSourceSets);
+        this.jarOutputsToSourceSets = LazyValues.lazyValue(this::createJarOutputsToSourceSets);
     }
 
     public GenericProjectProperties getProperties() {
@@ -132,12 +134,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     private Map<File, List<JavaSourceSet>> getBuildOutputsToProjectDeps() {
-        Map<File, List<JavaSourceSet>> result = buildOutputToSourceSets.get();
-        if (result == null) {
-            result = createBuildOutputsToSourceSets();
-            buildOutputToSourceSets.set(result);
-        }
-        return result;
+        return buildOutputToSourceSets.get();
     }
 
     private Map<File, List<JavaSourceSet>> createOutputsToSourceSets() {
@@ -148,12 +145,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     private Map<File, List<JavaSourceSet>> getOutputsToProjectDeps() {
-        Map<File, List<JavaSourceSet>> result = outputsToSourceSets.get();
-        if (result == null) {
-            result = createOutputsToSourceSets();
-            outputsToSourceSets.set(result);
-        }
-        return result;
+        return outputsToSourceSets.get();
     }
 
     public List<JavaSourceSet> getSourceSetsForOutput(File outputPath) {
@@ -181,12 +173,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     private Map<File, List<JavaSourceSet>> getJarOutputsToProjectDeps() {
-        Map<File, List<JavaSourceSet>> result = jarOutputsToSourceSets.get();
-        if (result == null) {
-            result = createJarOutputsToSourceSets();
-            jarOutputsToSourceSets.set(result);
-        }
-        return result;
+        return jarOutputsToSourceSets.get();
     }
 
     public List<JavaSourceSet> getSourceSetsForJarOutput(File jarPath) {
@@ -213,21 +200,11 @@ public final class NbJavaModule implements Serializable {
     }
 
     public JavaSourceSet getMainSourceSet() {
-        JavaSourceSet result = mainSourceSetRef.get();
-        if (result == null) {
-            mainSourceSetRef.set(findByNameOrEmpty(JavaSourceSet.NAME_MAIN));
-            result = mainSourceSetRef.get();
-        }
-        return result;
+        return mainSourceSetRef.get();
     }
 
     public JavaSourceSet getTestSourceSet() {
-        JavaSourceSet result = testSourceSetRef.get();
-        if (result == null) {
-            testSourceSetRef.set(findByNameOrEmpty(JavaSourceSet.NAME_TEST));
-            result = testSourceSetRef.get();
-        }
-        return result;
+        return testSourceSetRef.get();
     }
 
     private List<JavaSourceSet> findSourceSets(SourceSetFilter filter) {
@@ -262,12 +239,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     public List<JavaSourceSet> getTestSourceSets() {
-        List<JavaSourceSet> result = testSourceSetsRef.get();
-        if (result == null) {
-            testSourceSetsRef.set(findTestSourceSets());
-            result = testSourceSetsRef.get();
-        }
-        return result;
+        return testSourceSetsRef.get();
     }
 
     private List<JavaSourceSet> findNonTestSourceSets() {
@@ -285,21 +257,11 @@ public final class NbJavaModule implements Serializable {
     }
 
     public List<JavaSourceSet> getNonTestSourceSets() {
-        List<JavaSourceSet> result = nonTestSourceSetsRef.get();
-        if (result == null) {
-            nonTestSourceSetsRef.set(findNonTestSourceSets());
-            result = nonTestSourceSetsRef.get();
-        }
-        return result;
+        return nonTestSourceSetsRef.get();
     }
 
     public List<NamedSourceRoot> getNamedSourceRoots() {
-        List<NamedSourceRoot> result = namedSourceRootsRef.get();
-        if (result == null) {
-            namedSourceRootsRef.set(Collections.unmodifiableList(NamedSourceRoot.getAllSourceRoots(this)));
-            result = namedSourceRootsRef.get();
-        }
-        return result;
+        return namedSourceRootsRef.get();
     }
 
     private Map<String, JavaSourceSet> createNameToSourceSet() {
@@ -311,12 +273,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     private Map<String, JavaSourceSet> getNameToSourceSet() {
-        Map<String, JavaSourceSet> result = nameToSourceSetRef.get();
-        if (result == null) {
-            nameToSourceSetRef.set(createNameToSourceSet());
-            result = nameToSourceSetRef.get();
-        }
-        return result;
+        return nameToSourceSetRef.get();
     }
 
     public JavaSourceSet tryGetSourceSetByName(String name) {
@@ -333,12 +290,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     private Map<String, JavaTestTask> getTestNameToModel() {
-        Map<String, JavaTestTask> result = testNameToModelRef.get();
-        if (result == null) {
-            testNameToModelRef.set(createTestNameToModel());
-            result = testNameToModelRef.get();
-        }
-        return result;
+        return testNameToModelRef.get();
     }
 
     public JavaTestTask getTestModelByName(String name) {
@@ -365,12 +317,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     public Set<File> getAllBuildOutputs() {
-        Set<File> result = allBuildOutputRefs.get();
-        if (result == null) {
-            allBuildOutputRefs.set(createAllBuildOutputs());
-            result = allBuildOutputRefs.get();
-        }
-        return result;
+        return allBuildOutputRefs.get();
     }
 
     private static String getExpectedTestName(String sourceSetName) {

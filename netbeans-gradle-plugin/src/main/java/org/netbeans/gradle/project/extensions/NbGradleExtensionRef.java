@@ -2,9 +2,10 @@ package org.netbeans.gradle.project.extensions;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim2.utils.LazyValues;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
@@ -24,7 +25,7 @@ public final class NbGradleExtensionRef {
 
     private final DynamicLookup extensionLookup;
     private final DynamicLookup projectLookup;
-    private final AtomicReference<Lookup> deducedServicesRef;
+    private final Supplier<Lookup> deducedServicesRef;
 
     public <ModelType> NbGradleExtensionRef(
             GradleProjectExtensionDef<ModelType> extensionDef,
@@ -46,7 +47,7 @@ public final class NbGradleExtensionRef {
         this.projectLookup = new DynamicLookup(extension.getPermanentProjectLookup());
         this.extensionLookup = new DynamicLookup();
         this.lastActive = new AtomicBoolean(false);
-        this.deducedServicesRef = new AtomicReference<>(null);
+        this.deducedServicesRef = LazyValues.lazyValue(this::createDeducedLookup);
     }
 
     private static void checkExtensionName(String name, GradleProjectExtensionDef<?> def) {
@@ -127,17 +128,6 @@ public final class NbGradleExtensionRef {
                 extension.getProjectLookup());
     }
 
-    private Lookup getDeducedLookup() {
-        Lookup result = deducedServicesRef.get();
-        if (result == null) {
-            result = createDeducedLookup();
-            if (!deducedServicesRef.compareAndSet(null, result)) {
-                result = deducedServicesRef.get();
-            }
-        }
-        return result;
-    }
-
     public boolean setModelForExtension(Object model) {
         boolean active = model != null;
         boolean prevActive = lastActive.getAndSet(active);
@@ -149,7 +139,7 @@ public final class NbGradleExtensionRef {
                     extension.getPermanentProjectLookup(),
                     extension.getProjectLookup());
             extensionLookup.replaceLookups(
-                    getDeducedLookup(),
+                    deducedServicesRef.get(),
                     extension.getExtensionLookup(),
                     extension.getPermanentProjectLookup(),
                     extension.getProjectLookup());

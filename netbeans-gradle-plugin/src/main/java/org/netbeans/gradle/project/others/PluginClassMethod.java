@@ -3,10 +3,11 @@ package org.netbeans.gradle.project.others;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim2.utils.ExceptionHelper;
+import org.jtrim2.utils.LazyValues;
 
 public final class PluginClassMethod {
     private static final Logger LOGGER = Logger.getLogger(PluginClassMethod.class.getName());
@@ -15,7 +16,7 @@ public final class PluginClassMethod {
     private final ClassFinder pluginClass;
     private final String methodName;
     private final ClassFinder[] argTypeFinders;
-    private final AtomicReference<Method> methodRef;
+    private final Supplier<Method> methodRef;
 
     @SuppressWarnings("VolatileArrayField")
     private volatile Class<?>[] argTypesCache;
@@ -28,7 +29,7 @@ public final class PluginClassMethod {
         this.pluginClass = Objects.requireNonNull(pluginClass, "pluginClass");
         this.methodName = Objects.requireNonNull(methodName, "methodName");
         this.argTypeFinders = argTypeFinders.clone();
-        this.methodRef = new AtomicReference<>(null);
+        this.methodRef = LazyValues.lazyValue(this::tryFindMethod);
         this.argTypesCache = null;
 
         ExceptionHelper.checkNotNullElements(this.argTypeFinders, "argTypeFinders");
@@ -63,12 +64,7 @@ public final class PluginClassMethod {
     }
 
     public Method tryGetMethod() {
-        Method result = methodRef.get();
-        if (result == null) {
-            methodRef.compareAndSet(null, tryFindMethod());
-            result = methodRef.get();
-        }
-        return result;
+        return methodRef.get();
     }
 
     private Method tryFindMethod() {
