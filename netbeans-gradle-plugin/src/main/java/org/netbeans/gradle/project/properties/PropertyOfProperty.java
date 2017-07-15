@@ -9,16 +9,16 @@ import org.jtrim2.property.PropertySource;
 
 final class PropertyOfProperty<RootValue, SubValue> implements PropertySource<SubValue> {
     private final PropertySource<? extends RootValue> rootSrc;
-    private final Function<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter;
+    private final Function<? super RootValue, ? extends PropertySource<? extends SubValue>> subPropertyGetter;
 
     public PropertyOfProperty(
             PropertySource<? extends RootValue> rootSrc,
-            Function<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter) {
+            Function<? super RootValue, ? extends PropertySource<? extends SubValue>> subPropertyGetter) {
         this.rootSrc = Objects.requireNonNull(rootSrc, "rootSrc");
         this.subPropertyGetter = Objects.requireNonNull(subPropertyGetter, "subPropertyGetter");
     }
 
-    private PropertySource<SubValue> getSubProperty() {
+    private PropertySource<? extends SubValue> getSubProperty() {
         RootValue rootValue = rootSrc.getValue();
         return subPropertyGetter.apply(rootValue);
     }

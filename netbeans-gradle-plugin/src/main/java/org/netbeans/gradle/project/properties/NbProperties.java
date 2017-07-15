@@ -74,7 +74,7 @@ public final class NbProperties {
 
     public static <RootValue, SubValue> PropertySource<SubValue> propertyOfProperty(
             PropertySource<? extends RootValue> rootSrc,
-            Function<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter) {
+            Function<? super RootValue, ? extends PropertySource<? extends SubValue>> subPropertyGetter) {
         return new PropertyOfProperty<>(rootSrc, subPropertyGetter);
     }
 
