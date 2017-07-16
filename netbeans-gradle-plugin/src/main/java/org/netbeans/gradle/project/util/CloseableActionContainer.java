@@ -19,7 +19,6 @@ import org.jtrim2.executor.TaskExecutors;
 import org.jtrim2.property.PropertyFactory;
 import org.jtrim2.property.PropertySource;
 import org.jtrim2.utils.ExceptionHelper;
-import org.netbeans.gradle.project.properties.NbProperties;
 
 public final class CloseableActionContainer {
     private static final Logger LOGGER = Logger.getLogger(CloseableActionContainer.class.getName());
@@ -76,8 +75,7 @@ public final class CloseableActionContainer {
             final PropertySource<?> property,
             final Runnable changeListener,
             TaskExecutor executor) {
-        SimpleListenerRegistry<Runnable> asRegistry = NbProperties.asChangeListenerRegistry(property);
-        return defineEventAction(asRegistry, changeListener, executor);
+        return defineEventAction(property::addChangeListener, changeListener, executor);
     }
 
     public <Listener> CloseableAction.Ref defineEventAction(

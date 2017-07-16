@@ -24,10 +24,6 @@ public final class NbProperties {
         return new WeakListenerProperty<>(src);
     }
 
-    public static SimpleListenerRegistry<Runnable> asChangeListenerRegistry(PropertySource<?> property) {
-        return property::addChangeListener;
-    }
-
     public static <Value> PropertySource<Value> atomicValueView(
             final AtomicReference<? extends Value> valueRef,
             final SimpleListenerRegistry<Runnable> changeListeners) {
