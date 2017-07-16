@@ -69,7 +69,7 @@ public final class NbFileUtils {
                     prevChar = ch;
                 }
 
-                input.read(buffer);
+                readCount = input.read(buffer);
             }
 
             return isLineEndingByte(prevChar) ? Character.toString((char)prevChar) : null;
