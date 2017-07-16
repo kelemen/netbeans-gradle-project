@@ -38,12 +38,12 @@ public final class LicenseManager<T> {
     public PropertySource<CloseableAction> getRegisterListenerAction(
             PropertySource<? extends T> modelProperty,
             PropertySource<? extends LicenseHeaderInfo> headerProperty) {
-        return PropertyFactory.combine(headerProperty, modelProperty, this::getRegisterListenerAction);
+        return PropertyFactory.combine(modelProperty, headerProperty, this::getRegisterListenerAction);
     }
 
     private CloseableAction getRegisterListenerAction(
-            LicenseHeaderInfo header,
-            T ownerModel) {
+            T ownerModel,
+            LicenseHeaderInfo header) {
         Objects.requireNonNull(ownerModel, "ownerModel");
         return () -> impl.registerLicense(ownerModel, header);
     }
