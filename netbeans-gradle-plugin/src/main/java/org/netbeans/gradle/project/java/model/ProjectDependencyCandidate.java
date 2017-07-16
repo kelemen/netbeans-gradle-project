@@ -8,7 +8,6 @@ import org.jtrim2.property.PropertySource;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties.NbProperties;
 
 public final class ProjectDependencyCandidate {
     private static final PropertySource<JavaProjectDependencyDef> NO_DEPENDENCY
@@ -29,7 +28,7 @@ public final class ProjectDependencyCandidate {
             final File dependency,
             PropertySource<JavaExtension> extRef) {
 
-        return NbProperties.propertyOfProperty(extRef, (JavaExtension ext) -> {
+        return PropertyFactory.propertyOfProperty(extRef, (JavaExtension ext) -> {
             return ext != null
                     ? asProjectDepedencyDef(dependency, ext, ext.currentModel())
                     : NO_DEPENDENCY;

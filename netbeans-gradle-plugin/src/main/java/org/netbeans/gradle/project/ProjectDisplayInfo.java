@@ -4,7 +4,6 @@ import java.util.Objects;
 import org.jtrim2.property.PropertyFactory;
 import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.properties.NbProperties;
 
 public final class ProjectDisplayInfo {
     private final PropertySource<String> displayName;
@@ -16,7 +15,7 @@ public final class ProjectDisplayInfo {
         Objects.requireNonNull(currentModel, "currentModel");
         Objects.requireNonNull(displayNamePattern, "displayNamePattern");
 
-        this.displayName = NbProperties.combine(currentModel, displayNamePattern, NbGradleModel::getDisplayName);
+        this.displayName = PropertyFactory.combine(currentModel, displayNamePattern, NbGradleModel::getDisplayName);
         this.description = PropertyFactory.convert(currentModel, NbGradleModel::getDescription);
     }
 

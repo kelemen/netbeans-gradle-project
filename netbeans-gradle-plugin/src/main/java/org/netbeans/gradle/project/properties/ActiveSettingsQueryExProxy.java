@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.Objects;
+import org.jtrim2.property.PropertyFactory;
 import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyDef;
@@ -16,8 +17,8 @@ public final class ActiveSettingsQueryExProxy implements ActiveSettingsQueryEx {
     public ActiveSettingsQueryExProxy(PropertySource<ActiveSettingsQueryEx> wrapped) {
         this.wrappedRef = Objects.requireNonNull(wrapped, "wrapped");
 
-        this.currentProfileSettingsEx = NbProperties.propertyOfProperty(wrapped, ActiveSettingsQueryEx::currentProfileSettingsEx);
-        this.currentProfileSettings = NbProperties.propertyOfProperty(wrapped, ActiveSettingsQuery::currentProfileSettings);
+        this.currentProfileSettingsEx = PropertyFactory.propertyOfProperty(wrapped, ActiveSettingsQueryEx::currentProfileSettingsEx);
+        this.currentProfileSettings = PropertyFactory.propertyOfProperty(wrapped, ActiveSettingsQuery::currentProfileSettings);
     }
 
     private ActiveSettingsQueryEx getWrapped() {
@@ -38,7 +39,7 @@ public final class ActiveSettingsQueryExProxy implements ActiveSettingsQueryEx {
     public <ValueType> PropertySource<ValueType> getProperty(final PropertyDef<?, ValueType> propertyDef) {
         Objects.requireNonNull(propertyDef, "propertyDef");
 
-        return NbProperties.propertyOfProperty(wrappedRef, arg -> arg.getProperty(propertyDef));
+        return PropertyFactory.propertyOfProperty(wrappedRef, arg -> arg.getProperty(propertyDef));
     }
 
     @Override

@@ -155,7 +155,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
     @Override
     public <ValueType> PropertySource<ValueType> getProperty(PropertyDef<?, ValueType> propertyDef) {
-        return NbProperties.propertyOfProperty(currentProfileSettingsList, new CachingPropertyMerger<>(propertyDef));
+        return PropertyFactory.propertyOfProperty(currentProfileSettingsList, new CachingPropertyMerger<>(propertyDef));
     }
 
     private static class CachingPropertyMerger<Value> implements Function<List<SingleProfileSettingsEx>, PropertySource<Value>> {

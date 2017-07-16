@@ -14,8 +14,8 @@ import org.jtrim2.concurrent.AsyncTasks;
 import org.jtrim2.executor.MonitorableTaskExecutor;
 import org.jtrim2.executor.TaskExecutor;
 import org.jtrim2.executor.TaskExecutors;
+import org.jtrim2.property.PropertyFactory;
 import org.jtrim2.property.PropertySource;
-import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.CloseableAction;
 
 public final class LicenseManager<T> {
@@ -38,7 +38,7 @@ public final class LicenseManager<T> {
     public PropertySource<CloseableAction> getRegisterListenerAction(
             PropertySource<? extends T> modelProperty,
             PropertySource<? extends LicenseHeaderInfo> headerProperty) {
-        return NbProperties.combine(headerProperty, modelProperty, this::getRegisterListenerAction);
+        return PropertyFactory.combine(headerProperty, modelProperty, this::getRegisterListenerAction);
     }
 
     private CloseableAction getRegisterListenerAction(

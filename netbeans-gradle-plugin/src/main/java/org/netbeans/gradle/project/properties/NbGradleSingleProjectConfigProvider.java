@@ -53,8 +53,8 @@ implements
         this.commonConfigRef = PropertyFactory.memPropertyConcurrent(multiProjectProvider, SwingExecutors.getStrictExecutor(false));
         this.extensionProfiles = Collections.emptySet();
 
-        this.activeConfig = NbProperties.propertyOfProperty(commonConfigRef, NbGradleConfigProvider::activeConfiguration);
-        this.configs = NbProperties.propertyOfProperty(commonConfigRef, NbGradleConfigProvider::configurations);
+        this.activeConfig = PropertyFactory.propertyOfProperty(commonConfigRef, NbGradleConfigProvider::activeConfiguration);
+        this.configs = PropertyFactory.propertyOfProperty(commonConfigRef, NbGradleConfigProvider::configurations);
 
         PropertySource<ActiveSettingsQueryEx> activeSettingsQueryRef;
         activeSettingsQueryRef = PropertyFactory.convert(commonConfigRef, NbGradleConfigProvider::getActiveSettingsQuery);

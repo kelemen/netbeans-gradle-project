@@ -26,7 +26,6 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.openide.util.Utilities;
 
@@ -50,7 +49,7 @@ public final class JavaProjectDependencies {
         this.updateExecutor = new GenericUpdateTaskExecutor(TaskExecutors.inOrderSimpleExecutor(executor));
         this.translatedDependencies = PropertyFactory
                 .memPropertyConcurrent(null, true, SwingExecutors.getStrictExecutor(true));
-        this.translatedJavaDependenciesMap = NbProperties.propertyOfProperty(translatedDependencies, (TranslatedDependencies src) -> {
+        this.translatedJavaDependenciesMap = PropertyFactory.propertyOfProperty(translatedDependencies, (TranslatedDependencies src) -> {
             return src != null
                     ? new ProjectDepedencyDefProperty(src.translatedDependencies)
                     : NO_DEPENDENCIES;

@@ -175,7 +175,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     public static PropertySource<NbJavaModel> javaModelOfProject(Project project) {
         PropertySource<JavaExtension> extRef = extensionOfProject(project);
 
-        return NbProperties.propertyOfProperty(extRef, (JavaExtension ext) -> {
+        return PropertyFactory.propertyOfProperty(extRef, (JavaExtension ext) -> {
             return ext != null
                     ? ext.currentModel
                     : PropertyFactory.constSource(null);

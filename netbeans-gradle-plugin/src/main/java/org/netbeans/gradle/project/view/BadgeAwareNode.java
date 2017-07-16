@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim2.executor.UpdateTaskExecutor;
 import org.jtrim2.property.MutableProperty;
+import org.jtrim2.property.PropertyFactory;
 import org.jtrim2.property.PropertySource;
 import org.jtrim2.property.swing.SwingProperties;
 import org.jtrim2.property.swing.SwingPropertySource;
@@ -53,7 +54,7 @@ public final class BadgeAwareNode extends FilterNode {
         this.fileObjs = lazilySetProperty(memProperty(new FileObjects()));
         this.fileUpdater = NbTaskExecutors.newDefaultUpdateExecutor();
         this.iconChangeNotifier = SwingExecutors.getSwingUpdateExecutor(true);
-        this.statusProperty = NbProperties.propertyOfProperty(fileObjs, arg -> new FileSystemStatusProperty(arg).toStandard());
+        this.statusProperty = PropertyFactory.propertyOfProperty(fileObjs, arg -> new FileSystemStatusProperty(arg).toStandard());
     }
 
     public static Node makeBadgeAware(Node original, PropertySource<? extends Collection<File>> files) {

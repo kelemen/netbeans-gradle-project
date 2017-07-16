@@ -28,7 +28,6 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
-import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.EventUtils;
 import org.netbeans.spi.project.ui.support.NodeFactory;
 import org.netbeans.spi.project.ui.support.NodeList;
@@ -65,11 +64,11 @@ public final class AnnotationChildNodes {
         this.removeChildrenRef = new RemovedChildrenProperty();
         this.currentNodeLists = Collections.emptySet();
 
-        this.nodeFactories = NbProperties.combine(
+        this.nodeFactories = PropertyFactory.combine(
                 new NodeFactories(factoryLookupProvider),
                 this.removeChildrenRef,
                 (factories, isRemovedChildren) -> isRemovedChildren ? null : factories);
-        this.singleNodeFactories = NbProperties.propertyOfProperty(nodeFactories, this::convertFactories);
+        this.singleNodeFactories = PropertyFactory.propertyOfProperty(nodeFactories, this::convertFactories);
     }
 
     private void createAll(

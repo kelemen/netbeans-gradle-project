@@ -4,8 +4,6 @@ import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import javax.swing.JList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -72,21 +70,8 @@ public final class NbProperties {
         return between(wrapped, Integer.MIN_VALUE, value);
     }
 
-    public static <RootValue, SubValue> PropertySource<SubValue> propertyOfProperty(
-            PropertySource<? extends RootValue> rootSrc,
-            Function<? super RootValue, ? extends PropertySource<? extends SubValue>> subPropertyGetter) {
-        return new PropertyOfProperty<>(rootSrc, subPropertyGetter);
-    }
-
     public static PropertySource<Boolean> isNotNull(PropertySource<?> src) {
         return PropertyFactory.convert(src, input -> input != null);
-    }
-
-    public static <T, U, R> PropertySource<R> combine(
-            PropertySource<? extends T> src1,
-            PropertySource<? extends U> src2,
-            BiFunction<? super T, ? super U, ? extends R> valueCombiner) {
-        return new CombinedProperties<>(src1, src2, valueCombiner);
     }
 
     public static <Value> PropertySource<Value> listSelection(final JList<? extends Value> list) {
@@ -263,56 +248,6 @@ public final class NbProperties {
             });
 
             return new ReferenceHolderListenerRef(listener, result);
-        }
-    }
-
-    private static final class CombinedProperties<R> implements PropertySource<R> {
-        private final PropertySource<?> src1;
-        private final PropertySource<?> src2;
-        private final CombinedValues<?, ?, ? extends R> valueRef;
-
-        public <T, U> CombinedProperties(
-                PropertySource<? extends T> src1,
-                PropertySource<? extends U> src2,
-                BiFunction<? super T, ? super U, ? extends R> valueCombiner) {
-            Objects.requireNonNull(valueCombiner, "valueCombiner");
-
-            this.src1 = Objects.requireNonNull(src1, "src1");
-            this.src2 = Objects.requireNonNull(src2, "src2");
-            this.valueRef = new CombinedValues<>(src1, src2, valueCombiner);
-        }
-
-        @Override
-        public R getValue() {
-            return valueRef.getValue();
-        }
-
-        @Override
-        public ListenerRef addChangeListener(Runnable listener) {
-            return ListenerRefs.combineListenerRefs(
-                    src1.addChangeListener(listener),
-                    src2.addChangeListener(listener));
-        }
-    }
-
-    private static final class CombinedValues<T, U, R> {
-        private final PropertySource<? extends T> src1;
-        private final PropertySource<? extends U> src2;
-        private final BiFunction<? super T, ? super U, ? extends R> valueCombiner;
-
-        public CombinedValues(
-                PropertySource<? extends T> src1,
-                PropertySource<? extends U> src2,
-                BiFunction<? super T, ? super U, ? extends R> valueCombiner) {
-            this.src1 = src1;
-            this.src2 = src2;
-            this.valueCombiner = valueCombiner;
-        }
-
-        public R getValue() {
-            T value1 = src1.getValue();
-            U value2 = src2.getValue();
-            return valueCombiner.apply(value1, value2);
         }
     }
 }
