@@ -100,7 +100,7 @@ public class ReleaseToGithubTask extends DefaultTask {
         message.addProperty("draft", false);
         message.addProperty("prerelease", isPreRelease());
 
-        String url = GitHubUtils.getGitHubUrl(GitHubUtils.USER_NAME + '/' + GitHubUtils.REPO_NAME + "/releases");
+        String url = GitHubUtils.getGitHubUrl("repos/" + GitHubUtils.USER_NAME + '/' + GitHubUtils.REPO_NAME + "/releases");
         GitHubUtils.sendPost(url, appliedAuthToken, message);
     }
 

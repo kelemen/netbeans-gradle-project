@@ -42,8 +42,7 @@ public class UploadDeployedToGitHubTask extends DefaultTask {
         String appliedAuthToken = getAuthToken();
         String appliedVersion = getVersion();
 
-
-        String baseUploadUrl = getUploadUrl(authToken, version);
+        String baseUploadUrl = getUploadUrl(appliedAuthToken, appliedVersion);
 
         HttpUrl downloadUrl = HttpUrl.parse(sourceUrl(appliedVersion));
         byte[] binaryContent = HttpUtils.downloadBytes(downloadUrl, request -> { });
@@ -60,7 +59,7 @@ public class UploadDeployedToGitHubTask extends DefaultTask {
 
     private static String getUploadUrl(String authToken, String version) throws IOException {
         String tagName = VersionUtils.getTagForVersion(version);
-        String url = "repos/" + GitHubUtils.USER_NAME + "/" + GitHubUtils.REPO_NAME + "/releases/tags/" + tagName;
+        String url = GitHubUtils.getGitHubUrl("repos/" + GitHubUtils.USER_NAME + "/" + GitHubUtils.REPO_NAME + "/releases/tags/" + tagName);
         JsonElement response = GitHubUtils.sendJsonGet(url, authToken);
         JsonElement uploadUrlElement = response.getAsJsonObject().get("upload_url");
         if (uploadUrlElement == null) {
