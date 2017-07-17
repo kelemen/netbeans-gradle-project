@@ -27,8 +27,7 @@ public final class RegexpFileLineConsumer implements OutputLinkFinder {
         int lineNumber;
         try {
             lineNumber = Integer.parseInt(matcher.group(3));
-        }
-        catch (NumberFormatException ex) {
+        } catch (NumberFormatException ex) {
             // should not be possible
             return null;
         }
@@ -40,9 +39,8 @@ public final class RegexpFileLineConsumer implements OutputLinkFinder {
             if (!file.isFile()) {
                 return null;
             }
-        }
-        catch (Exception ex) {
-            LOGGER.log(Level.WARNING, "Path displayed in the output is not readable: {0}", path);
+        } catch (Exception ex) {
+            LOGGER.log(Level.FINE, "Path displayed in the output is not readable: {0}", path);
             return null;
         }
 
@@ -50,10 +48,9 @@ public final class RegexpFileLineConsumer implements OutputLinkFinder {
     }
 
     private static OutputLinkDef createLink(String line, File file, String path, int lineNumber, int linkLength) {
-
         Runnable listener = OpenEditorOutputListener.tryCreateListener(file, lineNumber);
         if (listener == null) {
-            LOGGER.log(Level.WARNING, "File displayed in the output disappeared: {0}", file);
+            LOGGER.log(Level.FINE, "File displayed in the output disappeared: {0}", file);
             return null;
         }
 
