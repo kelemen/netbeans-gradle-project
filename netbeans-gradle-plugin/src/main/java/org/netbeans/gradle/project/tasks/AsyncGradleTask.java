@@ -70,6 +70,7 @@ import org.netbeans.gradle.project.output.OutputLinkFinder;
 import org.netbeans.gradle.project.output.OutputLinkPrinter;
 import org.netbeans.gradle.project.output.OutputUrlConsumer;
 import org.netbeans.gradle.project.output.ReaderInputStream;
+import org.netbeans.gradle.project.output.RegexpFileLineConsumer;
 import org.netbeans.gradle.project.output.ReplaceLineFeedReader;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
@@ -302,7 +303,8 @@ public final class AsyncGradleTask implements Runnable {
                 new StackTraceConsumer(project),
                 new OutputUrlConsumer(),
                 projectDirLinks(project),
-                new FileLineConsumer()));
+                new FileLineConsumer(),
+                new RegexpFileLineConsumer()));
 
         InputOutputWrapper io = tab.getIo();
         Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
