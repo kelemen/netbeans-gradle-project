@@ -1,3 +1,5 @@
+- Recognizes "error" and "warning" lines with file paths in the output window as links.
+
 ### For NetBeans 9 only:
 
 
