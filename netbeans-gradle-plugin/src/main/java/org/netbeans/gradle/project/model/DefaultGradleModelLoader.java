@@ -369,10 +369,36 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
 
         Path rootProjectDir = projectLoadKey.getAppliedRootProjectDir();
         NbGradleProject rootProject = NbGradleProjectFactory.tryLoadSafeGradleProject(rootProjectDir);
-        if (rootProject == null) {
-            LOGGER.log(Level.INFO, "Failed to load root project for {0}.", project.getProjectDirectoryAsPath());
-            return projectLoadKey;
+        if (rootProject != null) {
+            return fixProjectLoadKeyWithRootProject(cancelToken, projectLoadKey, rootProject, progress);
         }
+
+        LOGGER.log(Level.INFO, "Failed to load root project for {0} attempting to guess another root project.", project.getProjectDirectoryAsPath());
+
+        ProjectLoadRequest adjustedLoadKey = new ProjectLoadRequest(
+                project,
+                new SettingsGradleDef(null, true));
+
+        rootProjectDir = adjustedLoadKey.getAppliedRootProjectDir();
+        rootProject = NbGradleProjectFactory.tryLoadSafeGradleProject(rootProjectDir);
+        if (rootProject != null) {
+            LOGGER.log(Level.INFO, "Found another root project for {0}: {1}.", new Object[]{
+                project.getProjectDirectoryAsPath(),
+                rootProjectDir});
+            return fixProjectLoadKeyWithRootProject(cancelToken, adjustedLoadKey, rootProject, progress);
+        }
+
+        LOGGER.log(Level.INFO, "Could not find another root project for {0} using whatever Gradle chooses.",
+                project.getProjectDirectoryAsPath());
+
+        return adjustedLoadKey;
+    }
+
+    private ProjectLoadRequest fixProjectLoadKeyWithRootProject(
+            CancellationToken cancelToken,
+            ProjectLoadRequest projectLoadKey,
+            NbGradleProject rootProject,
+            ProgressHandle progress) throws IOException, GradleModelLoadError {
 
         ProjectLoadRequest rootLoadKey = new ProjectLoadRequest(rootProject, projectLoadKey.settingsGradleDef);
         NbGradleModel rootModel = tryGetFromCache(rootLoadKey);
