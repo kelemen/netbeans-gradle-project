@@ -31,10 +31,7 @@ repositories {
     maven { url 'http://repo.gradle.org/gradle/libs-releases-local' }
 }
 
-customJavaCompilers {
-    String resDirsPath = sourceSets.main.resources.srcDirs.collect({ it.path }).join(File.pathSeparator)
-    addCompilerArgs(compileJava, '-sourcepath', resDirsPath)
-}
+compileJava.options.sourcepath = sourceSets.main.resources.sourceDirectories
 
 test.systemProperties['org.netbeans.gradle.runningTests'] = 'true'
 
