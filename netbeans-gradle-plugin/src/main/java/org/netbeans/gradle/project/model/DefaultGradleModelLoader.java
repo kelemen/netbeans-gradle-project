@@ -375,23 +375,30 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
 
         LOGGER.log(Level.INFO, "Failed to load root project for {0} attempting to guess another root project.", project.getProjectDirectoryAsPath());
 
-        ProjectLoadRequest adjustedLoadKey = new ProjectLoadRequest(
-                project,
-                new SettingsGradleDef(null, true));
+        return fixProjectLoadKeyWithGuessed(
+                cancelToken,
+                new ProjectLoadRequest(project, SettingsGradleDef.DEFAULT),
+                progress);
+    }
 
-        rootProjectDir = adjustedLoadKey.getAppliedRootProjectDir();
-        rootProject = NbGradleProjectFactory.tryLoadSafeGradleProject(rootProjectDir);
+    private ProjectLoadRequest fixProjectLoadKeyWithGuessed(
+            CancellationToken cancelToken,
+            ProjectLoadRequest projectLoadKey,
+            ProgressHandle progress) throws IOException, GradleModelLoadError {
+
+        Path rootProjectDir = projectLoadKey.getAppliedRootProjectDir();
+        NbGradleProject rootProject = NbGradleProjectFactory.tryLoadSafeGradleProject(rootProjectDir);
         if (rootProject != null) {
             LOGGER.log(Level.INFO, "Found another root project for {0}: {1}.", new Object[]{
                 project.getProjectDirectoryAsPath(),
                 rootProjectDir});
-            return fixProjectLoadKeyWithRootProject(cancelToken, adjustedLoadKey, rootProject, progress);
+            return fixProjectLoadKeyWithRootProject(cancelToken, projectLoadKey, rootProject, progress);
         }
 
         LOGGER.log(Level.INFO, "Could not find another root project for {0} using whatever Gradle chooses.",
                 project.getProjectDirectoryAsPath());
 
-        return adjustedLoadKey;
+        return projectLoadKey;
     }
 
     private ProjectLoadRequest fixProjectLoadKeyWithRootProject(
