@@ -17,14 +17,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.cancel.OperationCanceledException;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
+import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
@@ -129,6 +135,21 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
                 persistSettingsDefsNow();
             }
         });
+    }
+
+    // For test only
+    void waitForOutstanding(long msToWait) {
+        final WaitableSignal signal = new WaitableSignal();
+        SETTINGS_FILE_UPDATER.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            @Override
+            public void execute(CancellationToken cancelToken) throws Exception {
+                signal.signal();
+            }
+        }, null);
+
+        if (!signal.tryWaitSignal(Cancellation.UNCANCELABLE_TOKEN, msToWait, TimeUnit.MILLISECONDS)) {
+            throw new OperationCanceledException("timeout");
+        }
     }
 
     private void persistSettingsDefsNow() {
