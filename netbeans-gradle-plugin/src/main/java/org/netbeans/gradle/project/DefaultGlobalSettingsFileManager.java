@@ -300,7 +300,7 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
             subPaths.add(keyHash + ".properties");
         }
 
-        return GlobalSettingsUtils.tryGetGlobalCachePath(subPaths);
+        return GlobalSettingsUtils.cacheRoot().tryGetSubPath(subPaths);
     }
 
     private Locker getLocker() {

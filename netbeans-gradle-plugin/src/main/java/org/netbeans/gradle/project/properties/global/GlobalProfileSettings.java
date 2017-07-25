@@ -92,7 +92,7 @@ final class GlobalProfileSettings implements LoadableSingleProfileSettingsEx {
             this.outputPathRef = new LazyValue<>(new NbSupplier<Path>() {
                 @Override
                 public Path get() {
-                    return GlobalSettingsUtils.tryGetGlobalConfigPath(BASE_FILE_NAME);
+                    return GlobalSettingsUtils.configRoot().tryGetSubPath(BASE_FILE_NAME);
                 }
             });
         }
