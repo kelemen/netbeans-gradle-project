@@ -30,6 +30,7 @@ import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsUtils;
+import org.netbeans.gradle.project.util.LazyPaths;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.util.StringUtils;
 
@@ -40,6 +41,7 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int STAMP_SIZE = 16 ; // bytes
 
+    private final LazyPaths cacheDir;
     private final RootProjectRegistry rootProjectRegistry;
     private final UpdateTaskExecutor settingsDefPersistor;
 
@@ -49,8 +51,12 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
     private final Locker locker;
 
     public DefaultGlobalSettingsFileManager(RootProjectRegistry rootProjectRegistry) {
-        ExceptionHelper.checkNotNullArgument(rootProjectRegistry, "rootProjectRegistry");
-        this.rootProjectRegistry = rootProjectRegistry;
+        this(rootProjectRegistry, GlobalSettingsUtils.cacheRoot());
+    }
+
+    public DefaultGlobalSettingsFileManager(RootProjectRegistry rootProjectRegistry, LazyPaths cacheDir) {
+        this.rootProjectRegistry = Objects.requireNonNull(rootProjectRegistry, "rootProjectRegistry");
+        this.cacheDir = Objects.requireNonNull(cacheDir, "cacheDir");
         this.settingsDefPersistor = new GenericUpdateTaskExecutor(SETTINGS_FILE_UPDATER);
         this.outstandingDefsLock = new ReentrantLock();
         this.outstandingDefs = new HashMap<>();
@@ -300,7 +306,7 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
             subPaths.add(keyHash + ".properties");
         }
 
-        return GlobalSettingsUtils.cacheRoot().tryGetSubPath(subPaths);
+        return cacheDir.tryGetSubPath(subPaths);
     }
 
     private Locker getLocker() {
