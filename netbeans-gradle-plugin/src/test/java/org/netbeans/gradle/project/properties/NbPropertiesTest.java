@@ -1,10 +1,15 @@
 package org.netbeans.gradle.project.properties;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim2.event.CopyOnTriggerListenerManager;
-import org.jtrim2.event.EventListeners;
-import org.jtrim2.event.ListenerManager;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import org.jtrim2.collections.RefLinkedList;
+import org.jtrim2.collections.RefList;
 import org.jtrim2.event.ListenerRef;
 import org.jtrim2.property.MutableProperty;
 import org.jtrim2.property.PropertySource;
@@ -35,7 +40,7 @@ public class NbPropertiesTest {
     }
 
     @Test
-    public void testWeakListener() {
+    public void testWeakListener() throws InterruptedException {
         AtomicReference<ListenerRef> listenerRef = new AtomicReference<>(null);
         final AtomicInteger listenerCallCount = new AtomicInteger(0);
 
@@ -49,30 +54,72 @@ public class NbPropertiesTest {
         assertEquals("listener count", 1, property.getListenerCount());
 
         listenerRef.set(null);
-        runGC();
+
+        for (int i = 0; i < 50; i++) {
+            runGC();
+            if (property.tryWaitForNoListeners(100)) {
+                break;
+            }
+        }
 
         property.setValue(2);
+
         assertEquals("expected call count", 1, listenerCallCount.get());
         assertEquals("listener count", 0, property.getListenerCount());
     }
 
     private static final class TestProperty<ValueType> implements MutableProperty<ValueType> {
         private volatile ValueType value;
-        private final ListenerManager<Runnable> listeners;
+
+        private final Lock listenersLock;
+        private final Condition decreasedListenersCond;
+        private final RefList<Runnable> listeners;
 
         public TestProperty(ValueType value) {
             this.value = value;
-            this.listeners = new CopyOnTriggerListenerManager<>();
+            this.listenersLock = new ReentrantLock();
+            this.decreasedListenersCond = this.listenersLock.newCondition();
+            this.listeners = new RefLinkedList<>();
+        }
+
+        public boolean tryWaitForNoListeners(long ms) throws InterruptedException {
+            long nanos = TimeUnit.MILLISECONDS.toNanos(ms);
+            listenersLock.lock();
+            try {
+                while (!listeners.isEmpty()) {
+                    if (nanos <= 0) {
+                        return false;
+                    }
+                    nanos = decreasedListenersCond.awaitNanos(nanos);
+                }
+            } finally {
+                listenersLock.unlock();
+            }
+            return true;
         }
 
         public int getListenerCount() {
-            return listeners.getListenerCount();
+            listenersLock.lock();
+            try {
+                return listeners.size();
+            } finally {
+                listenersLock.unlock();
+            }
+        }
+
+        public List<Runnable> getListeners() {
+            listenersLock.lock();
+            try {
+                return new ArrayList<>(listeners);
+            } finally {
+                listenersLock.unlock();
+            }
         }
 
         @Override
         public void setValue(ValueType value) {
             this.value = value;
-            EventListeners.dispatchRunnable(listeners);
+            getListeners().forEach(Runnable::run);
         }
 
         @Override
@@ -82,7 +129,23 @@ public class NbPropertiesTest {
 
         @Override
         public ListenerRef addChangeListener(Runnable listener) {
-            return listeners.registerListener(listener);
+            RefList.ElementRef<?> listRef;
+            listenersLock.lock();
+            try {
+                listRef = listeners.addLastGetReference(listener);
+            } finally {
+                listenersLock.unlock();
+            }
+
+            return () -> {
+                listenersLock.lock();
+                try {
+                    listRef.remove();
+                    decreasedListenersCond.signalAll();
+                } finally {
+                    listenersLock.unlock();
+                }
+            };
         }
     }
 }
