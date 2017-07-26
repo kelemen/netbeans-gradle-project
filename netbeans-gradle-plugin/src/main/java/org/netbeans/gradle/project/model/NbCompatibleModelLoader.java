@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -198,7 +199,14 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         return result;
     }
 
-    private static NbGradleModel loadMainModelFromIdeaModule(
+    private Path getSettingsGradle(Path projectDir, ScriptFileProvider scriptProvider) {
+        return ModelLoadUtils.getSettingsGradleForProject(
+                settingsGradleDef,
+                projectDir,
+                scriptProvider);
+    }
+
+    private NbGradleModel loadMainModelFromIdeaModule(
             NbGradleProjectTree rootProject,
             IdeaModule ideaModule,
             ScriptFileProvider scriptProvider) throws IOException {
@@ -210,7 +218,8 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             throw new IOException("Failed to create project tree for project: " + ideaModule.getName());
         }
 
-        return new NbGradleModel(new NbGradleMultiProjectDef(rootProject, projectTree), scriptProvider);
+        Path settingsGradle = getSettingsGradle(projectTree.getProjectDir().toPath(), scriptProvider);
+        return new NbGradleModel(new NbGradleMultiProjectDef(rootProject, projectTree), settingsGradle);
     }
 
     private NbGradleModel.Builder loadMainModel(
@@ -229,7 +238,8 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
     }
 
     private NbGradleModel.Builder toBuilder(NbGradleMultiProjectDef projectDef, ScriptFileProvider scriptProvider) {
-        NbGradleModel.Builder result = new NbGradleModel.Builder(new NbGenericModelInfo(projectDef, scriptProvider));
+        Path settingsGradle = getSettingsGradle(projectDef.getMainProject().getProjectDir().toPath(), scriptProvider);
+        NbGradleModel.Builder result = new NbGradleModel.Builder(new NbGenericModelInfo(projectDef, settingsGradle));
         initBuilder(result);
         return result;
     }

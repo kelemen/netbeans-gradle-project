@@ -14,7 +14,6 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.script.CommonScripts;
-import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.tasks.vars.VariableResolver;
 import org.netbeans.gradle.project.tasks.vars.VariableResolvers;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
@@ -68,8 +67,8 @@ public final class NbGradleModel {
     // If true, we must instruct Gradle not to search for a settings.gradle.
     private final boolean rootWithoutSettingsGradle;
 
-    public NbGradleModel(NbGradleMultiProjectDef projectDef, ScriptFileProvider scriptProvider) {
-        this(new NbGenericModelInfo(projectDef, scriptProvider),
+    public NbGradleModel(NbGradleMultiProjectDef projectDef, Path settingsFile) {
+        this(new NbGenericModelInfo(projectDef, settingsFile),
                 Collections.<String, Object>emptyMap(),
                 false,
                 false);
@@ -135,14 +134,6 @@ public final class NbGradleModel {
 
     public void setModelForExtension(NbGradleExtensionRef extension) {
         extension.setModelForExtension(extensionModels.get(extension.getName()));
-    }
-
-    public static Path findSettingsGradle(Path projectDir, ScriptFileProvider scriptProvider) {
-        return NbGenericModelInfo.findSettingsGradle(projectDir, scriptProvider);
-    }
-
-    public static FileObject findSettingsGradle(FileObject projectDir, ScriptFileProvider scriptProvider) {
-        return NbGenericModelInfo.findSettingsGradle(projectDir, scriptProvider);
     }
 
     public ProjectId getProjectId() {

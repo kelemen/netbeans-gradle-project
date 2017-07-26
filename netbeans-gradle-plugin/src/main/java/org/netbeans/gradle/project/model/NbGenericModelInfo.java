@@ -22,10 +22,6 @@ public final class NbGenericModelInfo implements Serializable {
     private final Path settingsFile;
     private final long createTimeEpochMs;
 
-    public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, ScriptFileProvider scriptProvider) {
-        this(projectDef, findSettingsGradle(projectDef.getProjectDir().toPath(), scriptProvider));
-    }
-
     public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, Path settingsFile) {
         this(projectDef, settingsFile, System.currentTimeMillis());
     }
@@ -117,21 +113,6 @@ public final class NbGenericModelInfo implements Serializable {
         return result;
     }
 
-    public static Path findSettingsGradle(Path projectDir, ScriptFileProvider scriptProvider) {
-        Path settingsGradle = scriptProvider.findScriptFile(projectDir, CommonScripts.SETTINGS_BASE_NAME);
-        if (settingsGradle != null) {
-            return settingsGradle;
-        }
-
-        Path parentDir = projectDir.getParent();
-        if (parentDir != null) {
-            return findSettingsGradle(parentDir, scriptProvider);
-        }
-        else {
-            return null;
-        }
-    }
-
     public static FileObject findSettingsGradle(FileObject projectDir, ScriptFileProvider scriptProvider) {
         if (projectDir == null) {
             return null;
@@ -142,7 +123,7 @@ public final class NbGenericModelInfo implements Serializable {
             return null;
         }
 
-        Path resultPath = findSettingsGradle(projectDirFile.toPath(), scriptProvider);
+        Path resultPath = ModelLoadUtils.findSettingsGradle(projectDirFile.toPath(), scriptProvider);
         if (resultPath == null) {
             return null;
         }

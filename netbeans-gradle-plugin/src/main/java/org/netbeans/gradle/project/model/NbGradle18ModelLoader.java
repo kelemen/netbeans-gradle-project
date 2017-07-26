@@ -64,7 +64,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             ProjectConnection connection,
             ProgressHandle progress) throws IOException, GradleModelLoadError {
 
-        ProjectModelFetcher modelFetcher = new ProjectModelFetcher(project, gradleTarget);
+        ProjectModelFetcher modelFetcher = new ProjectModelFetcher(project, gradleTarget, settingsGradleDef);
         FetchedModelsOrError fetchedModelsOrError = modelFetcher.getModels(connection, setup);
         FetchedModels fetchedModels = fetchedModelsOrError.getModels();
         if (fetchedModels == null) {
@@ -343,8 +343,12 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         private final Map<String, List<Class<?>>> toolingModelNeeds;
         private final GenericModelFetcher modelFetcher;
 
-        public ProjectModelFetcher(NbGradleProject project, GradleTarget gradleTarget) {
-            this.settingsFile = NbGenericModelInfo.findSettingsGradle(
+        public ProjectModelFetcher(
+                NbGradleProject project,
+                GradleTarget gradleTarget,
+                SettingsGradleDef settingsGradleDef) {
+            this.settingsFile = ModelLoadUtils.getSettingsGradleForProject(
+                    settingsGradleDef,
                     project.getProjectDirectoryAsPath(),
                     project.getScriptFileProvider());
 

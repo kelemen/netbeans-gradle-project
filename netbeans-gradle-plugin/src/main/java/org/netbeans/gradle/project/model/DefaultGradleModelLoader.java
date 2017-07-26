@@ -668,7 +668,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     public static NbGradleModel createEmptyModel(Path projectDir, ScriptFileProvider scriptProvider) {
         return new NbGradleModel(
                 NbGradleMultiProjectDef.createEmpty(projectDir, scriptProvider),
-                scriptProvider);
+                ModelLoadUtils.findSettingsGradle(projectDir, scriptProvider));
     }
 
     private static List<String> getModelEvaluateArguments(Project project, SettingsGradleDef settingsDef) {
@@ -814,7 +814,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
                 return settingsFile;
             }
 
-            return NbGradleModel.findSettingsGradle(
+            return ModelLoadUtils.findSettingsGradle(
                     project.getProjectDirectoryAsPath(),
                     project.getScriptFileProvider());
         }
