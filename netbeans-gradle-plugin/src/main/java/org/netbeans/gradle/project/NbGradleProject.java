@@ -25,6 +25,7 @@ import org.netbeans.gradle.project.license.LicenseManager;
 import org.netbeans.gradle.project.license.LicenseManagers;
 import org.netbeans.gradle.project.license.LicenseSource;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
+import org.netbeans.gradle.project.model.ModelLoadUtils;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
@@ -389,7 +390,7 @@ public final class NbGradleProject implements Project {
         }
 
         private static Path getSettingsDir(Path projectDir, ScriptFileProvider scriptProvider) {
-            Path settingsGradle = NbGradleModel.findSettingsGradle(projectDir, scriptProvider);
+            Path settingsGradle = ModelLoadUtils.findSettingsGradle(projectDir, scriptProvider);
             Path rootDir = settingsGradle != null ? settingsGradle.getParent() : null;
             return rootDir != null ? rootDir : projectDir;
         }
