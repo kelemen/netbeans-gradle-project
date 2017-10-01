@@ -48,6 +48,7 @@ public final class CommonGlobalSettings {
     private final PropertyReference<Boolean> mayRelyOnJavaOfScript;
     private final PropertyReference<Boolean> compileOnSave;
     private final PropertyReference<Boolean> replaceLfOnStdIn;
+    private final PropertyReference<Boolean> askBeforeCancelExec;
     private final PropertyReference<Boolean> loadRootProjectFirst;
 
     private final PropertyReference<Boolean> detectProjectDependenciesByJarName;
@@ -72,6 +73,7 @@ public final class CommonGlobalSettings {
         this.mayRelyOnJavaOfScript = mayRelyOnJavaOfScript(activeSettingsQuery);
         this.compileOnSave = compileOnSave(activeSettingsQuery);
         this.replaceLfOnStdIn = replaceLfOnStdIn(activeSettingsQuery);
+        this.askBeforeCancelExec = askBeforeCancelExec(activeSettingsQuery);
         this.loadRootProjectFirst = loadRootProjectFirst(activeSettingsQuery);
         this.detectProjectDependenciesByJarName = detectProjectDependenciesByJarName(activeSettingsQuery);
         this.selfMaintainedTasks = selfMaintainedTasks(activeSettingsQuery);
@@ -186,9 +188,17 @@ public final class CommonGlobalSettings {
     public static PropertyReference<Boolean> replaceLfOnStdIn(ActiveSettingsQuery activeSettingsQuery) {
         return propertyRef(defineBooleanProperty("hacks", "replace-lf-on-stdin"), activeSettingsQuery, true);
     }
-
+    
     public PropertyReference<Boolean> replaceLfOnStdIn() {
         return replaceLfOnStdIn;
+    }
+    
+    public static PropertyReference<Boolean> askBeforeCancelExec(ActiveSettingsQuery activeSettingsQuery) {
+        return propertyRef(defineBooleanProperty("tasks", "ask-before-cancel-exec"), activeSettingsQuery, true);
+    }
+    
+    public PropertyReference<Boolean> askBeforeCancelExec() {
+        return askBeforeCancelExec;
     }
 
     public static PropertyReference<Boolean> loadRootProjectFirst(ActiveSettingsQuery activeSettingsQuery) {

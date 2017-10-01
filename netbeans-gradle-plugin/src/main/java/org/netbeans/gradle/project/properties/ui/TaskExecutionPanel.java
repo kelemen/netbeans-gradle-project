@@ -58,6 +58,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
         private final PropertyReference<Boolean> skipTestsRef;
         private final PropertyReference<Boolean> skipCheckRef;
         private final PropertyReference<Boolean> replaceLfOnStdInRef;
+        private final PropertyReference<Boolean> askBeforeCancelExecRef;
 
         public PropertyRefs(ActiveSettingsQuery settingsQuery) {
             alwaysClearOutputRef = CommonGlobalSettings.alwaysClearOutput(settingsQuery);
@@ -65,6 +66,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
             skipTestsRef = CommonGlobalSettings.skipTests(settingsQuery);
             skipCheckRef = CommonGlobalSettings.skipCheck(settingsQuery);
             replaceLfOnStdInRef = CommonGlobalSettings.replaceLfOnStdIn(settingsQuery);
+            askBeforeCancelExecRef = CommonGlobalSettings.askBeforeCancelExec(settingsQuery);
         }
 
         @Override
@@ -86,6 +88,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
         private final Boolean skipTests;
         private final Boolean skipCheck;
         private final Boolean replaceLfOnStdIn;
+        private final Boolean askBeforeCancelExec;
 
         public StoredSettingsImpl(PropertyRefs properties) {
             this.properties = properties;
@@ -95,6 +98,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
             this.skipTests = properties.skipTestsRef.tryGetValueWithoutFallback();
             this.skipCheck = properties.skipCheckRef.tryGetValueWithoutFallback();
             this.replaceLfOnStdIn = properties.replaceLfOnStdInRef.tryGetValueWithoutFallback();
+            this.askBeforeCancelExec = properties.askBeforeCancelExecRef.tryGetValueWithoutFallback();
         }
 
         public StoredSettingsImpl(PropertyRefs properties, TaskExecutionPanel panel) {
@@ -105,6 +109,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
             this.skipTests = panel.jSkipTestsCheck.isSelected();
             this.skipCheck = panel.jSkipCheckCheckBox.isSelected();
             this.replaceLfOnStdIn = panel.jReplaceLfOnStdIn.isSelected();
+            this.askBeforeCancelExec = panel.jAskBeforeCancelExecution.isSelected();
         }
 
         @Override
@@ -116,6 +121,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
             displayCheck(jSkipTestsCheck, skipTests, properties.skipTestsRef);
             displayCheck(jSkipCheckCheckBox, skipCheck, properties.skipCheckRef);
             displayCheck(jReplaceLfOnStdIn, replaceLfOnStdIn, properties.replaceLfOnStdInRef);
+            displayCheck(jAskBeforeCancelExecution, askBeforeCancelExec, properties.askBeforeCancelExecRef);
         }
 
         @Override
@@ -125,6 +131,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
             properties.skipTestsRef.setValue(skipTests);
             properties.skipCheckRef.setValue(skipCheck);
             properties.replaceLfOnStdInRef.setValue(replaceLfOnStdIn);
+            properties.askBeforeCancelExecRef.setValue(askBeforeCancelExec);
         }
     }
 
@@ -142,6 +149,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
         jReplaceLfOnStdIn = new javax.swing.JCheckBox();
         jAutoTasksCaption = new javax.swing.JLabel();
         jAutoTasks = new javax.swing.JComboBox<>();
+        jAskBeforeCancelExecution = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jSkipTestsCheck, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jSkipTestsCheck.text")); // NOI18N
 
@@ -152,6 +160,8 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
         org.openide.awt.Mnemonics.setLocalizedText(jReplaceLfOnStdIn, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jReplaceLfOnStdIn.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jAutoTasksCaption, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jAutoTasksCaption.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jAskBeforeCancelExecution, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jAskBeforeCancelExecution.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -166,14 +176,12 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
                         .addComponent(jAutoTasks, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jAskBeforeCancelExecution)
                             .addComponent(jSkipTestsCheck)
                             .addComponent(jAlwayClearOutput)
-                            .addComponent(jSkipCheckCheckBox))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, 0)
-                        .addComponent(jReplaceLfOnStdIn)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addComponent(jSkipCheckCheckBox)
+                            .addComponent(jReplaceLfOnStdIn))
+                        .addGap(0, 46, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -188,6 +196,8 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jReplaceLfOnStdIn)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jAskBeforeCancelExecution)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jAutoTasksCaption)
                     .addComponent(jAutoTasks, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -198,6 +208,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jAlwayClearOutput;
+    private javax.swing.JCheckBox jAskBeforeCancelExecution;
     private javax.swing.JComboBox<EnumCombo.Item<SelfMaintainedTasks>> jAutoTasks;
     private javax.swing.JLabel jAutoTasksCaption;
     private javax.swing.JCheckBox jReplaceLfOnStdIn;

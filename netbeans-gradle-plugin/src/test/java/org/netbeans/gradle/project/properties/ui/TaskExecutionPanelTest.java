@@ -18,6 +18,7 @@ public class TaskExecutionPanelTest {
             input.skipTests().setValue(true);
             input.skipCheck().setValue(false);
             input.replaceLfOnStdIn().setValue(false);
+            input.askBeforeCancelExec().setValue(false);
         });
     }
 
@@ -29,6 +30,7 @@ public class TaskExecutionPanelTest {
             input.skipTests().setValue(false);
             input.skipCheck().setValue(true);
             input.replaceLfOnStdIn().setValue(true);
+            input.askBeforeCancelExec().setValue(false);
         });
     }
 
@@ -40,6 +42,7 @@ public class TaskExecutionPanelTest {
             input.skipTests().setValue(false);
             input.skipCheck().setValue(true);
             input.replaceLfOnStdIn().setValue(false);
+            input.askBeforeCancelExec().setValue(false);
         });
     }
 }
