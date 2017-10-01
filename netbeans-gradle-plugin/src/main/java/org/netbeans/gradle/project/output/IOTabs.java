@@ -72,8 +72,8 @@ public final class IOTabs {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if ( !CommonGlobalSettings.getDefault().askBeforeCancelExec().getActiveValue() ||
-                    JOptionPane.showConfirmDialog(null,
+            if (!CommonGlobalSettings.getDefault().askBeforeCancelExec().getActiveValue()
+                    || JOptionPane.showConfirmDialog(null,
                             NbStrings.getConfirmStopTask(tabCaption),
                             NbStrings.getConfirmStopTaskTitle(),
                             JOptionPane.YES_NO_OPTION,
