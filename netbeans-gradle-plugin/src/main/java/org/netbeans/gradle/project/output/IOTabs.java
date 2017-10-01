@@ -53,7 +53,7 @@ public final class IOTabs {
     }
 
     @SuppressWarnings("serial")
-    private static final class StopTask extends TaskTabAction {
+    private static class StopTask extends TaskTabAction {
         @StaticResource
         private static final String ICON = "org/netbeans/gradle/project/resources/stop.png";
 
@@ -84,7 +84,7 @@ public final class IOTabs {
     }
 
     @SuppressWarnings("serial")
-    private static final class ReRunTask extends TaskTabAction {
+    private static class ReRunTask extends TaskTabAction {
         @StaticResource
         private static final String ICON = "org/netbeans/gradle/project/resources/rerun-icon.png";
 
@@ -105,7 +105,7 @@ public final class IOTabs {
     }
 
     @SuppressWarnings("serial")
-    private static final class ReRunWithDifferentArgsTask extends TaskTabAction {
+    private static class ReRunWithDifferentArgsTask extends TaskTabAction {
         @StaticResource
         private static final String ICON = "org/netbeans/gradle/project/resources/rerun-diff-args-icon.png";
 
