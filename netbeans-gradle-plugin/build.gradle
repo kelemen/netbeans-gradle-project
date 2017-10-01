@@ -135,7 +135,7 @@ dependencies {
 
     compile 'com.google.guava:guava:19.0'
 
-    def jtrimVersion = '2.0.0-alpha-3'
+    def jtrimVersion = '2.0.1'
 
     compile "org.jtrim2:jtrim-swing-property:${jtrimVersion}"
 
