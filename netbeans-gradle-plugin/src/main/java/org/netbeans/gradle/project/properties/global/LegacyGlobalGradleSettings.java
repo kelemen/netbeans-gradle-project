@@ -63,6 +63,7 @@ final class LegacyGlobalGradleSettings {
     private final StringBasedProperty<String> displayNamePattern;
     private final StringBasedProperty<JavaSourcesDisplayMode> javaSourcesDisplayMode;
     private final StringBasedProperty<Boolean> replaceLfOnStdIn;
+    private final StringBasedProperty<Boolean> askBeforeCancelExec;
     private final StringBasedProperty<DebugMode> debugMode;
     private final StringBasedProperty<Boolean> loadRootProjectFirst;
     private final StringBasedProperty<Boolean> detectProjectDependenciesByJarName;
@@ -126,6 +127,9 @@ final class LegacyGlobalGradleSettings {
         replaceLfOnStdIn = new GlobalProperty<>(
                 withNS(namespace, "replace-lf-on-stdin"),
                 new BooleanConverter(true));
+        askBeforeCancelExec = new GlobalProperty<>(
+                withNS(namespace, "ask-before-cancel-exec"),
+                new BooleanConverter(true));
         debugMode = new GlobalProperty<>(
                 withNS(namespace, "debug-mode"),
                 new EnumConverter<>(DebugMode.DEBUGGER_ATTACHES));
@@ -178,6 +182,7 @@ final class LegacyGlobalGradleSettings {
         moveToNewSettings(platformPreferenceOrder, newSettings.platformPreferenceOrder());
         moveToNewSettings(displayNamePattern, NbGradleCommonProperties.displayNamePattern(newSettings.getActiveSettingsQuery()));
         moveToNewSettings(replaceLfOnStdIn, newSettings.replaceLfOnStdIn());
+        moveToNewSettings(askBeforeCancelExec, newSettings.replaceLfOnStdIn());
         moveToNewSettings(loadRootProjectFirst, newSettings.loadRootProjectFirst());
         moveToNewSettings(detectProjectDependenciesByJarName, newSettings.detectProjectDependenciesByJarName());
 
