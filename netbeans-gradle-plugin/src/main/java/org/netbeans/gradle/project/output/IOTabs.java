@@ -12,7 +12,6 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
-import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.tasks.AsyncGradleTask;
 import org.netbeans.gradle.project.tasks.GradleCommandSpec;
 import org.netbeans.gradle.project.tasks.GradleCommandSpecFactory;
@@ -53,7 +52,7 @@ public final class IOTabs {
     }
 
     @SuppressWarnings("serial")
-    private static final class StopTask extends TaskTabAction {
+    private static class StopTask extends TaskTabAction {
         @StaticResource
         private static final String ICON = "org/netbeans/gradle/project/resources/stop.png";
 
@@ -72,19 +71,23 @@ public final class IOTabs {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if ( !CommonGlobalSettings.getDefault().askBeforeCancelExec().getActiveValue() ||
-                    JOptionPane.showConfirmDialog(null,
-                            NbStrings.getConfirmStopTask(tabCaption),
-                            NbStrings.getConfirmStopTaskTitle(),
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+            String message = NbStrings.getConfirmStopTask(tabCaption);
+            String title = NbStrings.getConfirmStopTaskTitle();
+
+            boolean confirmed = JOptionPane.showConfirmDialog(null,
+                    message,
+                    title,
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
+
+            if (confirmed) {
                 cancelCurrentlyRunning();
             }
         }
     }
 
     @SuppressWarnings("serial")
-    private static final class ReRunTask extends TaskTabAction {
+    private static class ReRunTask extends TaskTabAction {
         @StaticResource
         private static final String ICON = "org/netbeans/gradle/project/resources/rerun-icon.png";
 
@@ -105,7 +108,7 @@ public final class IOTabs {
     }
 
     @SuppressWarnings("serial")
-    private static final class ReRunWithDifferentArgsTask extends TaskTabAction {
+    private static class ReRunWithDifferentArgsTask extends TaskTabAction {
         @StaticResource
         private static final String ICON = "org/netbeans/gradle/project/resources/rerun-diff-args-icon.png";
 
