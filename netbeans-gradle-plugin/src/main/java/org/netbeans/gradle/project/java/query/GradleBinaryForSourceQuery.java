@@ -4,6 +4,8 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -43,36 +45,42 @@ implements
         this.changes = LazyChangeSupport.createSwing(new EventSource());
     }
 
-    private static File tryGetOutputDir(
-            NbJavaModule module, File root) {
-
+    private static List<File> tryGetOutputDirs(NbJavaModule module, File root) {
         for (JavaSourceSet sourceSet: module.getSources()) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File sourceRoot: sourceGroup.getSourceRoots()) {
                     if (Objects.equals(sourceRoot, root)) {
-                        return sourceSet.getOutputDirs().getClassesDir();
+                        File classesDir = sourceSet.getOutputDirs().getClassesDir();
+                        File jar = module.tryGetJarForClassesDir(classesDir);
+                        return jar != null
+                                ? Arrays.asList(classesDir, jar)
+                                : Collections.singletonList(classesDir);
                     }
                 }
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     private static URL[] getRootsAsURLs(
             NbJavaModule module, File root) {
 
-        File outputDir = tryGetOutputDir(module, root);
-        if (outputDir == null) {
+        List<File> outputDirs = tryGetOutputDirs(module, root);
+        if (outputDirs.isEmpty()) {
             return NO_ROOTS;
         }
 
-        try {
-            URL url = Utilities.toURI(outputDir).toURL();
-            return new URL[]{url};
-        } catch (MalformedURLException ex) {
-            LOGGER.log(Level.INFO, "Cannot convert to URL: " + outputDir, ex);
-            return NO_ROOTS;
-        }
+        return outputDirs.stream()
+                .map(outputDir -> {
+                    try {
+                        return Utilities.toURI(root).toURL();
+                    } catch (MalformedURLException ex) {
+                        LOGGER.log(Level.INFO, "Cannot convert to URL: " + outputDir, ex);
+                        return null;
+                    }
+                })
+                .filter(url -> url != null)
+                .toArray(URL[]::new);
     }
 
     @Override

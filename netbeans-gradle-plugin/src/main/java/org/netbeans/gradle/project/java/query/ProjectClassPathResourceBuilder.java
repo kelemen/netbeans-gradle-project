@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim2.collections.CollectionsEx;
@@ -406,11 +407,62 @@ public final class ProjectClassPathResourceBuilder {
     public enum ClassPathType {
         SOURCES,
         COMPILE,
-        RUNTIME;
+        RUNTIME,
+        MODULE_BOOT(sourceSetName -> SpecialClassPath.BOOT, COMPILE),
+        MODULE_COMPILE(COMPILE),
+        MODULE_RUNTIME(RUNTIME);
+
+        private final Function<String, ClassPathKey> keyFactory;
+        private final ClassPathType legacyType;
+
+        private ClassPathType() {
+            this(sourceSetName -> null, null);
+        }
+
+        private ClassPathType(ClassPathType baseType) {
+            this(sourceSetName -> new SourceSetClassPathType(sourceSetName, baseType), baseType);
+        }
+
+        private ClassPathType(Function<String, ClassPathKey> keyFactory, ClassPathType legacyType) {
+            this.keyFactory = keyFactory;
+            this.legacyType = legacyType;
+        }
+
+        public ClassPathKey getBaseKey(String sourceSetName) {
+            return keyFactory.apply(sourceSetName);
+        }
+
+        public ClassPathType getLegacyType() {
+            return legacyType;
+        }
     }
 
-    // Just a marker for type safety
+    public static final class ModuleBaseKeys {
+        private final ClassPathKey baseKey;
+        private final ClassPathKey sourcesKey;
+        private final ClassPathKey legacyKey;
+
+        public ModuleBaseKeys(ClassPathKey baseKey, ClassPathKey sourcesKey, ClassPathKey legacyKey) {
+            this.baseKey = Objects.requireNonNull(baseKey, "baseKey");
+            this.sourcesKey = Objects.requireNonNull(sourcesKey, "sourcesKey");
+            this.legacyKey = Objects.requireNonNull(legacyKey, "legacyKey");
+        }
+
+        public ClassPathKey getBaseKey() {
+            return baseKey;
+        }
+
+        public ClassPathKey getSourcesKey() {
+            return sourcesKey;
+        }
+
+        public ClassPathKey getLegacyKey() {
+            return legacyKey;
+        }
+    }
+
     public static interface ClassPathKey {
+        public ModuleBaseKeys getModuleBaseKeys();
     }
 
     public enum SpecialClassPath implements ClassPathKey {
@@ -418,7 +470,12 @@ public final class ProjectClassPathResourceBuilder {
         ALL_RUNTIME,
         ALL_BUILD_OUTPUT,
         COMPILE_FOR_GLOBAL,
-        RUNTIME_FOR_GLOBAL,
+        RUNTIME_FOR_GLOBAL;
+
+        @Override
+        public ModuleBaseKeys getModuleBaseKeys() {
+            return null;
+        }
     }
 
     public static final class SourceSetClassPathType implements ClassPathKey {
@@ -428,6 +485,25 @@ public final class ProjectClassPathResourceBuilder {
         public SourceSetClassPathType(String sourceSetName, ClassPathType classPathType) {
             this.sourceSetName = Objects.requireNonNull(sourceSetName, "sourceSetName");
             this.classPathType = Objects.requireNonNull(classPathType, "classPathType");
+        }
+
+        @Override
+        public ModuleBaseKeys getModuleBaseKeys() {
+            ClassPathKey baseKey = classPathType.getBaseKey(sourceSetName);
+            if (baseKey == null) {
+                return null;
+            }
+
+            ClassPathType legacyType = classPathType.getLegacyType();
+            if (legacyType == null) {
+                throw new IllegalStateException("Legacy type is null when there is a base key."
+                        + " Source set: " + sourceSetName + ", class path type: " + classPathType);
+            }
+
+            SourceSetClassPathType baseSources = new SourceSetClassPathType(sourceSetName, ClassPathType.SOURCES);
+            SourceSetClassPathType baseLegacy = new SourceSetClassPathType(sourceSetName, legacyType);
+
+            return new ModuleBaseKeys(baseKey, baseSources, baseLegacy);
         }
 
         @Override

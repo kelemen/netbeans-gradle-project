@@ -49,6 +49,7 @@ public final class NbJavaModule implements Serializable {
     private final Supplier<Map<File, List<JavaSourceSet>>> outputsToSourceSets;
     private final Supplier<Map<File, List<JavaSourceSet>>> buildOutputToSourceSets;
     private final Supplier<Map<File, List<JavaSourceSet>>> jarOutputsToSourceSets;
+    private final Supplier<Map<File, File>> classesDirToJars;
 
     public NbJavaModule(
             GenericProjectProperties properties,
@@ -80,6 +81,7 @@ public final class NbJavaModule implements Serializable {
         this.outputsToSourceSets = LazyValues.lazyValue(this::createOutputsToSourceSets);
         this.buildOutputToSourceSets = LazyValues.lazyValue(this::createBuildOutputsToSourceSets);
         this.jarOutputsToSourceSets = LazyValues.lazyValue(this::createJarOutputsToSourceSets);
+        this.classesDirToJars = LazyValues.lazyValue(this::createClassesDirToJar);
     }
 
     public GenericProjectProperties getProperties() {
@@ -153,6 +155,14 @@ public final class NbJavaModule implements Serializable {
         return result != null ? result : Collections.<JavaSourceSet>emptyList();
     }
 
+    private Map<File, File> createClassesDirToJar() {
+        Map<File, File> result = new HashMap<>();
+        jarOutputs.forEach(jar -> {
+            jar.getClassDirs().forEach(classesDir -> result.put(classesDir, jar.getJar()));
+        });
+        return result;
+    }
+
     private Map<File, List<JavaSourceSet>> createJarOutputsToSourceSets() {
         Map<File, List<JavaSourceSet>> buildOutputsToProjectDeps = getBuildOutputsToProjectDeps();
 
@@ -174,6 +184,11 @@ public final class NbJavaModule implements Serializable {
 
     private Map<File, List<JavaSourceSet>> getJarOutputsToProjectDeps() {
         return jarOutputsToSourceSets.get();
+    }
+
+    public File tryGetJarForClassesDir(File classesDir) {
+        Objects.requireNonNull(classesDir, "classesDir");
+        return classesDirToJars.get().get(classesDir);
     }
 
     public List<JavaSourceSet> getSourceSetsForJarOutput(File jarPath) {

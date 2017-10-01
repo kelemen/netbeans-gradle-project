@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import org.jtrim2.executor.GenericUpdateTaskExecutor;
 import org.jtrim2.executor.TaskExecutor;
@@ -46,19 +47,23 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.ProjectDependencyCandidate;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.ClassPathKey;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.ClassPathType;
+import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.ModuleBaseKeys;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SourceSetClassPathType;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SpecialClassPath;
 import org.netbeans.gradle.project.properties.NbProperties;
+import org.netbeans.gradle.project.properties.SwingPropertyChangeForwarder;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
+import org.netbeans.modules.java.api.common.classpath.ClassPathSupportFactory;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.java.classpath.PathResourceImplementation;
+import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -146,6 +151,7 @@ implements
                 return allSourcesClassPathRef.get();
             case ClassPath.BOOT:
                 return getPaths(SpecialClassPath.BOOT);
+            case JavaClassPathConstants.MODULE_COMPILE_PATH: /* falls through */
             case ClassPath.COMPILE:
                 return getPaths(SpecialClassPath.COMPILE_FOR_GLOBAL);
             case ClassPath.EXECUTE:
@@ -184,6 +190,10 @@ implements
 
     private GradleProperty.BuildPlatform getPlatformProperty() {
         return javaExt.getOwnerProjectLookup().lookup(GradleProperty.BuildPlatform.class);
+    }
+
+    private GradleProperty.SourceLevel getSourceLevel() {
+        return javaExt.getOwnerProjectLookup().lookup(GradleProperty.SourceLevel.class);
     }
 
     @Override
@@ -273,14 +283,27 @@ implements
 
         String name = sourceSet.getName();
 
+        ClassPathType translatedType = translateType(type);
+        return translatedType != null
+                ? new SourceSetClassPathType(name, translatedType)
+                : null;
+    }
+
+    private static ClassPathType translateType(String type) {
         switch (type) {
             case ClassPath.SOURCE:
-                return new SourceSetClassPathType(name, ClassPathType.SOURCES);
+                return ClassPathType.SOURCES;
             case JavaClassPathConstants.PROCESSOR_PATH: /* falls through */
             case ClassPath.COMPILE:
-                return new SourceSetClassPathType(name, ClassPathType.COMPILE);
+                return ClassPathType.COMPILE;
             case ClassPath.EXECUTE:
-                return new SourceSetClassPathType(name, ClassPathType.RUNTIME);
+                return ClassPathType.RUNTIME;
+            case JavaClassPathConstants.MODULE_EXECUTE_PATH:
+                return ClassPathType.MODULE_RUNTIME;
+            case JavaClassPathConstants.MODULE_COMPILE_PATH:
+                return ClassPathType.MODULE_COMPILE;
+            case JavaClassPathConstants.MODULE_BOOT_PATH:
+                return ClassPathType.MODULE_BOOT;
             default:
                 return null;
         }
@@ -372,10 +395,76 @@ implements
         loadedOnce = true;
     }
 
+    private <T> ClassPathSupport.Selector getClassPathSelector(
+            PropertySource<? extends T> src,
+            Function<? super T, ? extends ClassPath> classPathFactory) {
+
+        SwingPropertyChangeForwarder.Builder sourceLevel = new SwingPropertyChangeForwarder.Builder();
+        sourceLevel.addProperty(ClassPathSupport.Selector.PROP_ACTIVE_CLASS_PATH, src);
+
+        SwingPropertyChangeForwarder wrapped = sourceLevel.create();
+
+        return new ClassPathSupport.Selector() {
+            @Override
+            public ClassPath getActiveClassPath() {
+                return classPathFactory.apply(src.getValue());
+            }
+
+            @Override
+            public void addPropertyChangeListener(PropertyChangeListener listener) {
+                wrapped.addPropertyChangeListener(listener);
+            }
+
+            @Override
+            public void removePropertyChangeListener(PropertyChangeListener listener) {
+                wrapped.removePropertyChangeListener(listener);
+            }
+        };
+    }
+
+    private static boolean isModularVersion(String version) {
+        String normVersion = version.trim();
+        if (normVersion.startsWith("1.")) {
+            normVersion = normVersion.substring(2);
+        }
+
+        int sepIndex = normVersion.indexOf('.');
+        if (sepIndex < 0) {
+            sepIndex = normVersion.length();
+        }
+
+        String javaVersion = normVersion.substring(0, sepIndex);
+        try {
+            return Integer.parseInt(javaVersion) >= 9;
+        } catch (NumberFormatException ex) {
+            return false;
+        }
+    }
+
     private void loadClassPath(ClassPathKey classPathKey) {
-        classpaths.putIfAbsent(
-                classPathKey,
-                ClassPathFactory.createClassPath(new GradleClassPaths(classPathKey)));
+        ModuleBaseKeys moduleBaseKeys = classPathKey.getModuleBaseKeys();
+        if (moduleBaseKeys == null) {
+            classpaths.putIfAbsent(
+                    classPathKey,
+                    ClassPathFactory.createClassPath(new GradleClassPaths(classPathKey)));
+        }
+        else {
+            ClassPath base = getClassPath(moduleBaseKeys.getBaseKey());
+            ClassPath sources = getClassPath(moduleBaseKeys.getSourcesKey());
+            ClassPath boot = getClassPath(SpecialClassPath.BOOT);
+            ClassPath legacy = getClassPath(moduleBaseKeys.getLegacyKey());
+
+            ClassPath moduleClassPath = ClassPathFactory.createClassPath(ClassPathSupportFactory
+                    .createModuleInfoBasedPath(base, sources, boot, base, legacy, null));
+
+            ClassPathSupport.Selector classPathSelector = getClassPathSelector(getSourceLevel(), sourceLevel -> {
+                return isModularVersion(sourceLevel) ? moduleClassPath : ClassPath.EMPTY;
+            });
+
+            classpaths.putIfAbsent(
+                    classPathKey,
+                    ClassPathSupport.createMultiplexClassPath(classPathSelector));
+        }
     }
 
     private Map<ClassPathKey, List<PathResourceImplementation>> getClasspathResources() {
@@ -413,13 +502,17 @@ implements
             return null;
         }
 
+        return getClassPath(classPathKey);
+    }
+
+    private ClassPath getClassPath(ClassPathKey classPathKey) {
         ClassPath result = classpaths.get(classPathKey);
         if (result != null) {
             return result;
         }
 
         if (!loadedOnce) {
-            loadPathResources(projectModel);
+            loadPathResources(javaExt.getCurrentModel());
         }
 
         loadClassPath(classPathKey);
