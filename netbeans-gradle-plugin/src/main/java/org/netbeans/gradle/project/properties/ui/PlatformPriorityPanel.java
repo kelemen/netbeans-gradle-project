@@ -32,6 +32,8 @@ import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
+import org.netbeans.gradle.project.properties.standard.PlatformId;
+import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 import static org.jtrim2.property.swing.AutoDisplayState.*;
@@ -44,10 +46,12 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements Profile
     private ProfileEditor editor;
     private boolean okPressed;
 
+    private final ListenerRegistrations disableRefs;
 
     public PlatformPriorityPanel(boolean hasOwnButtons) {
         okPressed = false;
         editor = null;
+        disableRefs = new ListenerRegistrations();
 
         initComponents();
 
@@ -153,13 +157,15 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements Profile
     }
 
     private void setupEnableDisable() {
+        disableRefs.unregisterAll();
+
         PropertySource<Integer> selectedIndex = selectedIndexProperty(jPlatformList);
 
-        addSwingStateListener(NbProperties.greaterThanOrEqual(selectedIndex, 1),
-                componentDisabler(jMoveUpButton));
+        disableRefs.add(addSwingStateListener(NbProperties.greaterThanOrEqual(selectedIndex, 1),
+                componentDisabler(jMoveUpButton)));
 
-        addSwingStateListener(NbProperties.between(selectedIndex, 0, jPlatformListModel.size() - 2),
-                componentDisabler(jMoveDownButton));
+        disableRefs.add(addSwingStateListener(NbProperties.between(selectedIndex, 0, jPlatformListModel.size() - 2),
+                componentDisabler(jMoveDownButton)));
     }
 
     private static org.jtrim2.property.PropertySource<Integer> selectedIndexProperty(JList<?> list) {
@@ -227,6 +233,8 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements Profile
             displayPlatformOrder(platformOrder != null
                     ? platformOrder
                     : properties.platformOrderRef.getActiveValue());
+
+            setupEnableDisable();
         }
 
         @Override
@@ -369,7 +377,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements Profile
 
         public PlatformItem(JavaPlatform platform) {
             this.platform = platform;
-            this.caption = platform.getDisplayName();
+            this.caption = PlatformId.getDisplayNameOfPlatform(platform);
         }
 
         @Override
