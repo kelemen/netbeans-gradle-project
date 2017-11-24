@@ -39,6 +39,7 @@ import org.netbeans.gradle.project.properties.PlatformSelectionMode;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
+import org.netbeans.gradle.project.properties.standard.PlatformId;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
 import org.netbeans.gradle.project.tasks.vars.StringResolver;
@@ -447,6 +448,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
     private static class JavaPlatformComboItem {
         private final JavaPlatform platform;
         private final PlatformSelectionMode selectionMode;
+        private final String displayName;
 
         public JavaPlatformComboItem(JavaPlatform platform, PlatformSelectionMode selectionMode) {
             ExceptionHelper.checkNotNullArgument(platform, "platform");
@@ -454,6 +456,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
 
             this.platform = platform;
             this.selectionMode = selectionMode;
+            this.displayName = PlatformId.getDisplayNameOfPlatform(platform);
         }
 
         public JavaPlatform getPlatform() {
@@ -498,16 +501,18 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
 
         @Override
         public String toString() {
-            return platform.getDisplayName();
+            return displayName;
         }
     }
 
     private static class ProjectPlatformComboItem {
         private final ProjectPlatform platform;
+        private final String displayName;
 
         public ProjectPlatformComboItem(ProjectPlatform platform) {
             ExceptionHelper.checkNotNullArgument(platform, "platform");
             this.platform = platform;
+            this.displayName = PlatformId.getDisplayNameOfPlatform(platform);
         }
 
         public ProjectPlatform getPlatform() {
@@ -534,7 +539,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
 
         @Override
         public String toString() {
-            return platform.getDisplayName();
+            return displayName;
         }
     }
 

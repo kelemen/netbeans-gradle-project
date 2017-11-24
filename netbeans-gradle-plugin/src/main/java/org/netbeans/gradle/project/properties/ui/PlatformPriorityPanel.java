@@ -34,6 +34,7 @@ import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
+import org.netbeans.gradle.project.properties.standard.PlatformId;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 import static org.jtrim.property.swing.AutoDisplayState.*;
@@ -380,7 +381,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements Profile
 
         public PlatformItem(JavaPlatform platform) {
             this.platform = platform;
-            this.caption = platform.getDisplayName();
+            this.caption = PlatformId.getDisplayNameOfPlatform(platform);
         }
 
         @Override

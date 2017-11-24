@@ -50,6 +50,38 @@ public final class PlatformId implements PlatformSelector {
         return new PlatformId(name, versionStr);
     }
 
+    public static String getDisplayNameOfPlatform(ProjectPlatform platform) {
+        StringBuilder result = new StringBuilder();
+        result.append(platform.getDisplayName());
+        result.append(" (");
+        result.append(platform.getName());
+        result.append(" / ");
+        result.append(platform.getVersion());
+        result.append(")");
+
+        return result.toString();
+    }
+
+    public static String getDisplayNameOfPlatform(JavaPlatform platform) {
+        StringBuilder result = new StringBuilder();
+        result.append(platform.getDisplayName());
+        result.append(" (");
+
+        PlatformId id = tryGetIdOfPlatform(platform);
+        if (id == null) {
+            result.append("unknown version");
+        }
+        else {
+            result.append(id.getName());
+            result.append(" / ");
+            result.append(id.getVersion());
+        }
+
+        result.append(")");
+
+        return result.toString();
+    }
+
     public String getName() {
         return name;
     }

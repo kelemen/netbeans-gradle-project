@@ -21,6 +21,7 @@ import org.netbeans.gradle.project.properties.PlatformSelectionMode;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
+import org.netbeans.gradle.project.properties.standard.PlatformId;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
@@ -125,10 +126,12 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements ProfileEd
 
     private static class JavaPlatformItem {
         private final JavaPlatform platform;
+        private final String displayName;
 
         public JavaPlatformItem(JavaPlatform platform) {
             ExceptionHelper.checkNotNullArgument(platform, "platform");
             this.platform = platform;
+            this.displayName = PlatformId.getDisplayNameOfPlatform(platform);
         }
 
         public JavaPlatform getPlatform() {
@@ -137,7 +140,7 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements ProfileEd
 
         @Override
         public String toString() {
-            return platform.getDisplayName();
+            return displayName;
         }
 
         @Override
