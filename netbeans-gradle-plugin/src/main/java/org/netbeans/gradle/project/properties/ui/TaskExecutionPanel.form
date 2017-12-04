@@ -16,7 +16,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+          <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
@@ -31,6 +31,7 @@
                           <Component id="jAlwayClearOutput" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jSkipCheckCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jReplaceLfOnStdIn" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jShowGradleVersion" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="46" max="32767" attributes="0"/>
                   </Group>
@@ -52,6 +53,8 @@
               <Component id="jReplaceLfOnStdIn" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jAskBeforeCancelExecution" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="jShowGradleVersion" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jAutoTasksCaption" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -112,6 +115,13 @@
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/netbeans/gradle/project/properties/ui/Bundle.properties" key="TaskExecutionPanel.jAskBeforeCancelExecution.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="jShowGradleVersion">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/properties/ui/Bundle.properties" key="TaskExecutionPanel.jShowGradleVersion.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
