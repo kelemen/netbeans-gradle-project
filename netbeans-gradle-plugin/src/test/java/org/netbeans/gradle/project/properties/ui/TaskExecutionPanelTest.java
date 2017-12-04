@@ -28,6 +28,7 @@ public class TaskExecutionPanelTest {
                 input.skipCheck().setValue(false);
                 input.replaceLfOnStdIn().setValue(false);
                 input.askBeforeCancelExec().setValue(false);
+                input.showGradleVersion().setValue(true);
             }
         });
     }
@@ -43,6 +44,7 @@ public class TaskExecutionPanelTest {
                 input.skipCheck().setValue(true);
                 input.replaceLfOnStdIn().setValue(true);
                 input.askBeforeCancelExec().setValue(true);
+                input.showGradleVersion().setValue(false);
             }
         });
     }
@@ -58,6 +60,7 @@ public class TaskExecutionPanelTest {
                 input.skipCheck().setValue(true);
                 input.replaceLfOnStdIn().setValue(false);
                 input.askBeforeCancelExec().setValue(false);
+                input.showGradleVersion().setValue(true);
             }
         });
     }

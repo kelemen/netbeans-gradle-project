@@ -59,6 +59,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
         private final PropertyReference<Boolean> skipCheckRef;
         private final PropertyReference<Boolean> replaceLfOnStdInRef;
         private final PropertyReference<Boolean> askBeforeCancelExecRef;
+        private final PropertyReference<Boolean> showGradleVersionRef;
 
         public PropertyRefs(ActiveSettingsQuery settingsQuery) {
             alwaysClearOutputRef = CommonGlobalSettings.alwaysClearOutput(settingsQuery);
@@ -67,6 +68,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
             skipCheckRef = CommonGlobalSettings.skipCheck(settingsQuery);
             replaceLfOnStdInRef = CommonGlobalSettings.replaceLfOnStdIn(settingsQuery);
             askBeforeCancelExecRef = CommonGlobalSettings.askBeforeCancelExec(settingsQuery);
+            showGradleVersionRef = CommonGlobalSettings.showGradleVersion(settingsQuery);
         }
 
         @Override
@@ -89,6 +91,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
         private final Boolean skipCheck;
         private final Boolean replaceLfOnStdIn;
         private final Boolean askBeforeCancelExec;
+        private final Boolean showGradleVerison;
 
         public StoredSettingsImpl(PropertyRefs properties) {
             this.properties = properties;
@@ -99,6 +102,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
             this.skipCheck = properties.skipCheckRef.tryGetValueWithoutFallback();
             this.replaceLfOnStdIn = properties.replaceLfOnStdInRef.tryGetValueWithoutFallback();
             this.askBeforeCancelExec = properties.askBeforeCancelExecRef.tryGetValueWithoutFallback();
+            this.showGradleVerison = properties.showGradleVersionRef.tryGetValueWithoutFallback();
         }
 
         public StoredSettingsImpl(PropertyRefs properties, TaskExecutionPanel panel) {
@@ -110,6 +114,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
             this.skipCheck = panel.jSkipCheckCheckBox.isSelected();
             this.replaceLfOnStdIn = panel.jReplaceLfOnStdIn.isSelected();
             this.askBeforeCancelExec = panel.jAskBeforeCancelExecution.isSelected();
+            this.showGradleVerison = panel.jShowGradleVersion.isSelected();
         }
 
         @Override
@@ -122,6 +127,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
             displayCheck(jSkipCheckCheckBox, skipCheck, properties.skipCheckRef);
             displayCheck(jReplaceLfOnStdIn, replaceLfOnStdIn, properties.replaceLfOnStdInRef);
             displayCheck(jAskBeforeCancelExecution, askBeforeCancelExec, properties.askBeforeCancelExecRef);
+            displayCheck(jShowGradleVersion, showGradleVerison, properties.showGradleVersionRef);
         }
 
         @Override
@@ -132,6 +138,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
             properties.skipCheckRef.setValue(skipCheck);
             properties.replaceLfOnStdInRef.setValue(replaceLfOnStdIn);
             properties.askBeforeCancelExecRef.setValue(askBeforeCancelExec);
+            properties.showGradleVersionRef.setValue(showGradleVerison);
         }
     }
 
@@ -150,6 +157,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
         jAutoTasksCaption = new javax.swing.JLabel();
         jAutoTasks = new javax.swing.JComboBox<>();
         jAskBeforeCancelExecution = new javax.swing.JCheckBox();
+        jShowGradleVersion = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jSkipTestsCheck, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jSkipTestsCheck.text")); // NOI18N
 
@@ -162,6 +170,8 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
         org.openide.awt.Mnemonics.setLocalizedText(jAutoTasksCaption, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jAutoTasksCaption.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jAskBeforeCancelExecution, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jAskBeforeCancelExecution.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jShowGradleVersion, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jShowGradleVersion.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -180,7 +190,8 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
                             .addComponent(jSkipTestsCheck)
                             .addComponent(jAlwayClearOutput)
                             .addComponent(jSkipCheckCheckBox)
-                            .addComponent(jReplaceLfOnStdIn))
+                            .addComponent(jReplaceLfOnStdIn)
+                            .addComponent(jShowGradleVersion))
                         .addGap(0, 46, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -198,6 +209,8 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jAskBeforeCancelExecution)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jShowGradleVersion)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jAutoTasksCaption)
                     .addComponent(jAutoTasks, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -212,6 +225,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEdi
     private javax.swing.JComboBox<EnumCombo.Item<SelfMaintainedTasks>> jAutoTasks;
     private javax.swing.JLabel jAutoTasksCaption;
     private javax.swing.JCheckBox jReplaceLfOnStdIn;
+    private javax.swing.JCheckBox jShowGradleVersion;
     private javax.swing.JCheckBox jSkipCheckCheckBox;
     private javax.swing.JCheckBox jSkipTestsCheck;
     // End of variables declaration//GEN-END:variables

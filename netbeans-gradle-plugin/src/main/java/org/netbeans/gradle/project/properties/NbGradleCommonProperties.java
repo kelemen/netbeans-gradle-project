@@ -15,6 +15,7 @@ import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
+import org.netbeans.gradle.project.properties.standard.CommonProperties;
 import org.netbeans.gradle.project.properties.standard.CustomTasksProperty;
 import org.netbeans.gradle.project.properties.standard.CustomVariables;
 import org.netbeans.gradle.project.properties.standard.CustomVariablesProperty;
@@ -46,6 +47,7 @@ public final class NbGradleCommonProperties {
     private final PropertyReference<UserInitScriptPath> userInitScriptPath;
     private final PropertyReference<String> displayNamePattern;
     private final PropertyReference<CustomVariables> customVariables;
+    private final PropertyReference<Boolean> showGradleVersion;
 
     public NbGradleCommonProperties(NbGradleProject ownerProject, ActiveSettingsQuery activeSettingsQuery) {
         ExceptionHelper.checkNotNullArgument(ownerProject, "ownerProject");
@@ -65,6 +67,7 @@ public final class NbGradleCommonProperties {
         this.sourceLevel = sourceLevel(ownerProject, activeSettingsQuery, this.targetPlatform.getActiveSource());
         this.displayNamePattern = displayNamePattern(activeSettingsQuery);
         this.customVariables = customVariables(activeSettingsQuery);
+        this.showGradleVersion = showGradleVersion(activeSettingsQuery);
     }
 
     public Project getOwnerProject() {
@@ -219,6 +222,17 @@ public final class NbGradleCommonProperties {
 
     public PropertyReference<CustomVariables> customVariables() {
         return customVariables;
+    }
+
+    public static PropertyReference<Boolean> showGradleVersion(ActiveSettingsQuery activeSettingsQuery) {
+        return get(
+                CommonProperties.defineBooleanProperty("tasks", "show-gradle-version"),
+                activeSettingsQuery,
+                PropertyFactory.constSource(false));
+    }
+
+    public PropertyReference<Boolean> showGradleVersion() {
+        return showGradleVersion;
     }
 
     private static <ValueType> PropertyReference<ValueType> get(

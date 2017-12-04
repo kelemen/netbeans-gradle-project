@@ -29,6 +29,7 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultCancellationTokenSource;
+import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jtrim.cancel.Cancellation;
@@ -59,6 +60,7 @@ import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.DefaultModelBuilderSetup;
+import org.netbeans.gradle.project.model.GradleConnectorRef;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
@@ -224,8 +226,6 @@ public final class AsyncGradleTask implements Runnable {
         if (!taskDef.getJvmArguments().isEmpty()) {
             buildOutput.println(NbStrings.getTaskJvmArgumentsMessage(taskDef.getJvmArguments()));
         }
-
-        buildOutput.println();
     }
 
     private static boolean hasArgumentInTaskNames(List<String> taskNames) {
@@ -459,7 +459,9 @@ public final class AsyncGradleTask implements Runnable {
         CancellationToken cancelToken = cancellation.getToken();
         Throwable commandError = null;
 
-        GradleConnector gradleConnector = DefaultGradleModelLoader.createGradleConnector(cancelToken, project);
+        GradleConnectorRef gradleConnectorRef = DefaultGradleModelLoader.createGradleConnectorRef(cancelToken, project);
+        GradleConnector gradleConnector = gradleConnectorRef.getGradleConnector();
+
         gradleConnector.forProjectDirectory(projectDir);
         ProjectConnection projectConnection = null;
         try {
@@ -509,6 +511,9 @@ public final class AsyncGradleTask implements Runnable {
                                         : taskDef;
 
                                 printCommand(buildOutput, command, finalTaskDef);
+                                printGradleVersion(gradleConnectorRef, projectConnection, targetSetup, buildOutput);
+                                buildOutput.println();
+
                                 configureBuildLauncher(targetSetup, buildLauncher, finalTaskDef, initScripts);
                                 runBuild(cancelToken, buildLauncher);
 
@@ -557,6 +562,45 @@ public final class AsyncGradleTask implements Runnable {
                 taskDef.getCommandFinalizer().onComplete(commandContext, commandError);
             }
         }
+    }
+
+    private void printGradleVersion(
+            GradleConnectorRef gradleConnectorRef,
+            ProjectConnection projectConnection,
+            OperationInitializer targetSetup,
+            OutputWriter buildOutput) {
+
+        if (!project.getCommonProperties().showGradleVersion().getActiveValue()) {
+            return;
+        }
+
+        ModelBuilder<BuildEnvironment> envRef = projectConnection.model(BuildEnvironment.class);
+        DefaultGradleModelLoader.setupLongRunningOP(targetSetup, envRef);
+        BuildEnvironment env = envRef.get();
+
+        StringBuilder envStr = new StringBuilder();
+
+        envStr.append("Gradle ");
+        envStr.append(env.getGradle().getGradleVersion());
+
+        envStr.append(" (requested: ");
+        envStr.append(gradleConnectorRef.getRequestedGradleLocation().toLocalizedString());
+        envStr.append(")");
+
+        envStr.append(", using Java home ");
+        envStr.append(env.getJava().getJavaHome());
+
+        try {
+            File gradleUserHome = env.getGradle().getGradleUserHome();
+            envStr.append(", using Gradle home: ");
+            envStr.append(gradleUserHome);
+        } catch (UnsupportedMethodException ex) {
+            File gradleUserHome = gradleConnectorRef.getRequestedGradleUserHome();
+            envStr.append(", requested Gradle home: ");
+            envStr.append(gradleUserHome != null ? gradleUserHome : "default");
+        }
+
+        buildOutput.println(envStr.toString());
     }
 
     private void preSubmitGradleTask() {

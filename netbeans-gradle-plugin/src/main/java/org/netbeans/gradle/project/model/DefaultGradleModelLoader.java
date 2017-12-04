@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.model;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -12,7 +11,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -23,7 +21,6 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.LongRunningOperation;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
-import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jtrim.cancel.Cancellation;
@@ -50,11 +47,7 @@ import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
-import org.netbeans.gradle.project.properties.GradleLocation;
-import org.netbeans.gradle.project.properties.GradleLocationDef;
-import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
-import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.tasks.DaemonTask;
@@ -62,14 +55,11 @@ import org.netbeans.gradle.project.tasks.GradleArguments;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.GradleTasks;
-import org.netbeans.gradle.project.tasks.vars.StringResolver;
-import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.util.GradleVersions;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
-import org.openide.util.Lookup;
 
 public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel> {
     private static final Logger LOGGER = Logger.getLogger(DefaultGradleModelLoader.class.getName());
@@ -147,71 +137,16 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         return cacheRef.get();
     }
 
-    private static boolean hasWrapper(NbGradleProject project) {
-        Path rootDir = getProjectLoadKey(project).getAppliedRootProjectDir();
-        Path wrapperPropertiesFile = rootDir
-                .resolve("gradle")
-                .resolve("wrapper")
-                .resolve("gradle-wrapper.properties");
-        return Files.isRegularFile(wrapperPropertiesFile);
+    public static GradleConnector createGradleConnector(CancellationToken cancelToken, Project project) {
+        return createGradleConnectorRef(cancelToken, project).getGradleConnector();
     }
 
-    private static boolean shouldRelyOnWrapper(NbGradleProject project, GradleLocationDef locationDef) {
-        if (locationDef.getLocationRef() == GradleLocationDefault.DEFAULT_REF) {
-            return true;
-        }
-
-        return locationDef.isPreferWrapper() && hasWrapper(project);
+    public static GradleConnectorRef createGradleConnectorRef(CancellationToken cancelToken, Project project) {
+        return GradleConnectorRef.open(cancelToken, project);
     }
 
-    public static GradleConnector createGradleConnector(
-            CancellationToken cancelToken,
-            final Project project) {
-        ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
-        final GradleConnector result = GradleConnector.newConnector();
-        Integer timeoutSec = CommonGlobalSettings.getDefault().gradleDaemonTimeoutSec().getActiveValue();
-        if (timeoutSec != null && result instanceof DefaultGradleConnector) {
-            ((DefaultGradleConnector)result).daemonMaxIdleTime(timeoutSec, TimeUnit.SECONDS);
-        }
-
-        NbGradleProject gradleProject = NbGradleProjectFactory.getGradleProject(project);
-
-        File gradleUserHome = CommonGlobalSettings.getDefault().gradleUserHomeDir().getActiveValue();
-        if (gradleUserHome != null) {
-            result.useGradleUserHomeDir(gradleUserHome);
-        }
-
-        NbGradleCommonProperties commonProperties = gradleProject.getCommonProperties();
-
-        GradleLocationDef gradleLocationDef = commonProperties.gradleLocation().getActiveValue();
-        if (!shouldRelyOnWrapper(gradleProject, gradleLocationDef)) {
-            StringResolver resolver = StringResolvers.getDefaultResolverSelector().getProjectResolver(gradleProject, Lookup.EMPTY);
-            GradleLocation gradleLocation = gradleLocationDef.getLocation(resolver);
-            gradleLocation.applyLocation(new GradleLocation.Applier() {
-                @Override
-                public void applyVersion(String versionStr) {
-                    result.useGradleVersion(versionStr);
-                }
-
-                @Override
-                public void applyDirectory(File gradleHome) {
-                    result.useInstallation(gradleHome);
-                }
-
-                @Override
-                public void applyDistribution(URI location) {
-                    result.useDistribution(location);
-                }
-
-                @Override
-                public void applyDefault() {
-                }
-            });
-        }
-
-        return result;
+    public static Path getAppliedRootProjectDir(NbGradleProject project) {
+        return getProjectLoadKey(project).getAppliedRootProjectDir();
     }
 
     private static ProjectLoadRequest getProjectLoadKey(NbGradleProject project) {

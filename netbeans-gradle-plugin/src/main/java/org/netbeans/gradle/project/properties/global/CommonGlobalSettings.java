@@ -50,6 +50,7 @@ public final class CommonGlobalSettings {
     private final PropertyReference<Boolean> replaceLfOnStdIn;
     private final PropertyReference<Boolean> askBeforeCancelExec;
     private final PropertyReference<Boolean> loadRootProjectFirst;
+    private final PropertyReference<Boolean> showGradleVersion;
 
     private final PropertyReference<Boolean> detectProjectDependenciesByJarName;
     private final PropertyReference<SelfMaintainedTasks> selfMaintainedTasks;
@@ -81,6 +82,7 @@ public final class CommonGlobalSettings {
         this.modelLoadingStrategy = modelLoadingStrategy(activeSettingsQuery);
         this.projectCacheSize = projectCacheSize(activeSettingsQuery);
         this.gradleDaemonTimeoutSec = gradleDaemonTimeoutSec(activeSettingsQuery);
+        this.showGradleVersion = showGradleVersion(activeSettingsQuery);
     }
 
     public static PropertyReference<ScriptPlatform> defaultJdk(ActiveSettingsQuery activeSettingsQuery) {
@@ -189,15 +191,15 @@ public final class CommonGlobalSettings {
     public static PropertyReference<Boolean> replaceLfOnStdIn(ActiveSettingsQuery activeSettingsQuery) {
         return propertyRef(defineBooleanProperty("hacks", "replace-lf-on-stdin"), activeSettingsQuery, true);
     }
-    
+
     public PropertyReference<Boolean> replaceLfOnStdIn() {
         return replaceLfOnStdIn;
     }
-    
+
     public static PropertyReference<Boolean> askBeforeCancelExec(ActiveSettingsQuery activeSettingsQuery) {
         return propertyRef(defineBooleanProperty("tasks", "ask-before-cancel-exec"), activeSettingsQuery, true);
     }
-    
+
     public PropertyReference<Boolean> askBeforeCancelExec() {
         return askBeforeCancelExec;
     }
@@ -241,6 +243,14 @@ public final class CommonGlobalSettings {
 
     public PropertyReference<ModelLoadingStrategy> modelLoadingStrategy() {
         return modelLoadingStrategy;
+    }
+
+    public static PropertyReference<Boolean> showGradleVersion(ActiveSettingsQuery activeSettingsQuery) {
+        return NbGradleCommonProperties.showGradleVersion(activeSettingsQuery);
+    }
+
+    public PropertyReference<Boolean> showGradleVersion() {
+        return showGradleVersion;
     }
 
     public static PropertyReference<Integer> projectCacheSize(ActiveSettingsQuery activeSettingsQuery) {
