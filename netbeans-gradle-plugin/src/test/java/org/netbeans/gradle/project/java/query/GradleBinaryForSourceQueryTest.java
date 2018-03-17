@@ -26,7 +26,6 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.Utilities;
 
 import static org.junit.Assert.*;
-import static org.netbeans.gradle.project.query.TestSourceQueryUtils.*;
 
 public class GradleBinaryForSourceQueryTest {
     @ClassRule
