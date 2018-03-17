@@ -8,7 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
@@ -19,6 +22,7 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.util.JavaModelTestUtils;
 import org.netbeans.gradle.project.util.SafeTmpFolder;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Utilities;
 
 import static org.junit.Assert.*;
@@ -74,7 +78,18 @@ public class GradleBinaryForSourceQueryTest {
             throw new AssertionError("Missing result for " + sourcePath);
         }
 
-        assertEquals("classes dir", expectedOutput.getClassesDir(), expectedSingleFile(result));
+        URL[] roots = result.getRoots();
+        Set<File> fileRoots = Arrays.stream(roots)
+                .map(FileUtil::archiveOrDirForURL)
+                .collect(Collectors.toSet());
+
+        expectContains("classes dir", fileRoots, expectedOutput.getClassesDir());
+    }
+
+    private static <T> void expectContains(String name, Set<T> set, T expected) {
+        if (!set.contains(expected)) {
+            throw new AssertionError("Expected " + expected + " in " + name + " " + set);
+        }
     }
 
     @Test

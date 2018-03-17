@@ -73,7 +73,7 @@ implements
         return outputDirs.stream()
                 .map(outputDir -> {
                     try {
-                        return Utilities.toURI(root).toURL();
+                        return Utilities.toURI(outputDir).toURL();
                     } catch (MalformedURLException ex) {
                         LOGGER.log(Level.INFO, "Cannot convert to URL: " + outputDir, ex);
                         return null;
