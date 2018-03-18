@@ -193,11 +193,11 @@ implements
         }
 
         private JavaOutputDirs parseOutputDirs(SourceSetOutput outputDirs) throws Exception {
-            File classesDir = outputDirs.getClassesDir();
+            Set<File> classesDirs = JavaSourcesUtils.getClassesDirs(outputDirs);
             File resourcesDir = outputDirs.getResourcesDir();
             Set<File> otherDirs = outputDirs.getDirs().getFiles();
 
-            return new JavaOutputDirs(classesDir, resourcesDir, otherDirs);
+            return new JavaOutputDirs(classesDirs, resourcesDir, otherDirs);
         }
     }
 }

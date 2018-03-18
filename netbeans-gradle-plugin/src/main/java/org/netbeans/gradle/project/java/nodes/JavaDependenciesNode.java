@@ -336,7 +336,7 @@ public final class JavaDependenciesNode extends AbstractNode {
                 if (inherited != null) {
                     classpaths.removeAll(inherited.getClasspaths().getCompileClasspaths());
                     classpaths.removeAll(inherited.getClasspaths().getRuntimeClasspaths());
-                    classpaths.remove(inherited.getOutputDirs().getClassesDir());
+                    classpaths.removeAll(inherited.getOutputDirs().getClassesDirs());
                     classpaths.remove(inherited.getOutputDirs().getResourcesDir());
                     classpaths.removeAll(inherited.getOutputDirs().getOtherDirs());
                 }
@@ -377,7 +377,9 @@ public final class JavaDependenciesNode extends AbstractNode {
 
             Map<File, String> buildOutput = new HashMap<>();
             for (JavaSourceSet sourceSet: mainModule.getSources()) {
-                buildOutput.put(sourceSet.getOutputDirs().getClassesDir(), sourceSet.getName());
+                for (File classesDir: sourceSet.getOutputDirs().getClassesDirs()) {
+                    buildOutput.put(classesDir, sourceSet.getName());
+                }
             }
 
             Map<String, Set<String>> result = new HashMap<>();

@@ -128,7 +128,7 @@ public final class IdeaJavaModelUtils {
         File resourcesDir = new File(buildOutputDir, "resources");
 
         JavaOutputDirs mainOutputs = new JavaOutputDirs(
-                new File(classesDir, JavaSourceSet.NAME_MAIN),
+                Collections.singleton(new File(classesDir, JavaSourceSet.NAME_MAIN)),
                 new File(resourcesDir, JavaSourceSet.NAME_MAIN),
                 Collections.<File>emptyList());
 
@@ -137,7 +137,7 @@ public final class IdeaJavaModelUtils {
         main.setClasspaths(classPaths.main);
 
         JavaOutputDirs testOutputs = new JavaOutputDirs(
-                new File(classesDir, JavaSourceSet.NAME_TEST),
+                Collections.singleton(new File(classesDir, JavaSourceSet.NAME_TEST)),
                 new File(resourcesDir, JavaSourceSet.NAME_TEST),
                 Collections.<File>emptyList());
 

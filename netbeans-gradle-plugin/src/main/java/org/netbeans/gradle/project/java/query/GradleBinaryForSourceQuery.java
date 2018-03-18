@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.java.query;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
+import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -50,11 +52,15 @@ implements
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File sourceRoot: sourceGroup.getSourceRoots()) {
                     if (Objects.equals(sourceRoot, root)) {
-                        File classesDir = sourceSet.getOutputDirs().getClassesDir();
-                        File jar = module.tryGetJarForClassesDir(classesDir);
-                        return jar != null
-                                ? Arrays.asList(classesDir, jar)
-                                : Collections.singletonList(classesDir);
+                        JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
+
+                        List<File> result = new ArrayList<>();
+                        result.addAll(outputDirs.getClassesDirs());
+                        File jar = module.tryGetJarForOutput(outputDirs);
+                        if (jar != null) {
+                            result.add(jar);
+                        }
+                        return result;
                     }
                 }
             }

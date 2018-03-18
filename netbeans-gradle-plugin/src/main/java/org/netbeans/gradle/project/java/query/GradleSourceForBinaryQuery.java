@@ -69,7 +69,7 @@ implements
 
         for (JavaSourceSet sourceSet: module.getSources()) {
             JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
-            if (Objects.equals(outputDirs.getClassesDir(), binaryRoot)) {
+            if (outputDirs.getClassesDirs().contains(binaryRoot)) {
                 List<File> result = new ArrayList<>();
 
                 for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
@@ -118,10 +118,11 @@ implements
 
         for (JavaSourceSet sourceSet: mainModule.getSources()) {
             JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
-            File classesDir = outputDirs.getClassesDir();
+            for (File classesDir: outputDirs.getClassesDirs()) {
             if (NbFileUtils.isParentOrSame(classesDir, binaryRoot)) {
                 return classesDir;
             }
+        }
         }
         return null;
     }

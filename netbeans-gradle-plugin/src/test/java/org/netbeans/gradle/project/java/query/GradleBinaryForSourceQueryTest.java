@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -82,11 +83,11 @@ public class GradleBinaryForSourceQueryTest {
                 .map(FileUtil::archiveOrDirForURL)
                 .collect(Collectors.toSet());
 
-        expectContains("classes dir", fileRoots, expectedOutput.getClassesDir());
+        expectContains("classes dir", fileRoots, expectedOutput.getClassesDirs());
     }
 
-    private static <T> void expectContains(String name, Set<T> set, T expected) {
-        if (!set.contains(expected)) {
+    private static <T> void expectContains(String name, Set<T> set, Collection<T> expected) {
+        if (!set.containsAll(expected)) {
             throw new AssertionError("Expected " + expected + " in " + name + " " + set);
         }
     }

@@ -27,7 +27,7 @@ public class NbJavaModelTest {
     private static JavaSourceSet createSources(String name) {
         JavaSourceSet.Builder result = new JavaSourceSet.Builder(
                 name,
-                new JavaOutputDirs(new File(name + "-out-classes"), new File(name + "-out-res"), Collections.<File>emptySet()));
+                new JavaOutputDirs(Collections.singleton(new File(name + "-out-classes")), new File(name + "-out-res"), Collections.<File>emptySet()));
         result.addSourceGroup(createSourceGroup(name));
         return result.create();
     }
@@ -44,7 +44,7 @@ public class NbJavaModelTest {
         List<NbJarOutput> jarOutputs = Arrays.asList(
                 new NbJarOutput("jar",
                         new File(properties.getBuildDir(), "myproject.jar"),
-                        Arrays.asList(sources.get(0).getOutputDirs().getClassesDir()))
+                        sources.get(0).getOutputDirs().getClassesDirs())
         );
 
         return new NbJavaModule(properties, compatibility, sources, listedDirs, jarOutputs, testModel, NbCodeCoverage.NO_CODE_COVERAGE);

@@ -415,7 +415,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
     private void markOwnedOutputDirs(Path projectDir, JavaSourceSet sourceSet) {
         JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
-        markOwnerIfNecessary(projectDir, outputDirs.getClassesDir());
+        markOwnerIfNecessary(projectDir, outputDirs.getClassesDirs());
         markOwnerIfNecessary(projectDir, outputDirs.getResourcesDir());
         markOwnerIfNecessary(projectDir, outputDirs.getOtherDirs());
     }

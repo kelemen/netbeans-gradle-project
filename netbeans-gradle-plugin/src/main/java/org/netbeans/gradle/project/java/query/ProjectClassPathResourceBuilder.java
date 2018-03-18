@@ -134,14 +134,21 @@ public final class ProjectClassPathResourceBuilder {
         return result;
     }
 
+    private static <T> void addIfNotNull(T element, Collection<? super T> result) {
+        if (element != null) {
+            result.add(element);
+        }
+    }
+
     private List<PathResourceImplementation> getBuildOutputDirsAsPathResources(JavaSourceSet sourceSet) {
         JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
-        PathResourceImplementation classesDir = toPathResource(outputDirs.getClassesDir(), urlForArchiveFactory);
-        PathResourceImplementation resourcesDir = toPathResource(outputDirs.getResourcesDir(), urlForArchiveFactory);
 
-        List<PathResourceImplementation> result = new ArrayList<>(2);
-        if (classesDir != null) result.add(classesDir);
-        if (resourcesDir != null) result.add(resourcesDir);
+        List<PathResourceImplementation> result = new ArrayList<>();
+        for (File classesDir: outputDirs.getClassesDirs()) {
+            addIfNotNull(toPathResource(classesDir, urlForArchiveFactory), result);
+        }
+        addIfNotNull(toPathResource(outputDirs.getResourcesDir(), urlForArchiveFactory), result);
+
         return result;
     }
 
@@ -255,7 +262,7 @@ public final class ProjectClassPathResourceBuilder {
         Set<File> classPaths = new HashSet<>();
 
         for (JavaSourceSet sourceSet: mainModule.getSources()) {
-            classPaths.add(sourceSet.getOutputDirs().getClassesDir());
+            classPaths.addAll(sourceSet.getOutputDirs().getClassesDirs());
             classPaths.addAll(getFixedRuntimeClasspaths(sourceSet));
         }
 
@@ -272,7 +279,7 @@ public final class ProjectClassPathResourceBuilder {
             classPaths.addAll(sourceSet.getClasspaths().getRuntimeClasspaths());
         }
 
-        removeOtherBuildOutputDirs(projectModel, classPaths);
+        removeOtherBuildOutputDirs(classPaths);
 
         setClassPathResources(
                 SpecialClassPath.RUNTIME_FOR_GLOBAL,
@@ -287,17 +294,17 @@ public final class ProjectClassPathResourceBuilder {
             classPaths.addAll(sourceSet.getClasspaths().getCompileClasspaths());
         }
 
-        removeOtherBuildOutputDirs(projectModel, classPaths);
+        removeOtherBuildOutputDirs(classPaths);
 
         setClassPathResources(
                 SpecialClassPath.COMPILE_FOR_GLOBAL,
                 getPathResources(classPaths, new HashSet<>()));
     }
 
-    private void removeOtherBuildOutputDirs(NbJavaModel projectModel, Set<File> classPaths) {
+    private void removeOtherBuildOutputDirs(Set<File> classPaths) {
         for (JavaProjectDependencyDef dependency: translatedDependencies.values()) {
             for (JavaSourceSet sourceSet: dependency.getJavaModule().getSources()) {
-                classPaths.remove(sourceSet.getOutputDirs().getClassesDir());
+                classPaths.removeAll(sourceSet.getOutputDirs().getClassesDirs());
             }
         }
     }
@@ -306,12 +313,12 @@ public final class ProjectClassPathResourceBuilder {
         Set<File> classPaths = new HashSet<>();
 
         for (JavaSourceSet sourceSet: projectModel.getMainModule().getSources()) {
-            classPaths.add(sourceSet.getOutputDirs().getClassesDir());
+            classPaths.addAll(sourceSet.getOutputDirs().getClassesDirs());
         }
 
         for (JavaProjectDependencyDef dependency: translatedDependencies.values()) {
             for (JavaSourceSet sourceSet: dependency.getJavaModule().getSources()) {
-                classPaths.add(sourceSet.getOutputDirs().getClassesDir());
+                classPaths.addAll(sourceSet.getOutputDirs().getClassesDirs());
             }
         }
 

@@ -996,7 +996,7 @@ public class MultiLevelJavaProjectTest {
 
         File classesDir = getSubPath(projectDir, "build", "myclasses", name);
         File resourcesDir = getSubPath(projectDir, "build", "myresources", name);
-        return new JavaOutputDirs(classesDir, resourcesDir, Collections.<File>emptySet());
+        return new JavaOutputDirs(Collections.singleton(classesDir), resourcesDir, Collections.<File>emptySet());
     }
 
     private static JavaSourceGroup sourceGroupOfSourceSet(
