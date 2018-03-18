@@ -132,7 +132,9 @@ public final class NbJavaModule implements Serializable {
 
         for (JavaSourceSet sourceSet: sources) {
             JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
-            result.put(outputDirs.getClassesDir(), Collections.singletonList(sourceSet));
+            for (File classesDir: outputDirs.getClassesDirs()) {
+                result.put(classesDir, Collections.singletonList(sourceSet));
+            }
         }
 
         return result;
@@ -204,7 +206,10 @@ public final class NbJavaModule implements Serializable {
     private JavaSourceSet emptySourceSet(String name) {
         File classesDir = new File(properties.getProjectDir(), "nb-virtual-classes");
         File resourcesDir = new File(properties.getProjectDir(), "nb-virtual-resources");
-        JavaOutputDirs output = new JavaOutputDirs(classesDir, resourcesDir, Collections.<File>emptyList());
+        JavaOutputDirs output = new JavaOutputDirs(
+                Collections.singleton(classesDir),
+                resourcesDir,
+                Collections.<File>emptyList());
         JavaSourceSet.Builder result = new JavaSourceSet.Builder(name, output);
         return result.create();
     }
@@ -365,7 +370,7 @@ public final class NbJavaModule implements Serializable {
     private Set<File> createAllBuildOutputs() {
         Set<File> result = CollectionUtils.newHashSet(sources.size());
         for (JavaSourceSet sourceSet: sources) {
-            result.add(sourceSet.getOutputDirs().getClassesDir());
+            result.addAll(sourceSet.getOutputDirs().getClassesDirs());
         }
         for (NbJarOutput jar: jarOutputs) {
             result.add(jar.getJar());

@@ -46,7 +46,7 @@ public final class JavaModelTestUtils {
         File resourcesDir = new File(buildDir, "resources");
 
         JavaSourceSet.Builder result = new JavaSourceSet.Builder(name, new JavaOutputDirs(
-                new File(classesDir, name),
+                Collections.singleton(new File(classesDir, name)),
                 new File(resourcesDir, name),
                 Collections.<File>emptyList()));
         result.addSourceGroup(new JavaSourceGroup(JavaSourceGroupName.JAVA, Collections.singletonList(srcRoot)));
@@ -61,8 +61,8 @@ public final class JavaModelTestUtils {
         List<NbJarOutput> result = new ArrayList<>(sources.size());
         for (JavaSourceSet sourceSet: sources) {
             File jar = new File(jarDir, sourceSet.getName() + ".jar");
-            File classesDir = sourceSet.getOutputDirs().getClassesDir();
-            result.add(new NbJarOutput(sourceSet.getName() + "Jar", jar, Collections.singletonList(classesDir)));
+            Set<File> classesDirs = sourceSet.getOutputDirs().getClassesDirs();
+            result.add(new NbJarOutput(sourceSet.getName() + "Jar", jar, classesDirs));
         }
         return result;
     }

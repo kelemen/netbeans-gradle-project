@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
@@ -79,7 +80,7 @@ public class GradleBinaryForSourceQueryTest {
             throw new AssertionError("Missing result for " + sourcePath);
         }
 
-        assertEquals("classes dir", expectedOutput.getClassesDir(), expectedSingleFile(result));
+        assertEquals("classes dir", expectedOutput.getClassesDirs(), Collections.singleton(expectedSingleFile(result)));
     }
 
     @Test

@@ -62,9 +62,10 @@ public class GradleSourceForBinaryQueryTest {
     private void verifyAllClassesDirHaveSources(SourceForBinaryQueryImplementation2 query, JavaSourceSet sourceSet) throws IOException {
         Set<File> expectedSourceRoots = JavaModelTestUtils.getAllSourceDirs(sourceSet);
 
-        File classesDir = sourceSet.getOutputDirs().getClassesDir();
-        verifySourceRoots(query, classesDir, expectedSourceRoots);
-        verifySourceRoots(query, new File(classesDir, "subdir"), expectedSourceRoots);
+        for (File classesDir: sourceSet.getOutputDirs().getClassesDirs()) {
+            verifySourceRoots(query, classesDir, expectedSourceRoots);
+            verifySourceRoots(query, new File(classesDir, "subdir"), expectedSourceRoots);
+        }
     }
 
     private void verifySourceRoots(

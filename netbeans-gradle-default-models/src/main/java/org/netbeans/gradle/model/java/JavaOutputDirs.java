@@ -1,9 +1,13 @@
 package org.netbeans.gradle.model.java;
 
 import java.io.File;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -23,14 +27,14 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 public final class JavaOutputDirs implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final File classesDir;
+    private final Set<File> classesDirs;
     private final File resourcesDir;
     private final Set<File> otherDirs;
 
     /**
      * Creates a new {@code JavaOutputDirs} with the given properties.
      *
-     * @param classesDir the directory where the compile binaries (class files)
+     * @param classesDirs the directories where the compile binaries (class files)
      *   of the associated source set are stored after compilation. This
      *   argument cannot be {@code null}.
      * @param resourcesDir the directory where the resources of the associated
@@ -43,20 +47,21 @@ public final class JavaOutputDirs implements Serializable {
      * @throws NullPointerException thrown if any of the arguments is
      *   {@code null}
      */
-    public JavaOutputDirs(File classesDir, File resourcesDir, Collection<? extends File> otherDirs) {
-        if (classesDir == null) throw new NullPointerException("classesDir");
+    public JavaOutputDirs(Collection<File> classesDirs, File resourcesDir, Collection<? extends File> otherDirs) {
+        if (classesDirs == null) throw new NullPointerException("classesDir");
         if (resourcesDir == null) throw new NullPointerException("resourcesDir");
         if (otherDirs == null) throw new NullPointerException("otherDirs");
 
-        this.classesDir = classesDir;
+        this.classesDirs = Collections.unmodifiableSet(new HashSet<File>(classesDirs));
         this.resourcesDir = resourcesDir;
         this.otherDirs = Collections.unmodifiableSet(new LinkedHashSet<File>(otherDirs));
 
+        CollectionUtils.checkNoNullElements(this.classesDirs, "classesDirs");
         CollectionUtils.checkNoNullElements(this.otherDirs, "otherDirs");
     }
 
     /**
-     * Returns the directory where the compile binaries (class files) of the
+     * Returns the directories where the compile binaries (class files) of the
      * associated source set are stored after compilation. Note that a source
      * set may contain multiple source roots.
      *
@@ -64,8 +69,8 @@ public final class JavaOutputDirs implements Serializable {
      *   associated source set are stored after compilation. This method
      *   never returns {@code null}.
      */
-    public File getClassesDir() {
-        return classesDir;
+    public Set<File> getClassesDirs() {
+        return classesDirs;
     }
 
     /**
@@ -90,5 +95,31 @@ public final class JavaOutputDirs implements Serializable {
      */
     public Set<File> getOtherDirs() {
         return otherDirs;
+    }
+
+    private Object writeReplace() {
+        return new SerializedFormat(this);
+    }
+
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Use proxy.");
+    }
+
+    private static final class SerializedFormat implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final Set<File> classesDirs;
+        private final File resourcesDir;
+        private final Set<File> otherDirs;
+
+        public SerializedFormat(JavaOutputDirs source) {
+            this.classesDirs = source.classesDirs;
+            this.resourcesDir = source.resourcesDir;
+            this.otherDirs = source.otherDirs;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new JavaOutputDirs(classesDirs, resourcesDir, otherDirs);
+        }
     }
 }

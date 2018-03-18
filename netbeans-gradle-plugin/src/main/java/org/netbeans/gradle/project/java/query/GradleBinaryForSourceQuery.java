@@ -3,8 +3,12 @@ package org.netbeans.gradle.project.java.query;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
@@ -51,36 +55,47 @@ implements
         this.changes = LazyChangeSupport.createSwing(new EventSource());
     }
 
-    private static File tryGetOutputDir(
+    private static Set<File> getOutputDirs(
             NbJavaModule module, File root) {
 
         for (JavaSourceSet sourceSet: module.getSources()) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File sourceRoot: sourceGroup.getSourceRoots()) {
                     if (Objects.equals(sourceRoot, root)) {
-                        return sourceSet.getOutputDirs().getClassesDir();
+                        return sourceSet.getOutputDirs().getClassesDirs();
                     }
                 }
             }
         }
-        return null;
+        return Collections.emptySet();
+    }
+
+    private static URL toUrl(File file) {
+        try {
+
+            return Utilities.toURI(file).toURL();
+        } catch (MalformedURLException ex) {
+            LOGGER.log(Level.INFO, "Cannot convert to URL: " + file, ex);
+            return null;
+        }
     }
 
     private static URL[] getRootsAsURLs(
             NbJavaModule module, File root) {
 
-        File outputDir = tryGetOutputDir(module, root);
-        if (outputDir == null) {
+        Set<File> outputDirs = getOutputDirs(module, root);
+        if (outputDirs.isEmpty()) {
             return NO_ROOTS;
         }
 
-        try {
-            URL url = Utilities.toURI(outputDir).toURL();
-            return new URL[]{url};
-        } catch (MalformedURLException ex) {
-            LOGGER.log(Level.INFO, "Cannot convert to URL: " + outputDir, ex);
-            return NO_ROOTS;
+        List<URL> result = new ArrayList<>(outputDirs.size());
+        for (File outputDir: outputDirs) {
+            URL url = toUrl(outputDir);
+            if (url != null) {
+                result.add(url);
+            }
         }
+        return result.toArray(new URL[result.size()]);
     }
 
     @Override

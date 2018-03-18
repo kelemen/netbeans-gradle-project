@@ -38,7 +38,7 @@ public final class SourceSetVerification {
             JavaOutputDirs expected,
             JavaOutputDirs actual) {
 
-        assertEquals(expected.getClassesDir(), actual.getClassesDir());
+        assertEquals(expected.getClassesDirs(), actual.getClassesDirs());
         assertEquals(expected.getResourcesDir(), actual.getResourcesDir());
     }
 

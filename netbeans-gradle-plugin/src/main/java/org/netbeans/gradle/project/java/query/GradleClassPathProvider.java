@@ -23,7 +23,6 @@ import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
-import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -268,9 +267,6 @@ implements
         }
 
         for (JavaSourceSet sourceSet: projectModel.getMainModule().getSources()) {
-            JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
-            outputDirs.getClassesDir();
-
             if (isInOneOf(file, sourceSet.getClasspaths().getCompileClasspaths())) {
                 return sourceSet;
             }

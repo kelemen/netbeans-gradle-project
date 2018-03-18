@@ -98,7 +98,7 @@ public final class JavaParsingUtils {
 
         Set<File> result = CollectionUtils.newHashSet(sourceSets.size());
         for (JavaSourceSet sourceSet: sourceSets) {
-            result.add(sourceSet.getOutputDirs().getClassesDir());
+            result.addAll(sourceSet.getOutputDirs().getClassesDirs());
         }
         return result;
     }
@@ -157,7 +157,7 @@ public final class JavaParsingUtils {
         Collection<File> compile = adjustedClassPaths(origClassPaths.getCompileClasspaths(), dependencyMap);
         Collection<File> runtime = adjustedClassPaths(origClassPaths.getRuntimeClasspaths(), dependencyMap);
 
-        runtime.remove(sourceSet.getOutputDirs().getClassesDir());
+        runtime.removeAll(sourceSet.getOutputDirs().getClassesDirs());
         runtime.remove(sourceSet.getOutputDirs().getResourcesDir());
 
         JavaClassPaths classPaths = new JavaClassPaths(compile, runtime);
