@@ -116,7 +116,9 @@ public final class HttpUtils {
 
     private static void verifySuccess(HttpUrl url, Response response) throws IOException {
         if (!response.isSuccessful()) {
-            throw new IOException("Failed http request with " + response.code() + " for " + url);
+            ResponseBody body = response.body();
+            String bodyStr = body != null ? body.string() : "<NO-BODY>";
+            throw new IOException("Failed http request with " + response.code() + " for " + url + "\n" + bodyStr);
         }
     }
 
