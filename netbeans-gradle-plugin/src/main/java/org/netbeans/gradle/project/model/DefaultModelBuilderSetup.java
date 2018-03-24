@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
@@ -65,11 +64,8 @@ public final class DefaultModelBuilderSetup implements OperationInitializer {
             args.setJvmArguments(jvmArgs.toArray(new String[jvmArgs.size()]));
         }
         if (progress != null) {
-            args.setProgressListeners(new ProgressListener[]{new ProgressListener() {
-                @Override
-                public void statusChanged(ProgressEvent pe) {
-                    progress.progress(pe.getDescription());
-                }
+            args.setProgressListeners(new ProgressListener[]{pe -> {
+                progress.progress(pe.getDescription());
             }});
         }
     }
