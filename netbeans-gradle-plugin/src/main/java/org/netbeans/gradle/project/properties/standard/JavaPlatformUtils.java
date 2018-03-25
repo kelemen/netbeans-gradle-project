@@ -71,7 +71,8 @@ public final class JavaPlatformUtils {
 
         for (JavaPlatform platform: platforms) {
             Specification specification = platform.getSpecification();
-            if (specName.equalsIgnoreCase(specification.getName())
+            if (specification != null
+                    && specName.equalsIgnoreCase(specification.getName())
                     && version.equals(specification.getVersion())) {
                 return platform;
             }
