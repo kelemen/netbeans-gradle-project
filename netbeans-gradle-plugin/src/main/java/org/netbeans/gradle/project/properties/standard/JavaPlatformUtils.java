@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim2.event.ListenerRef;
@@ -51,6 +52,23 @@ public final class JavaPlatformUtils {
             List<JavaPlatform> platforms) {
         List<JavaPlatform> orderedPlatforms = order.orderPlatforms(platforms);
         return tryChooseFromOrderedPlatforms(specName, versionStr, orderedPlatforms);
+    }
+
+    private static String specificationToStr(Specification spec) {
+        return spec.getName() + "/" + spec.getVersion();
+    }
+
+    private static String platformToStr(JavaPlatform platform) {
+        Specification spec = platform.getSpecification();
+        return spec != null ? specificationToStr(spec) : platform.getDisplayName() + " (null specification)";
+    }
+
+    private static String platformsToStr(Collection<? extends JavaPlatform> platforms) {
+        StringJoiner result = new StringJoiner(", ", "[", "]");
+        platforms.forEach(platform -> {
+            result.add(platformToStr(platform));
+        });
+        return result.toString();
     }
 
     public static JavaPlatform tryChooseFromOrderedPlatforms(
@@ -129,6 +147,9 @@ public final class JavaPlatformUtils {
         }
 
         if (bestMatch == null) {
+            LOGGER.log(Level.WARNING,
+                    "Found no usable platforms in {0} returning the default platform.",
+                    platformsToStr(platforms));
             return JavaPlatform.getDefault();
         }
 
