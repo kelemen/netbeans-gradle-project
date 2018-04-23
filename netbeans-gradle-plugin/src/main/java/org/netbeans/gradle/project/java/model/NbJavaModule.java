@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -45,6 +46,7 @@ public final class NbJavaModule implements Serializable {
     private final Supplier<List<NamedSourceRoot>> namedSourceRootsRef;
     private final Supplier<Map<String, JavaSourceSet>> nameToSourceSetRef;
     private final Supplier<Map<String, JavaTestTask>> testNameToModelRef;
+    private final Supplier<Set<File>> allBuildOutputDirsRefs;
     private final Supplier<Set<File>> allBuildOutputRefs;
     private final Supplier<Map<File, List<JavaSourceSet>>> outputsToSourceSets;
     private final Supplier<Map<File, List<JavaSourceSet>>> buildOutputToSourceSets;
@@ -78,6 +80,7 @@ public final class NbJavaModule implements Serializable {
         this.nameToSourceSetRef = LazyValues.lazyValue(this::createNameToSourceSet);
         this.testNameToModelRef = LazyValues.lazyValue(this::createTestNameToModel);
         this.allBuildOutputRefs = LazyValues.lazyValue(this::createAllBuildOutputs);
+        this.allBuildOutputDirsRefs = LazyValues.lazyValue(this::createAllBuildOutputDirs);
         this.outputsToSourceSets = LazyValues.lazyValue(this::createOutputsToSourceSets);
         this.buildOutputToSourceSets = LazyValues.lazyValue(this::createBuildOutputsToSourceSets);
         this.jarOutputsToSourceSets = LazyValues.lazyValue(this::createJarOutputsToSourceSets);
@@ -335,11 +338,21 @@ public final class NbJavaModule implements Serializable {
         return getTestNameToModel().get(name);
     }
 
-    private Set<File> createAllBuildOutputs() {
+    private Set<File> createAllBuildOutputDirs() {
         Set<File> result = CollectionUtils.newHashSet(sources.size());
         for (JavaSourceSet sourceSet: sources) {
             result.addAll(sourceSet.getOutputDirs().getClassesDirs());
         }
+        return Collections.unmodifiableSet(result);
+    }
+
+    public Set<File> getAllBuildOutputDirs() {
+        return allBuildOutputDirsRefs.get();
+    }
+
+    private Set<File> createAllBuildOutputs() {
+        Set<File> result = new HashSet<>(getAllBuildOutputDirs());
+
         for (NbJarOutput jar: jarOutputs) {
             result.add(jar.getJar());
         }

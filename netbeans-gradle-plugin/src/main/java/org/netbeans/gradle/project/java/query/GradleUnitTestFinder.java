@@ -11,6 +11,7 @@ import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.util.DefaultUrlFactory;
 import org.netbeans.gradle.project.util.UrlFactory;
 import org.netbeans.spi.java.queries.MultipleRootsUnitTestForSourceQueryImplementation;
 import org.openide.filesystems.FileObject;
@@ -39,7 +40,7 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
     }
 
     private static URL[] urlsFromSourceSets(Collection<JavaSourceSet> sourceSets) {
-        UrlFactory urlFactory = UrlFactory.getDefaultArchiveOrDirFactory();
+        UrlFactory urlFactory = DefaultUrlFactory.getDefaultDirFactory();
 
         List<URL> result = new ArrayList<>();
         for (JavaSourceSet sourceSet: sourceSets) {

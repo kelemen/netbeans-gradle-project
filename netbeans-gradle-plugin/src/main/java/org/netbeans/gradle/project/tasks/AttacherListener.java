@@ -28,6 +28,7 @@ import org.netbeans.gradle.project.java.model.JavaProjectDependencyDef;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.output.DebugTextListener;
+import org.netbeans.gradle.project.util.DefaultUrlFactory;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.util.UrlFactory;
@@ -66,7 +67,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     }
 
     private static void addSourcesOfBinaries(Collection<File> binaries, Set<FileObject> result) {
-        UrlFactory urlFactory = UrlFactory.getDefaultArchiveOrDirFactory();
+        UrlFactory urlFactory = DefaultUrlFactory.getDefaultArchiveOrDirFactory();
         for (File binary: binaries) {
             URL url = urlFactory.toUrl(binary);
             if (url == null) continue;

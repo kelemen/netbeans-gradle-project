@@ -32,6 +32,7 @@ import org.netbeans.gradle.project.java.model.NbJarOutput;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.util.DefaultUrlFactory;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.FileGroupFilter;
 import org.netbeans.gradle.project.util.UnionFileGroupFilter;
@@ -53,7 +54,8 @@ public final class ProjectClassPathResourceBuilder {
     // Maps JAR name to source set output directory.
     private Map<String, Set<File>> openedProjectsOutput;
 
-    private final UrlFactory urlForArchiveFactory;
+    private final UrlFactory urlForDirFactory;
+    private final UrlFactory urlAutoSelectFactory;
 
     public ProjectClassPathResourceBuilder(
             NbJavaModel projectModel,
@@ -65,7 +67,14 @@ public final class ProjectClassPathResourceBuilder {
         this.classpathResources = null;
         this.missing = null;
         this.openedProjectsOutput = null;
-        this.urlForArchiveFactory = UrlFactory.getDefaultArchiveOrDirFactory();
+        this.urlForDirFactory = DefaultUrlFactory.getDefaultDirFactory();
+
+        UrlFactory urlForArchiveFactory = DefaultUrlFactory.getDefaultArchiveOrDirFactory();
+        Set<File> buildDirs = projectModel.getMainModule().getAllBuildOutputDirs();
+        this.urlAutoSelectFactory = file -> {
+            UrlFactory selectedFactory = buildDirs.contains(file) ? urlForDirFactory : urlForArchiveFactory;
+            return selectedFactory.toUrl(file);
+        };
     }
 
     public void build() {
@@ -145,9 +154,9 @@ public final class ProjectClassPathResourceBuilder {
 
         List<PathResourceImplementation> result = new ArrayList<>();
         for (File classesDir: outputDirs.getClassesDirs()) {
-            addIfNotNull(toPathResource(classesDir, urlForArchiveFactory), result);
+            addIfNotNull(toPathResource(classesDir, urlForDirFactory), result);
         }
-        addIfNotNull(toPathResource(outputDirs.getResourcesDir(), urlForArchiveFactory), result);
+        addIfNotNull(toPathResource(outputDirs.getResourcesDir(), urlForDirFactory), result);
 
         return result;
     }
@@ -343,7 +352,6 @@ public final class ProjectClassPathResourceBuilder {
         setClassPathResources(classPathKey, paths);
     }
 
-
     private static PathResourceImplementation toPathResource(File file, UrlFactory urlForArchiveFactory) {
         URL url = urlForArchiveFactory.toUrl(file);
         return url != null ? ClassPathSupport.createResource(url) : null;
@@ -352,11 +360,11 @@ public final class ProjectClassPathResourceBuilder {
     private static PathResourceImplementation toPathResource(
             File file,
             FileGroupFilter includeRules,
-            UrlFactory urlForArchiveFactory) {
-        return ExcludeAwarePathResource.tryCreate(file, includeRules, urlForArchiveFactory);
+            UrlFactory urlFactory) {
+        return ExcludeAwarePathResource.tryCreate(file, includeRules, urlFactory);
     }
 
-    private static List<PathResourceImplementation> getPathResources(
+    private List<PathResourceImplementation> getPathResources(
             Collection<File> files,
             Set<File> invalid) {
         return getPathResources(files, invalid, ExcludeIncludeRules.ALLOW_ALL);
@@ -368,14 +376,21 @@ public final class ProjectClassPathResourceBuilder {
                 : new LinkedHashSet<>(input);
     }
 
-    public static List<PathResourceImplementation> getPathResources(
+    public List<PathResourceImplementation> getPathResources(
             Collection<File> files,
             Set<File> invalid,
             FileGroupFilter includeRules) {
+        return getPathResources(files, invalid, includeRules, urlAutoSelectFactory);
+    }
+
+    public static List<PathResourceImplementation> getPathResources(
+            Collection<File> files,
+            Set<File> invalid,
+            FileGroupFilter includeRules,
+            UrlFactory urlFactory) {
 
         boolean allowAll = includeRules.isAllowAll();
 
-        UrlFactory urlFactory = UrlFactory.getDefaultArchiveOrDirFactory();
         List<PathResourceImplementation> result = new ArrayList<>(files.size());
         for (File file: asSet(files)) {
             PathResourceImplementation pathResource = allowAll

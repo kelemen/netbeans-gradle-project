@@ -18,6 +18,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.GradleHomeRegistry;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.util.DefaultUrlFactory;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.UrlFactory;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
@@ -80,7 +81,7 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
             return NO_URLS;
         }
 
-        UrlFactory urlFactory = UrlFactory.getDefaultArchiveOrDirFactory();
+        UrlFactory urlFactory = DefaultUrlFactory.getDefaultArchiveOrDirFactory();
 
         List<URL> result = new ArrayList<>(jars.size());
         for (File jar: jars) {

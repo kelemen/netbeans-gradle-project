@@ -53,6 +53,7 @@ import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.SwingPropertyChangeForwarder;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
+import org.netbeans.gradle.project.util.DefaultUrlFactory;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -314,7 +315,7 @@ implements
                 ExcludeIncludeRules includeRules = ExcludeIncludeRules.create(sourceGroup);
                 Set<File> sourceRoots = sourceGroup.getSourceRoots();
 
-                result.addAll(getPathResources(sourceRoots, new HashSet<>(), includeRules));
+                result.addAll(getDirPathResources(sourceRoots, new HashSet<>(), includeRules));
             }
         }
     }
@@ -335,11 +336,11 @@ implements
         allSources = Collections.unmodifiableList(sources);
     }
 
-    public static List<PathResourceImplementation> getPathResources(
+    private static List<PathResourceImplementation> getDirPathResources(
             Collection<File> files,
             Set<File> invalid,
             ExcludeIncludeRules includeRules) {
-        return ProjectClassPathResourceBuilder.getPathResources(files, invalid, includeRules);
+        return ProjectClassPathResourceBuilder.getPathResources(files, invalid, includeRules, DefaultUrlFactory.getDefaultDirFactory());
     }
 
     private void loadPathResources(NbJavaModel projectModel) {
