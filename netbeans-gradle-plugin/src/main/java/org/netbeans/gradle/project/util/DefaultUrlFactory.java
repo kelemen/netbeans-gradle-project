@@ -12,16 +12,24 @@ import java.util.logging.Logger;
 import org.netbeans.gradle.model.util.ConstructableWeakRef;
 import org.netbeans.gradle.model.util.NbSupplier5;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Utilities;
 
 public final class DefaultUrlFactory {
     private static final Logger LOGGER = Logger.getLogger(DefaultUrlFactory.class.getName());
 
     private static final NbSupplier5<DefaultUrlFactory> DEFAULT_REF = new ConstructableWeakRef<>(DefaultUrlFactory::new);
     private static final NbSupplier5<UrlFactory> DEFAULT_GENERIC_REF = new ConstructableWeakRef<>(() -> {
-        return DEFAULT_REF.get()::toUrl;
+        return getDefaultInstance()::toUrl;
     });
     private static final NbSupplier5<UrlFactory> DEFAULT_DIR_REF = new ConstructableWeakRef<>(() -> {
-        return DEFAULT_REF.get()::toUrlDir;
+        return getDefaultInstance().withUrlFactory(dir -> {
+            try {
+                return Utilities.toURI(dir).toURL();
+            } catch (MalformedURLException ex) {
+                LOGGER.log(Level.INFO, "Cannot convert to URL: " + dir, ex);
+                return null;
+            }
+        })::toUrlDir;
     });
 
     private final Function<? super File, ? extends URL> urlCreator;
@@ -32,8 +40,12 @@ public final class DefaultUrlFactory {
     }
 
     public DefaultUrlFactory(Function<? super File, ? extends URL> urlCreator) {
+        this(urlCreator, new ConcurrentHashMap<>(256));
+    }
+
+    private DefaultUrlFactory(Function<? super File, ? extends URL> urlCreator, ConcurrentMap<File, URL> cache) {
         this.urlCreator = Objects.requireNonNull(urlCreator, "urlCreator");
-        this.cache = new ConcurrentHashMap<>(256);
+        this.cache = Objects.requireNonNull(cache, "cache");
     }
 
     public static URL urlForArchiveOrDir(File entry) {
@@ -46,6 +58,10 @@ public final class DefaultUrlFactory {
 
     public static UrlFactory getDefaultDirFactory() {
         return DEFAULT_DIR_REF.get();
+    }
+
+    public static DefaultUrlFactory getDefaultInstance() {
+        return DEFAULT_REF.get();
     }
 
     private URL toUrl(File entry, boolean knownDir) {
@@ -81,5 +97,9 @@ public final class DefaultUrlFactory {
 
     public URL toUrl(File entry) {
         return toUrl(entry, false);
+    }
+
+    public DefaultUrlFactory withUrlFactory(Function<? super File, ? extends URL> urlCreator) {
+        return new DefaultUrlFactory(urlCreator, cache);
     }
 }

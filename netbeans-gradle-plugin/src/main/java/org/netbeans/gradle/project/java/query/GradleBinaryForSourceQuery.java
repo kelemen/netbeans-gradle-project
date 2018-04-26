@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,8 +8,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
@@ -20,17 +17,15 @@ import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.AbstractBinaryForSourceQuery;
+import org.netbeans.gradle.project.util.DefaultUrlFactory;
 import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.netbeans.gradle.project.util.NbFileUtils;
-import org.openide.util.Utilities;
 
 public final class GradleBinaryForSourceQuery
 extends
         AbstractBinaryForSourceQuery
 implements
         JavaModelChangeListener {
-    private static final Logger LOGGER = Logger.getLogger(GradleSourceForBinaryQuery.class.getName());
-
     private static final URL[] NO_ROOTS = new URL[0];
 
     private final Supplier<? extends NbJavaModule> moduleProvider;
@@ -77,14 +72,7 @@ implements
         }
 
         return outputDirs.stream()
-                .map(outputDir -> {
-                    try {
-                        return Utilities.toURI(outputDir).toURL();
-                    } catch (MalformedURLException ex) {
-                        LOGGER.log(Level.INFO, "Cannot convert to URL: " + outputDir, ex);
-                        return null;
-                    }
-                })
+                .map(DefaultUrlFactory.getDefaultDirFactory()::toUrl)
                 .filter(url -> url != null)
                 .toArray(URL[]::new);
     }
