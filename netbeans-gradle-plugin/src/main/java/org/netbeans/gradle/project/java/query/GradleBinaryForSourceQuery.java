@@ -4,7 +4,6 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -20,6 +19,7 @@ import org.netbeans.gradle.project.query.AbstractBinaryForSourceQuery;
 import org.netbeans.gradle.project.util.DefaultUrlFactory;
 import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.UrlFactory;
 
 public final class GradleBinaryForSourceQuery
 extends
@@ -42,39 +42,33 @@ implements
         this.changes = LazyChangeSupport.createSwing(new EventSource());
     }
 
-    private static List<File> tryGetOutputDirs(NbJavaModule module, File root) {
+    private static URL[] getRootsAsURLs(NbJavaModule module, File root) {
         for (JavaSourceSet sourceSet: module.getSources()) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File sourceRoot: sourceGroup.getSourceRoots()) {
                     if (Objects.equals(sourceRoot, root)) {
                         JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
 
-                        List<File> result = new ArrayList<>();
-                        result.addAll(outputDirs.getClassesDirs());
+                        UrlFactory dirFactory = DefaultUrlFactory.getDefaultDirFactory();
+
+                        List<URL> result = new ArrayList<>();
+                        outputDirs.getClassesDirs().stream()
+                                .map(dirFactory::toUrl)
+                                .filter(url -> url != null)
+                                .forEach(result::add);
+
                         File jar = module.tryGetJarForOutput(outputDirs);
                         if (jar != null) {
-                            result.add(jar);
+                            UrlFactory urlFactory = DefaultUrlFactory.getDefaultArchiveOrDirFactory();
+                            result.add(urlFactory.toUrl(jar));
                         }
-                        return result;
+
+                        return result.toArray(new URL[result.size()]);
                     }
                 }
             }
         }
-        return Collections.emptyList();
-    }
-
-    private static URL[] getRootsAsURLs(
-            NbJavaModule module, File root) {
-
-        List<File> outputDirs = tryGetOutputDirs(module, root);
-        if (outputDirs.isEmpty()) {
-            return NO_ROOTS;
-        }
-
-        return outputDirs.stream()
-                .map(DefaultUrlFactory.getDefaultDirFactory()::toUrl)
-                .filter(url -> url != null)
-                .toArray(URL[]::new);
+        return NO_ROOTS;
     }
 
     @Override
