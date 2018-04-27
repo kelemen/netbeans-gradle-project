@@ -64,27 +64,32 @@ public final class DefaultUrlFactory {
         return DEFAULT_REF.get();
     }
 
+    private URL updateUrl(URL url, boolean knownDir) {
+        if (!knownDir || url == null) {
+            return url;
+        }
+
+        String urlStr = url.toExternalForm();
+        if (!urlStr.endsWith("/")) {
+            try {
+                return new URL(urlStr + "/");
+            } catch (MalformedURLException ex) {
+                LOGGER.log(Level.INFO, "Cannot set directory URL: " + url, ex);
+                // Go on and use whatever we have then.
+            }
+        }
+        return url;
+    }
+
     private URL toUrl(File entry, boolean knownDir) {
-        URL result = cache.get(entry);
+        URL result = updateUrl(cache.get(entry), knownDir);
         if (result != null) {
             return result;
         }
 
-        result = urlCreator.apply(entry);
+        result = updateUrl(urlCreator.apply(entry), knownDir);
         if (result == null) {
             return null;
-        }
-
-        if (knownDir) {
-            String urlStr = result.toExternalForm();
-            if (!urlStr.endsWith("/")) {
-                try {
-                    result = new URL(urlStr + "/");
-                } catch (MalformedURLException ex) {
-                    LOGGER.log(Level.INFO, "Cannot set directory URL: " + result, ex);
-                    // Go on and use whatever we have then.
-                }
-            }
         }
 
         URL prevValue = cache.putIfAbsent(entry, result);
