@@ -2,32 +2,12 @@ package org.netbeans.gradle.model.util;
 
 import java.io.File;
 import java.net.URL;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 
 public class ClassLoaderUtilsTest {
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
-
     private static void verifyPathParts(File file, String... parts) {
         File current = file;
         for (int i = parts.length - 1; i >= 0; i--) {
@@ -37,6 +17,18 @@ public class ClassLoaderUtilsTest {
         }
 
         assertTrue("File path is too long " + file, current == null || current.getParentFile() == null);
+    }
+
+    @Test
+    public void testExtractJarPathFromUrl1() throws Exception {
+        File file = ClassLoaderUtils.extractPathFromURL(new URL("jar:file:///c/my!dir/my-path!/"));
+        verifyPathParts(file, "c", "my!dir", "my-path");
+    }
+
+    @Test
+    public void testExtractJarPathFromUrl2() throws Exception {
+        File file = ClassLoaderUtils.extractPathFromURL(new URL("jar:file:///c/mydir!/my-path!/"));
+        verifyPathParts(file, "c", "mydir!", "my-path");
     }
 
     @Test
