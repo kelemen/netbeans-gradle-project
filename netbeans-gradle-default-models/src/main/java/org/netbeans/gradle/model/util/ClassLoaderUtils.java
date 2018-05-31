@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class ClassLoaderUtils {
     private static final AtomicReference<File> JAR_OF_THIS_PROJECT = new AtomicReference<File>(null);
+    private static final String JAR_PATH_TERMINATOR = "!/";
 
     public static File findClassPathOfClass(Class<?> cl) {
         return BasicFileUtils.toCanonicalFile(findClassPathOfClassNonCanonical(cl));
@@ -34,16 +35,29 @@ public final class ClassLoaderUtils {
         }
     }
 
+    private static String extractRawPathFromJarUrl(URL url) {
+        String path = url.getPath();
+        if (path.endsWith(JAR_PATH_TERMINATOR)) {
+            return path.substring(0, path.length() - JAR_PATH_TERMINATOR.length());
+        }
+
+        int jarPathEnd = path.indexOf(JAR_PATH_TERMINATOR);
+        return path.substring(0, jarPathEnd);
+    }
+
+    private static File extractPathFromJarUrl(URL url) {
+        try {
+            URL jarURL = new URL(extractRawPathFromJarUrl(url));
+            return urlToFile(jarURL);
+        } catch (MalformedURLException ex) {
+            throw new IllegalArgumentException("Unexpected URL: " + url);
+        }
+    }
+
     public static File extractPathFromURL(URL url) {
         String protocol = url.getProtocol();
         if ("jar".equals(protocol)) {
-            String[] pathParts = url.getPath().split("!", 2);
-            try {
-                URL jarURL = new URL(pathParts[0]);
-                return urlToFile(jarURL);
-            } catch (MalformedURLException ex) {
-                throw new IllegalArgumentException("Unexpected URL: " + url);
-            }
+            return extractPathFromJarUrl(url);
         }
         else if ("file".equals(protocol)) {
             return urlToFile(url);
