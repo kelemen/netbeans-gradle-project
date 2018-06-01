@@ -80,7 +80,7 @@ public final class ClassLoaderUtils {
     public static File extractPathFromURL(URL url) {
         URL fileUrl = extractFileUrlFromUrl(url);
         if ("file".equals(fileUrl.getProtocol())) {
-            return urlToFile(url);
+            return urlToFile(fileUrl);
         }
         else {
             throw new IllegalArgumentException("Unexpected URL: " + url);
