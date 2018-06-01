@@ -1,9 +1,12 @@
 package org.netbeans.gradle.model;
 
-import java.io.File;
 import java.io.Serializable;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +30,7 @@ final class GradleInfoQueryMap {
     private final Map<KeyWrapper, Throwable> serializationIssues;
     private final SerializationCache serializationCache;
 
+    @SuppressWarnings("ThrowableResultIgnored")
     private GradleInfoQueryMap(
             CustomSerializedMap builderMap,
             Map<KeyWrapper, ModelClassPathDef> classpath,
@@ -193,7 +197,7 @@ final class GradleInfoQueryMap {
         private static final long serialVersionUID = 1L;
 
         private final CustomSerializedMap builderMap;
-        private final Map<KeyWrapper, Set<File>> paths;
+        private final Map<KeyWrapper, Collection<URL>> paths;
 
         public Deserializer(
                 CustomSerializedMap builderMap,
@@ -206,27 +210,32 @@ final class GradleInfoQueryMap {
                 KeyWrapper key = entry.getKey();
                 if (key == null) throw new NullPointerException("classpath[?].key");
 
-                this.paths.put(key, entry.getValue().getJarFiles());
+                this.paths.put(key, new ArrayList<URL>(entry.getValue().getJarUrls()));
             }
         }
 
         private ClassLoader getClassLoaderForKey(
                 KeyWrapper key,
                 ClassLoader parent,
-                Map<Set<File>, ClassLoader> cache) {
+                Map<Set<String>, ClassLoader> cache) {
 
-            Set<File> files = paths.get(key);
+            Collection<URL> files = paths.get(key);
             if (files == null || files.isEmpty()) {
                 return parent;
             }
 
-            ClassLoader result = cache.get(files);
+            Set<String> urlStrings = new HashSet<String>(2 * files.size());
+            for (URL url: files) {
+                urlStrings.add(url.toExternalForm());
+            }
+
+            ClassLoader result = cache.get(urlStrings);
             if (result != null) {
                 return result;
             }
 
-            result = ClassLoaderUtils.classLoaderFromClassPath(files, parent);
-            cache.put(files, result);
+            result = ClassLoaderUtils.classLoaderFromClassPathUrls(files, parent);
+            cache.put(urlStrings, result);
             return result;
         }
 
@@ -234,7 +243,7 @@ final class GradleInfoQueryMap {
                 SerializationCache serializationCache,
                 ClassLoader parent,
                 IssueTransformer deserializationIssueTransformer) {
-            Map<Set<File>, ClassLoader> cache = new HashMap<Set<File>, ClassLoader>();
+            Map<Set<String>, ClassLoader> cache = new HashMap<Set<String>, ClassLoader>();
             Map<Object, List<?>> result = CollectionUtils.newHashMap(builderMap.size());
 
             for (Map.Entry<Object, SerializedEntries> entry: builderMap.getMap().entrySet()) {

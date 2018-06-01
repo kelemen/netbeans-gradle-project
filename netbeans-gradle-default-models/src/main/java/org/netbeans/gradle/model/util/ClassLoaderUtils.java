@@ -11,20 +11,27 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class ClassLoaderUtils {
-    private static final AtomicReference<File> JAR_OF_THIS_PROJECT = new AtomicReference<File>(null);
+    private static final AtomicReference<URL> JAR_OF_THIS_PROJECT = new AtomicReference<URL>(null);
     private static final String JAR_PATH_TERMINATOR = "!/";
 
+    /**
+     * @deprecated Use {@link #findUrlClassPathOfClass(Class) findUrlClassPathOfClass}
+     *
+     * @param cl class whose class path is to be returned
+     * @return the JAR containing the class
+     */
+    @Deprecated
     public static File findClassPathOfClass(Class<?> cl) {
-        return BasicFileUtils.toCanonicalFile(findClassPathOfClassNonCanonical(cl));
+        return BasicFileUtils.toCanonicalFile(extractPathFromURL(findUrlClassPathOfClass(cl)));
     }
 
-    private static File findClassPathOfClassNonCanonical(Class<?> cl) {
+    public static URL findUrlClassPathOfClass(Class<?> cl) {
         URL urlOfClassPath = cl.getProtectionDomain().getCodeSource().getLocation();
         if (urlOfClassPath == null) {
             throw new IllegalArgumentException("Unable to locate classpath of " + cl);
         }
 
-        return extractPathFromURL(urlOfClassPath);
+        return extractFileUrlFromUrl(urlOfClassPath);
     }
 
     private static File urlToFile(URL url) {
@@ -45,21 +52,34 @@ public final class ClassLoaderUtils {
         return path.substring(0, jarPathEnd);
     }
 
-    private static File extractPathFromJarUrl(URL url) {
+    private static URL extractUrlFromJarUrl(URL url) {
         try {
-            URL jarURL = new URL(extractRawPathFromJarUrl(url));
-            return urlToFile(jarURL);
+            return new URL(extractRawPathFromJarUrl(url));
         } catch (MalformedURLException ex) {
-            throw new IllegalArgumentException("Unexpected URL: " + url);
+            throw new IllegalArgumentException("Unexpected URL: " + url, ex);
         }
     }
 
-    public static File extractPathFromURL(URL url) {
+    public static URL extractFileUrlFromUrl(URL url) {
         String protocol = url.getProtocol();
         if ("jar".equals(protocol)) {
-            return extractPathFromJarUrl(url);
+            return extractUrlFromJarUrl(url);
         }
-        else if ("file".equals(protocol)) {
+        else{
+            return url;
+        }
+    }
+
+    /**
+     * @deprecated Use {@link #extractFileUrlFromUrl(URL) extractFileUrlFromUrl}
+     *
+     * @param url URL from which the file object is to be returned
+     * @return the file to which the URL points to
+     */
+    @Deprecated
+    public static File extractPathFromURL(URL url) {
+        URL fileUrl = extractFileUrlFromUrl(url);
+        if ("file".equals(fileUrl.getProtocol())) {
             return urlToFile(url);
         }
         else {
@@ -67,15 +87,37 @@ public final class ClassLoaderUtils {
         }
     }
 
-    public static File getLocationOfClassPath() {
-        File result = JAR_OF_THIS_PROJECT.get();
+    public static URL getUrlOfClassPath() {
+        URL result = JAR_OF_THIS_PROJECT.get();
         if (result == null) {
-            JAR_OF_THIS_PROJECT.set(findClassPathOfClass(ClassLoaderUtils.class));
+            JAR_OF_THIS_PROJECT.set(findUrlClassPathOfClass(ClassLoaderUtils.class));
             result = JAR_OF_THIS_PROJECT.get();
         }
         return result;
     }
 
+    /**
+     * @deprecated Use {@link #getUrlOfClassPath() getUrlOfClassPath}
+     *
+     * @return the class path entry containing this class
+     */
+    @Deprecated
+    public static File getLocationOfClassPath() {
+        return BasicFileUtils.toCanonicalFile(extractPathFromURL(getUrlOfClassPath()));
+    }
+
+    public static ClassLoader classLoaderFromClassPathUrls(Collection<URL> classPath, ClassLoader parent) {
+        return new URLClassLoader(classPath.toArray(new URL[classPath.size()]), parent);
+    }
+
+    /**
+     * @deprecated Use {@link #classLoaderFromClassPathUrls(Collection, ClassLoader) classLoaderFromClassPath}
+     *
+     * @param classPath the new class path entries
+     * @param parent the parent class loader to delegate to
+     * @return the class loader loading the given class path
+     */
+    @Deprecated
     public static ClassLoader classLoaderFromClassPath(Collection<File> classPath, ClassLoader parent) {
         List<URL> urls = new ArrayList<URL>(classPath.size());
         try {
@@ -85,8 +127,7 @@ public final class ClassLoaderUtils {
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex);
         }
-
-        return new URLClassLoader(urls.toArray(new URL[urls.size()]), parent);
+        return classLoaderFromClassPathUrls(urls, parent);
     }
 
     private ClassLoaderUtils() {

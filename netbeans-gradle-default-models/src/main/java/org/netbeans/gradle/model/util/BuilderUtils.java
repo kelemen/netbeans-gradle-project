@@ -1,6 +1,6 @@
 package org.netbeans.gradle.model.util;
 
-import java.io.File;
+import java.net.URL;
 import java.util.Collections;
 import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.BuilderIssue;
@@ -22,10 +22,10 @@ public final class BuilderUtils {
         Class<?> currentObjClass = currentObj.getClass();
 
         while (currentObjClass != null) {
-            File classPathOfClass = ModelClassPathDef.getClassPathOfClass(currentObjClass);
+            URL classPathOfClass = ModelClassPathDef.getUrlClassPathOfClass(currentObjClass);
             if (!ModelClassPathDef.isImplicitlyAssumed(classPathOfClass)) {
                 ClassLoader classLoader = currentObjClass.getClassLoader();
-                return ModelClassPathDef.fromJarFiles(classLoader, Collections.singleton(classPathOfClass));
+                return ModelClassPathDef.fromJarUrls(classLoader, Collections.singleton(classPathOfClass));
             }
 
             if (currentObj instanceof BuilderWrapper) {

@@ -2,16 +2,18 @@ package org.netbeans.gradle.model.util;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 
+@SuppressWarnings("deprecation")
 public class ClassLoaderUtilsTest {
     private static void verifyPathParts(File file, String... parts) {
         File current = file;
         for (int i = parts.length - 1; i >= 0; i--) {
-            assertNotNull("File is too short " + parts, current);
+            assertNotNull("File is too short " + Arrays.toString(parts), current);
             assertEquals("File must match file parts: " + file, parts[i], current.getName());
             current = current.getParentFile();
         }
