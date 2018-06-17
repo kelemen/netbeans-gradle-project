@@ -30,6 +30,7 @@ import org.netbeans.modules.gsf.testrunner.api.Status;
 import org.netbeans.modules.gsf.testrunner.api.Testcase;
 import org.netbeans.modules.gsf.testrunner.api.Trouble;
 import org.netbeans.spi.project.ActionProvider;
+import org.netbeans.spi.project.SingleMethod;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.xml.sax.Attributes;
@@ -222,7 +223,7 @@ public final class TestXmlDisplayer {
                 String testClassName = test.getClassName();
 
                 if (name != null && testClassName != null) {
-                    result.add(new SpecificTestcase(testClassName, testName));
+                    result.add(new SpecificTestcase(testClassName, name));
                 }
             }
             return result;
@@ -235,14 +236,16 @@ public final class TestXmlDisplayer {
                 return;
             }
 
-            SpecificTestcases testcases = new SpecificTestcases(getSpecificTestcases(tests));
-            Lookup context = Lookups.fixed(new TestTaskName(testName), testcases);
-            GradleActionProvider.invokeAction(project, ActionProvider.COMMAND_TEST, context);
+            List<Object> contextObjs = new ArrayList<>();
+            contextObjs.add(new TestTaskName(testName));
+            contextObjs.addAll(getSpecificTestcases(tests));
+            Lookup context = Lookups.fixed(contextObjs.toArray());
+            GradleActionProvider.invokeAction(project, SingleMethod.COMMAND_RUN_SINGLE_METHOD, context);
         }
 
         @Override
         public boolean enabled(RerunType type) {
-            return type == RerunType.ALL;
+            return true;
         }
 
         @Override
