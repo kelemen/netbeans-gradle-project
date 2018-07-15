@@ -145,7 +145,7 @@ public final class GenericModelFetcher {
 
         initScript = initScript.replace(
                 "$NB_BOOT_CLASSPATH",
-                toPastableString(ClassLoaderUtils.getLocationOfClassPath().getPath()));
+                toPastableString(ClassLoaderUtils.getUrlOfClassPath().toExternalForm()));
 
         TemporaryFileManager fileManager = TemporaryFileManager.getDefault();
 

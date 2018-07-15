@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -18,16 +19,25 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class NbPropertiesTest {
-    private static void runGC() {
+    private static void runGC(WeakReference<?> testRef) {
+        long startTime = System.nanoTime();
+        int tryCount = 0;
+        while (testRef.get() != null) {
         System.gc();
         System.gc();
         Runtime.getRuntime().runFinalization();
+            tryCount++;
+
+            if (tryCount >= 3 && (System.nanoTime() - startTime) > TimeUnit.MILLISECONDS.toNanos(20000)) {
+                throw new AssertionError("Timeout while waiting for the GC.");
+            }
+        }
         System.gc();
         System.gc();
         Runtime.getRuntime().runFinalization();
     }
 
-    private static void addWeakListener(
+    private static WeakReference<?> addWeakListener(
             PropertySource<?> property,
             AtomicInteger listenerCallCount,
             AtomicReference<ListenerRef> resultRef) {
@@ -36,7 +46,11 @@ public class NbPropertiesTest {
         // or the ListenerRef.
 
         PropertySource<?> weakProperty = NbProperties.weakListenerProperty(property);
-        resultRef.set(weakProperty.addChangeListener(listenerCallCount::incrementAndGet));
+        Runnable listener = listenerCallCount::incrementAndGet;
+
+        WeakReference<?> testRef = new WeakReference<>(listener);
+        resultRef.set(weakProperty.addChangeListener(listener));
+        return testRef;
     }
 
     @Test
@@ -45,22 +59,16 @@ public class NbPropertiesTest {
         final AtomicInteger listenerCallCount = new AtomicInteger(0);
 
         TestProperty<Integer> property = new TestProperty<>(0);
-        addWeakListener(property, listenerCallCount, listenerRef);
+        WeakReference<?> testRef = addWeakListener(property, listenerCallCount, listenerRef);
 
-        runGC();
+        runGC(new WeakReference<>(new Object()));
 
         property.setValue(1);
         assertEquals("expected call count", 1, listenerCallCount.get());
         assertEquals("listener count", 1, property.getListenerCount());
 
         listenerRef.set(null);
-
-        for (int i = 0; i < 50; i++) {
-            runGC();
-            if (property.tryWaitForNoListeners(100)) {
-                break;
-            }
-        }
+        runGC(testRef);
 
         property.setValue(2);
 
