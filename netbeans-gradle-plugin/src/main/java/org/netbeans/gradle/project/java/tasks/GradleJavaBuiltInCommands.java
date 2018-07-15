@@ -330,11 +330,11 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     }
 
     private static String[] cleanAndTestClassTasks() {
-        return cleanAndTestTasks("--tests", StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant() + "*");
+        return cleanAndTestTasks(StandardTaskVariable.TEST_CLASSES_STARED_ARGS.getScriptReplaceConstant());
     }
 
     private static String[] cleanAndTestMethodTasks() {
-        return cleanAndTestTasks("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant());
+        return cleanAndTestTasks(StandardTaskVariable.TEST_METHODS_ARGS.getScriptReplaceConstant());
     }
 
     private static String[] cleanAndTestTasks(String... testTaskOptions) {

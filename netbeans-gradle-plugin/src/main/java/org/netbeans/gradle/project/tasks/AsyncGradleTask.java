@@ -83,6 +83,7 @@ import org.netbeans.gradle.project.properties.global.SelfMaintainedTasks;
 import org.netbeans.gradle.project.script.GroovyScripts;
 import org.netbeans.gradle.project.tasks.vars.DisplayedTaskVariable;
 import org.netbeans.gradle.project.tasks.vars.EmptyTaskVarMap;
+import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
 import org.netbeans.gradle.project.tasks.vars.TaskVariableQueryDialog;
 import org.netbeans.gradle.project.tasks.vars.VariableResolver;
 import org.netbeans.gradle.project.tasks.vars.VariableResolvers;
@@ -232,6 +233,68 @@ public final class AsyncGradleTask implements Runnable {
         return false;
     }
 
+    private static int nextNonWsIndex(String str, int fromIndex) {
+        for (int i = fromIndex; i < str.length(); i++) {
+            if (str.charAt(i) > ' ') {
+                return i;
+            }
+        }
+        return str.length();
+    }
+
+    private static int nextNonWsIndexReverse(String str, int fromIndex) {
+        for (int i = Math.min(fromIndex, str.length() - 1); i >= 0; i--) {
+            if (str.charAt(i) > ' ') {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static void expandInto(String arg, List<String> result) {
+        int fromIndex = 0;
+
+        while (fromIndex < arg.length()) {
+            int index = arg.indexOf(' ', fromIndex);
+            if (index < 0) {
+                result.add(arg.substring(fromIndex));
+                return;
+            }
+
+            result.add(arg.substring(fromIndex, index));
+            int valueStartIndex = nextNonWsIndex(arg, index);
+
+            int nextArgIndex = arg.indexOf(" --", valueStartIndex);
+            if (nextArgIndex < 0) {
+                nextArgIndex = arg.length();
+            }
+
+            int valueEndIndex = nextNonWsIndexReverse(arg, nextArgIndex);
+            if (valueStartIndex <= valueEndIndex) {
+                result.add(arg.substring(valueStartIndex, valueEndIndex + 1));
+            }
+
+            fromIndex = nextArgIndex + 1;
+            if (fromIndex < 0) {
+                // Just to avoid an infinite loop in case arg.length() == Integer.MAX_INT
+            }
+        }
+    }
+
+    private static String[] fixArguments(List<String> args) {
+        // This is required because some task variable expand to multiple arguments (such as --tests).
+        List<String> result = new ArrayList<>(args.size());
+        for (String arg: args) {
+            if (arg.startsWith("--")) {
+                expandInto(arg, result);
+            }
+            else {
+                result.add(arg);
+            }
+        }
+        return result.toArray(new String[result.size()]);
+    }
+
     private static void configureBuildLauncher(
             OperationInitializer targetSetup,
             BuildLauncher buildLauncher,
@@ -250,13 +313,13 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         // HACK: GRADLE-2972
-        if (hasArgumentInTaskNames(taskDef.getTaskNames()) || arguments.contains("--tests")) {
+        if (hasArgumentInTaskNames(taskDef.getTaskNames()) || arguments.contains(StandardTaskVariable.TEST_ARGUMENT)) {
             arguments.addAll(0, taskDef.getTaskNames());
-            buildLauncher.withArguments(arguments.toArray(new String[arguments.size()]));
+            buildLauncher.withArguments(fixArguments(arguments));
         }
         else {
             if (!arguments.isEmpty()) {
-                buildLauncher.withArguments(arguments.toArray(new String[arguments.size()]));
+                buildLauncher.withArguments(fixArguments(arguments));
             }
 
             buildLauncher.forTasks(taskDef.getTaskNamesArray());

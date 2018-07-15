@@ -45,10 +45,14 @@ public final class CachingVariableMap<ProjectInfo> implements TaskVariableMap {
         public static final VariableValue NULL_VALUE = new VariableValue(null);
         public static final VariableValue EMPTY_VALUE = new VariableValue("");
 
-        public final String value;
+        private final String value;
 
         public VariableValue(String value) {
             this.value = value;
+        }
+
+        public String getValue() {
+            return value;
         }
     }
 

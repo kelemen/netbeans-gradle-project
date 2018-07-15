@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.tasks.vars;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -40,17 +42,7 @@ public enum StandardTaskVariable {
         return new VariableValue(uniqueName);
     }),
     SELECTED_CLASS("selected-class", (variables, project, actionContext) -> {
-        SpecificTestClass testClass = actionContext.lookup(SpecificTestClass.class);
-        if (testClass != null) {
-            return new VariableValue(testClass.getTestClassName());
-        }
-
-        FileObject file = getFileOfContext(actionContext);
-        if (file == null) {
-            return VariableValue.NULL_VALUE;
-        }
-
-        return getClassNameForFile(project, file);
+        return getOneValue(getSelectedClasses(project, actionContext));
     }),
     SELECTED_FILE("selected-file", (variables, project, actionContext) -> {
         FileObject fileObject = getFileOfContext(actionContext);
@@ -69,7 +61,9 @@ public enum StandardTaskVariable {
         String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
         return new VariableValue(deducePathFromClass(selectedClass));
     }),
-    TEST_METHOD("test-method", StandardTaskVariable::getMethodReplaceVariable),
+    TEST_METHOD("test-method", (variables, project, actionContext) -> {
+        return getOneValue(getMethodReplaceVariables(variables, project, actionContext));
+    }),
     PLATFORM_DIR("platform-dir", (variables, project, actionContext) -> {
         ProjectPlatform targetPlatform = project.getCommonProperties().targetPlatform().getActiveValue();
         FileObject rootFolder = targetPlatform != null ? targetPlatform.getRootFolder() : null;
@@ -87,11 +81,27 @@ public enum StandardTaskVariable {
                 : null);
     }),
     CMD_LINE_ARGS("cmd-line-args", (variables, project, actionContext) -> VariableValue.EMPTY_VALUE),
-    JVM_LINE_ARGS("jvm-line-args", (variables, project, actionContext) -> VariableValue.EMPTY_VALUE);
+    JVM_LINE_ARGS("jvm-line-args", (variables, project, actionContext) -> VariableValue.EMPTY_VALUE),
+    TEST_CLASSES_ARGS("test-classes-args", (variables, project, actionContext) -> {
+        return toTestArgument(getSelectedClasses(project, actionContext));
+    }),
+    TEST_CLASSES_STARED_ARGS("test-classes-stared-args", (variables, project, actionContext) -> {
+        List<String> classes = getSelectedClasses(project, actionContext);
+        List<String> staredClasses = new ArrayList<>(classes.size());
+        for (String cl: classes) {
+            staredClasses.add(cl + "*");
+        }
+        return toTestArgument(staredClasses);
+    }),
+    TEST_METHODS_ARGS("test-methods-args", (variables, project, actionContext) -> {
+        return toTestArgument(getMethodReplaceVariables(variables, project, actionContext));
+    });
 
     private static final Logger LOGGER = Logger.getLogger(StandardTaskVariable.class.getName());
     private static final CachingVariableMap.VariableDefMap<NbGradleProject> TASK_VARIABLE_MAP
             = createStandardMap();
+
+    public static final String TEST_ARGUMENT = "--tests";
 
     private static String deducePathFromClass(String selectedClass) {
         return selectedClass != null
@@ -99,7 +109,7 @@ public enum StandardTaskVariable {
                 : null;
     }
 
-    private static VariableValue getClassNameForFile(NbGradleProject project, FileObject file) {
+    private static String tryGetClassNameForFile(NbGradleProject project, FileObject file) {
         SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
                 .getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
 
@@ -115,42 +125,57 @@ public enum StandardTaskVariable {
             }
         }
 
-        return new VariableValue(relFileName != null ? relFileName.replace('/', '.') : null);
+        return relFileName != null ? relFileName.replace('/', '.') : null;
     }
 
-    private static VariableValue getMethodReplaceVariable(
+    private static String tryGetMethodReplaceVariable(
             TaskVariableMap variables,
             NbGradleProject project,
             SingleMethod method) {
 
         String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
         if (selectedClass == null) {
-            selectedClass = getClassNameForFile(project, method.getFile()).value;
+            selectedClass = tryGetClassNameForFile(project, method.getFile());
             if (selectedClass == null) {
                 LOGGER.log(Level.INFO, "Could not find class file name for file {0}", method.getFile());
-                return VariableValue.NULL_VALUE;
+                return null;
             }
         }
 
-        return new VariableValue(selectedClass + "." + method.getMethodName());
+        return selectedClass + "." + method.getMethodName();
     }
 
-    private static VariableValue getMethodReplaceVariable(
+    private static List<String> getMethodReplaceVariables(
             TaskVariableMap variables,
             NbGradleProject project,
             Lookup actionContext) {
 
-        SingleMethod method = actionContext.lookup(SingleMethod.class);
-        if (method != null) {
-            return getMethodReplaceVariable(variables, project, method);
+        Collection<? extends SingleMethod> methods = actionContext.lookupAll(SingleMethod.class);
+        if (!methods.isEmpty()) {
+            List<String> result = new ArrayList<>();
+            for (SingleMethod method: methods) {
+                String methodName = tryGetMethodReplaceVariable(variables, project, method);
+                if (methodName != null) {
+                    result.add(methodName);
+                }
+            }
+            return result;
         }
 
-        SpecificTestcase specificTestcase = actionContext.lookup(SpecificTestcase.class);
-        if (specificTestcase != null) {
-            return new VariableValue(specificTestcase.getTestIncludePattern());
+        Collection<? extends SpecificTestcase> specificTestcases = actionContext.lookupAll(SpecificTestcase.class);
+        if (!specificTestcases.isEmpty()) {
+            List<String> result = new ArrayList<>();
+            for (SpecificTestcase specificTestcase: specificTestcases) {
+                result.add(specificTestcase.getTestIncludePattern());
+            }
+            return result;
         }
 
-        return VariableValue.NULL_VALUE;
+        return Collections.emptyList();
+    }
+
+    private static VariableValue getOneValue(List<String> values) {
+        return values.isEmpty() ? VariableValue.NULL_VALUE : new VariableValue(values.get(0));
     }
 
     private static String removeExtension(String filePath) {
@@ -164,7 +189,7 @@ public enum StandardTaskVariable {
         List<FileObject> files = new ArrayList<>();
         for (DataObject dataObj: context.lookupAll(DataObject.class)) {
             FileObject file = dataObj.getPrimaryFile();
-            if (file != null) {
+            if (file != null && !file.isFolder()) {
                 files.add(file);
             }
         }
@@ -173,16 +198,7 @@ public enum StandardTaskVariable {
 
     private static FileObject getFileOfContext(Lookup context) {
         List<FileObject> files = getFilesOfContext(context);
-        if (files.isEmpty()) {
-            return null;
-        }
-
-        FileObject file = files.get(0);
-        if (file == null) {
-            return null;
-        }
-
-        return file.isFolder() ? null : file;
+        return files.isEmpty() ? null : files.get(0);
     }
 
     public static TaskVariableMap createVarReplaceMap(
@@ -208,6 +224,49 @@ public enum StandardTaskVariable {
 
     public String getScriptReplaceConstant() {
         return variable.getScriptReplaceConstant();
+    }
+
+    private static List<String> getSelectedClasses(NbGradleProject project, Lookup actionContext) {
+        Collection<? extends SpecificTestClass> testClasses = actionContext.lookupAll(SpecificTestClass.class);
+        if (!testClasses.isEmpty()) {
+            List<String> result = new ArrayList<>();
+            for (SpecificTestClass testClass: testClasses) {
+                result.add(testClass.getTestClassName());
+            }
+            return result;
+        }
+
+        List<FileObject> files = getFilesOfContext(actionContext);
+        if (files.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> result = new ArrayList<>(files.size());
+        for (FileObject file: files) {
+            String className = tryGetClassNameForFile(project, file);
+            if (className != null) {
+                result.add(className);
+            }
+        }
+        return result;
+    }
+
+    private static VariableValue toTestArgument(List<String> values) {
+        int valueCount = values.size();
+        if (valueCount == 0) {
+            return VariableValue.NULL_VALUE;
+        }
+
+        StringBuilder result = new StringBuilder(valueCount * 40);
+        for (String value: values) {
+            if (result.length() > 0) {
+                result.append(' ');
+            }
+            result.append(TEST_ARGUMENT);
+            result.append(' ');
+            result.append(value);
+        }
+        return new VariableValue(result.toString());
     }
 
     private static CachingVariableMap.VariableDefMap<NbGradleProject> createStandardMap() {
