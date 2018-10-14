@@ -372,47 +372,11 @@ public final class JavaDependenciesNode extends AbstractNode {
             return intersect;
         }
 
-        private static Map<String, Set<String>> sourceSetDependencyGraph(
-                NbJavaModule mainModule) {
-
-            Map<File, String> buildOutput = new HashMap<>();
-            for (JavaSourceSet sourceSet: mainModule.getSources()) {
-                for (File classesDir: sourceSet.getOutputDirs().getClassesDirs()) {
-                    buildOutput.put(classesDir, sourceSet.getName());
-                }
-            }
-
-            Map<String, Set<String>> result = new HashMap<>();
-            for (JavaSourceSet sourceSet: mainModule.getSources()) {
-                String sourceSetName = sourceSet.getName();
-
-                Set<File> compileClasspaths = sourceSet.getClasspaths().getCompileClasspaths();
-                Set<File> runtimeClasspaths = sourceSet.getClasspaths().getRuntimeClasspaths();
-
-                Set<String> dependencies = new HashSet<>();
-                for (Map.Entry<File, String> entry: buildOutput.entrySet()) {
-                    File classesOutputDir = entry.getKey();
-                    if (runtimeClasspaths.contains(classesOutputDir) || compileClasspaths.contains(classesOutputDir)) {
-                        String dependencyName = entry.getValue();
-                        if (!sourceSetName.equals(dependencyName)) {
-                            dependencies.add(entry.getValue());
-                        }
-                    }
-                }
-
-                result.put(sourceSetName, dependencies);
-            }
-
-            // TODO: Remove redundant edges
-
-            return result;
-        }
-
         private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
             NbJavaModel currentModel = javaExt.getCurrentModel();
             NbJavaModule mainModule = currentModel.getMainModule();
 
-            Map<String, Set<String>> dependencyGraph = sourceSetDependencyGraph(mainModule);
+            Map<String, Set<String>> dependencyGraph = mainModule.sourceSetDependencyGraph();
 
             for (JavaSourceSet sourceSet: mainModule.getSources()) {
                 JavaClassPaths classpaths = sourceSet.getClasspaths();

@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -400,6 +401,39 @@ public final class NbJavaModule implements Serializable {
         }
 
         return bestName != null ? bestName : TestTaskName.DEFAULT_TEST_TASK_NAME;
+    }
+
+    public Map<String, Set<String>> sourceSetDependencyGraph() {
+        Map<File, String> buildOutput = new LinkedHashMap<>();
+
+        getSources().forEach(sourceSet -> {
+            sourceSet.getOutputDirs().getClassesDirs().forEach(classesDir -> {
+                buildOutput.put(classesDir, sourceSet.getName());
+            });
+        });
+
+        Map<String, Set<String>> result = new LinkedHashMap<>();
+        getSources().forEach(sourceSet -> {
+            String sourceSetName = sourceSet.getName();
+
+            Set<File> compileClasspaths = sourceSet.getClasspaths().getCompileClasspaths();
+            Set<File> runtimeClasspaths = sourceSet.getClasspaths().getRuntimeClasspaths();
+
+            Set<String> dependencies = new LinkedHashSet<>();
+            buildOutput.forEach((classesOutputDir, dependencyName) -> {
+                if (runtimeClasspaths.contains(classesOutputDir) || compileClasspaths.contains(classesOutputDir)) {
+                    if (!sourceSetName.equals(dependencyName)) {
+                        dependencies.add(dependencyName);
+                    }
+                }
+            });
+
+            result.put(sourceSetName, dependencies);
+        });
+
+        // TODO: Remove redundant edges
+
+        return result;
     }
 
     private Object writeReplace() {
