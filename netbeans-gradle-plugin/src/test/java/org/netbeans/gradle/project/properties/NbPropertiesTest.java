@@ -14,6 +14,7 @@ import org.jtrim2.collections.RefList;
 import org.jtrim2.event.ListenerRef;
 import org.jtrim2.property.MutableProperty;
 import org.jtrim2.property.PropertySource;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -23,9 +24,9 @@ public class NbPropertiesTest {
         long startTime = System.nanoTime();
         int tryCount = 0;
         while (testRef.get() != null) {
-        System.gc();
-        System.gc();
-        Runtime.getRuntime().runFinalization();
+            System.gc();
+            System.gc();
+            Runtime.getRuntime().runFinalization();
             tryCount++;
 
             if (tryCount >= 3 && (System.nanoTime() - startTime) > TimeUnit.MILLISECONDS.toNanos(20000)) {
@@ -54,6 +55,7 @@ public class NbPropertiesTest {
     }
 
     @Test
+    @Ignore
     public void testWeakListener() throws InterruptedException {
         AtomicReference<ListenerRef> listenerRef = new AtomicReference<>(null);
         final AtomicInteger listenerCallCount = new AtomicInteger(0);
