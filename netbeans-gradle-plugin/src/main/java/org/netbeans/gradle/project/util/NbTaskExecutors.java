@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.util;
 
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 import org.jtrim2.executor.DelegatedTaskExecutorService;
 import org.jtrim2.executor.GenericUpdateTaskExecutor;
 import org.jtrim2.executor.MonitorableTaskExecutor;
@@ -13,8 +12,6 @@ import org.jtrim2.executor.UpdateTaskExecutor;
 import org.jtrim2.utils.ExceptionHelper;
 
 public final class NbTaskExecutors {
-    private static final Logger LOGGER = Logger.getLogger(NbTaskExecutors.class.getName());
-
     public static final MonitorableTaskExecutorService DEFAULT_EXECUTOR
             = newExecutor("Gradle-Default", getDefaultThreadCount(), 5000);
 
