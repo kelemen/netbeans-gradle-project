@@ -24,6 +24,10 @@ public final class NbProperties {
         return new WeakListenerProperty<>(src);
     }
 
+    public static SimpleListenerRegistry<Runnable> weakListenerRegistry(SimpleListenerRegistry<Runnable> wrapped) {
+        return new WeakChangeListenerRegistry(wrapped);
+    }
+
     public static <Value> PropertySource<Value> atomicValueView(
             final AtomicReference<? extends Value> valueRef,
             final SimpleListenerRegistry<Runnable> changeListeners) {
@@ -219,11 +223,36 @@ public final class NbProperties {
         }
     }
 
+    private static class WeakChangeListenerRegistry implements SimpleListenerRegistry<Runnable> {
+        private final SimpleListenerRegistry<Runnable> wrapped;
+
+        public WeakChangeListenerRegistry(SimpleListenerRegistry<Runnable> wrapped) {
+            this.wrapped = Objects.requireNonNull(wrapped, "wrapped");
+        }
+
+        @Override
+        public ListenerRef registerListener(Runnable listener) {
+            Objects.requireNonNull(listener, "listener");
+
+            final WeakReference<Runnable> listenerRef = new WeakReference<>(listener);
+            ListenerRef result = wrapped.registerListener(() -> {
+                Runnable currentListener = listenerRef.get();
+                if (currentListener != null) {
+                    currentListener.run();
+                }
+            });
+
+            return new ReferenceHolderListenerRef(listener, result);
+        }
+    }
+
     private static class WeakListenerProperty<Value> implements PropertySource<Value> {
         private final PropertySource<? extends Value> src;
+        private final SimpleListenerRegistry<Runnable> changeRegistry;
 
         public WeakListenerProperty(PropertySource<? extends Value> src) {
             this.src = Objects.requireNonNull(src, "src");
+            this.changeRegistry = new WeakChangeListenerRegistry(src::addChangeListener);
         }
 
         @Override
@@ -233,17 +262,7 @@ public final class NbProperties {
 
         @Override
         public ListenerRef addChangeListener(Runnable listener) {
-            Objects.requireNonNull(listener, "listener");
-
-            final WeakReference<Runnable> listenerRef = new WeakReference<>(listener);
-            ListenerRef result = src.addChangeListener(() -> {
-                Runnable currentListener = listenerRef.get();
-                if (currentListener != null) {
-                    currentListener.run();
-                }
-            });
-
-            return new ReferenceHolderListenerRef(listener, result);
+            return changeRegistry.registerListener(listener);
         }
     }
 }
