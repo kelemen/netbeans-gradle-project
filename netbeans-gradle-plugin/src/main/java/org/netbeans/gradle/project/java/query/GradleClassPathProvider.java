@@ -222,11 +222,11 @@ implements
         changes.removePropertyChangeListener(listener);
     }
 
-    private boolean isInOneOf(File file, Collection<File> roots) {
+    private static boolean isInOneOf(File file, Collection<File> roots) {
         return isInOneOf(file, roots, null);
     }
 
-    private boolean isInOneOf(File file, Collection<File> roots, ExcludeIncludeRules excludeRules) {
+    private static boolean isInOneOf(File file, Collection<File> roots, ExcludeIncludeRules excludeRules) {
         for (File root: roots) {
             if (NbFileUtils.isParentOrSame(root, file)) {
                 if (excludeRules == null) {
@@ -238,7 +238,7 @@ implements
         return false;
     }
 
-    private JavaSourceSet findAssociatedSourceSet(NbJavaModel projectModel, FileObject fileObj) {
+    public static JavaSourceSet findAssociatedSourceSet(NbJavaModel projectModel, FileObject fileObj) {
         File file = FileUtil.toFile(fileObj);
         if (file == null) {
             return null;
@@ -419,25 +419,6 @@ implements
         };
     }
 
-    private static boolean isModularVersion(String version) {
-        String normVersion = version.trim();
-        if (normVersion.startsWith("1.")) {
-            normVersion = normVersion.substring(2);
-        }
-
-        int sepIndex = normVersion.indexOf('.');
-        if (sepIndex < 0) {
-            sepIndex = normVersion.length();
-        }
-
-        String javaVersion = normVersion.substring(0, sepIndex);
-        try {
-            return Integer.parseInt(javaVersion) >= 9;
-        } catch (NumberFormatException ex) {
-            return false;
-        }
-    }
-
     private void loadClassPath(ClassPathKey classPathKey) {
         ModuleBaseKeys moduleBaseKeys = classPathKey.getModuleBaseKeys();
         if (moduleBaseKeys == null) {
@@ -455,7 +436,7 @@ implements
                     .createModuleInfoBasedPath(base, sources, boot, base, legacy, null));
 
             ClassPathSupport.Selector classPathSelector = getClassPathSelector(getSourceLevel(), sourceLevel -> {
-                return isModularVersion(sourceLevel) ? moduleClassPath : ClassPath.EMPTY;
+                return GradleSourceLevelQueryImplementation.isModularVersion(sourceLevel) ? moduleClassPath : ClassPath.EMPTY;
             });
 
             classpaths.putIfAbsent(

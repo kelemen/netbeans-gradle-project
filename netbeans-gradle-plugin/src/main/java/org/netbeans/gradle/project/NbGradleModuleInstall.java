@@ -12,7 +12,8 @@ public final class NbGradleModuleInstall extends Yenta {
             "org.netbeans.modules.gsf.testrunner.ui",
             "org.netbeans.modules.gsf.codecoverage",
             "org.netbeans.modules.groovy.support",
-            "org.netbeans.modules.java.api.common")));
+            "org.netbeans.modules.java.api.common",
+            "org.netbeans.modules.java.preprocessorbridge")));
 
     @Override
     protected Set<String> friends() {

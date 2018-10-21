@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.java.query;
 
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.jtrim2.property.PropertySource;
 import org.jtrim2.property.swing.SwingPropertySource;
@@ -16,6 +18,10 @@ public final class GradleSourceLevelQueryImplementation
 implements
         SourceLevelQueryImplementation2 {
 
+    private static final Logger LOGGER = Logger.getLogger(GradleSourceLevelQueryImplementation.class.getName());
+
+    private static final String JAVA_VERSION_PREFIX = "1.";
+
     private final FileObject projectDir;
     private final Result result;
 
@@ -26,6 +32,28 @@ implements
 
         GradleProperty.SourceLevel sourceLevel = javaExt.getOwnerProjectLookup().lookup(GradleProperty.SourceLevel.class);
         this.result = new ResultImpl(sourceLevel);
+    }
+
+    public static boolean isModularVersion(String version) {
+        return getNumJavaVersion(version) >= 9;
+    }
+
+    public static int getNumJavaVersion(String sourceLevel) {
+        String noPrefixLevel = sourceLevel.startsWith(JAVA_VERSION_PREFIX)
+                ? sourceLevel.substring(JAVA_VERSION_PREFIX.length())
+                : sourceLevel;
+
+        int endIndex = noPrefixLevel.indexOf('.');
+        if (endIndex < 0) {
+            endIndex = noPrefixLevel.length();
+        }
+
+        try {
+            return Integer.parseInt(noPrefixLevel.substring(0, endIndex));
+        } catch (NumberFormatException ex) {
+            LOGGER.log(Level.INFO, "Unexpected source level: " + sourceLevel, ex);
+            return -1;
+        }
     }
 
     @Override

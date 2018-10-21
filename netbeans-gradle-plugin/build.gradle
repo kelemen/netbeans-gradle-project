@@ -123,6 +123,7 @@ dependencies {
     providedCompile netbeansApi('org-netbeans-core-multitabs')
     providedCompile netbeansApi('org-netbeans-swing-tabcontrol')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-java-api-common')
+    providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-java-preprocessorbridge')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-groovy-support')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner-ui')

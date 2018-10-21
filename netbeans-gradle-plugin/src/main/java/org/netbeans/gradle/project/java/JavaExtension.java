@@ -50,6 +50,7 @@ import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
 import org.netbeans.gradle.project.java.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.java.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
+import org.netbeans.gradle.project.java.query.GradleCompilerOptionsQuery;
 import org.netbeans.gradle.project.java.query.GradleProjectSources;
 import org.netbeans.gradle.project.java.query.GradleProjectTemplates;
 import org.netbeans.gradle.project.java.query.GradleSourceForBinaryQuery;
@@ -129,6 +130,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
                     new GradleBinaryForSourceQuery(this),
                     new GradleProjectTemplates(),
                     new JavaGradleTaskVariableQuery(this),
+                    new GradleCompilerOptionsQuery(this),
                     new J2SEPlatformFromScriptQueryImpl(this) // internal use only
             );
         });
