@@ -1,8 +1,6 @@
 package org.netbeans.gradle.project.util;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -40,6 +38,7 @@ import org.jtrim2.executor.UpdateTaskExecutor;
 import org.jtrim2.swing.concurrent.SwingExecutors;
 
 public final class FileSystemWatcher {
+
     private static final Logger LOGGER = Logger.getLogger(FileSystemWatcher.class.getName());
 
     private static final WatchEvent.Kind<?>[] EVENTS = new WatchEvent.Kind<?>[]{
@@ -73,11 +72,10 @@ public final class FileSystemWatcher {
     }
 
     /**
-     * Waits until there are no more watches registered and no more polling is done.
-     * Fails if that state cannot be reached.
+     * Waits until there are no more watches registered and no more polling is done. Fails if that state cannot be
+     * reached.
      * <P>
-     * This method is only for testing purposes to verify that this filesystem watcher cleans up
-     * properly.
+     * This method is only for testing purposes to verify that this filesystem watcher cleans up properly.
      */
     void waitFor(long timeout, TimeUnit unit) {
         pollExecutor.shutdown();
@@ -142,11 +140,7 @@ public final class FileSystemWatcher {
     }
 
     private static void cancelWatchService(WatchService watchService) {
-        try {
-            watchService.close();
-        } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Failed to close watch service.", ex);
-        }
+        tryCloseWatchService(watchService);
     }
 
     private void stopPolling(WatchService watchService) throws IOException {
@@ -200,7 +194,7 @@ public final class FileSystemWatcher {
                     Path keyContext = keyContext(key);
 
                     List<WatchEvent<?>> events = key.pollEvents();
-                    for (WatchEvent<?> event : events) {
+                    for (WatchEvent<?> event: events) {
                         notifyPath(keyContext, event);
                     }
 
@@ -215,15 +209,20 @@ public final class FileSystemWatcher {
                 stopPolling(watchService);
             }
         }).whenComplete((result, error) -> {
-            closeUnsafe(watchService);
+            tryCloseWatchService(watchService);
         }).exceptionally(AsyncTasks::expectNoError);
     }
 
-    private static void closeUnsafe(Closeable resource) {
+    private static void tryCloseWatchService(WatchService watchService) {
+        if (watchService == null) {
+            return;
+        }
+
         try {
-            resource.close();
+            watchService.close();
+        } catch (ClosedWatchServiceException ex) {
         } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
+            LOGGER.log(Level.INFO, "Failed to close watch service.", ex);
         }
     }
 
@@ -288,12 +287,14 @@ public final class FileSystemWatcher {
                 return;
             }
 
-            watchServiceToClose = activeWatchService;
-            activeWatchService = null;
-
             Listeners listeners = checkedPaths.remove(path);
             if (listeners == null) {
                 return;
+            }
+
+            if (checkedPaths.isEmpty()) {
+                watchServiceToClose = activeWatchService;
+                activeWatchService = null;
             }
 
             watchKey = listeners.getWatchKey();
@@ -302,22 +303,10 @@ public final class FileSystemWatcher {
             }
         } finally {
             mainLock.unlock();
-            tryClose(watchServiceToClose);
+            tryCloseWatchService(watchServiceToClose);
         }
 
         watchKey.cancel();
-    }
-
-    private static void tryClose(WatchService watchService) {
-        if (watchService == null) {
-            return;
-        }
-
-        try {
-            watchService.close();
-        } catch (IOException ex) {
-            LOGGER.log(Level.INFO, "Failed to close watch service.", ex);
-        }
     }
 
     private boolean removeWathKeyOfPath(Path path, WatchKey watchKey) {
@@ -350,6 +339,14 @@ public final class FileSystemWatcher {
     }
 
     private void startWatching(WatchService watchService, Path path, Listeners listeners) throws IOException {
+        try {
+            startWatchingUnsafe(watchService, path, listeners);
+        } catch (ClosedWatchServiceException ex) {
+            // The watchService was cancelled before actually starting
+        }
+    }
+
+    private void startWatchingUnsafe(WatchService watchService, Path path, Listeners listeners) throws IOException {
         Path parent = path.getParent();
         while (parent != null) {
             WatchKey watchKey = tryRegister(watchService, parent);
@@ -394,10 +391,8 @@ public final class FileSystemWatcher {
             watchKey.cancel();
             rebuildWatchKeys(watchService, watchKey);
         }
-        else {
-            if (!watchKey.reset()) {
-                rebuildWatchKeys(watchService, watchKey);
-            }
+        else if (!watchKey.reset()) {
+            rebuildWatchKeys(watchService, watchKey);
         }
     }
 
@@ -426,6 +421,7 @@ public final class FileSystemWatcher {
     }
 
     private static final class WatchKeyListeners {
+
         private final Map<Path, Listeners> listeners;
 
         public WatchKeyListeners() {
@@ -443,6 +439,7 @@ public final class FileSystemWatcher {
     }
 
     private static final class Listeners {
+
         private final Path path;
 
         private final Lock listenersLock;
@@ -541,10 +538,12 @@ public final class FileSystemWatcher {
     }
 
     private interface ElementRemover {
+
         public int removeAndGetRemainingCount();
     }
 
     private static final class DefaultHolder {
+
         private static final FileSystemWatcher DEFAULT = new FileSystemWatcher(FileSystems.getDefault(), SwingExecutors.getStrictExecutor(true));
     }
 }
