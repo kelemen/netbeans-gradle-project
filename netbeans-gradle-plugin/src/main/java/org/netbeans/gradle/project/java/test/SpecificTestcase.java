@@ -4,9 +4,9 @@ import java.util.Objects;
 
 public final class SpecificTestcase {
     private final String testClassName;
-    private final String testMethodName;
+    private final TestMethodName testMethodName;
 
-    public SpecificTestcase(String testClassName, String testMethodName) {
+    public SpecificTestcase(String testClassName, TestMethodName testMethodName) {
         this.testClassName = Objects.requireNonNull(testClassName, "testClassName");
         this.testMethodName = Objects.requireNonNull(testMethodName, "testMethodName");
     }
@@ -15,11 +15,15 @@ public final class SpecificTestcase {
         return testClassName;
     }
 
-    public String getTestMethodName() {
+    public TestMethodName getTestMethodName() {
         return testMethodName;
     }
 
     public String getTestIncludePattern() {
-        return testClassName + "." + testMethodName;
+        return getQualifiedName();
+    }
+
+    public String getQualifiedName() {
+        return testClassName + "." + testMethodName.getGradleArgName();
     }
 }

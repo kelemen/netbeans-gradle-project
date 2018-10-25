@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -41,7 +42,6 @@ public final class TestXmlDisplayer {
     private static final File[] NO_FILES = new File[0];
     private static final String NEW_LINE_PATTERN = Pattern.quote("\n");
     private static final String[] STACKTRACE_PREFIXES = {"at "};
-    private static final char[] TEST_NAME_TERMINATE_CHARS = "([".toCharArray();
 
     private final Project project;
     private final JavaExtension javaExt;
@@ -196,16 +196,7 @@ public final class TestXmlDisplayer {
         return displayReport(runContext, reportFiles);
     }
 
-    private static String extractTestMethodName(String testName) {
-        int minIndex = Integer.MAX_VALUE;
-        for (char endCh: TEST_NAME_TERMINATE_CHARS) {
-            int index = testName.indexOf(endCh);
-            if (index >= 0 && index < minIndex) {
-                minIndex = index;
-            }
-        }
-        return minIndex >= testName.length() ? testName : testName.substring(0, minIndex);
-    }
+
 
     public class JavaRerunHandler implements RerunHandler {
         private final Lookup rerunContext;
@@ -221,16 +212,10 @@ public final class TestXmlDisplayer {
         }
 
         private List<SpecificTestcase> getSpecificTestcases(Set<Testcase> tests) {
-            List<SpecificTestcase> result = new ArrayList<>(tests.size());
-            for (Testcase test: tests) {
-                String name = extractTestMethodName(test.getName());
-                String testClassName = test.getClassName();
-
-                if (name != null && testClassName != null) {
-                    result.add(new SpecificTestcase(testClassName, name));
-                }
-            }
-            return result;
+            return tests.stream()
+                    .map(TestMethodName::tryConvertToSpecificTestcase)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
         }
 
         @Override

@@ -36,19 +36,7 @@ public final class JavaTestMethodNode extends TestMethodNode {
 
         this.javaExt = Objects.requireNonNull(javaExt, "javaExt");
         this.testTaskName = Objects.requireNonNull(testTaskName, "testTaskName");
-        this.specificTestcase = toSpecificTestcase(testcase);
-    }
-
-    private static SpecificTestcase toSpecificTestcase(Testcase testcase) {
-        String className = testcase.getClassName();
-        String name = testcase.getName();
-
-        if (className != null && name != null) {
-            return new SpecificTestcase(className, name);
-        }
-        else {
-            return null;
-        }
+        this.specificTestcase = TestMethodName.tryConvertToSpecificTestcase(testcase);
     }
 
     @Override
@@ -82,13 +70,9 @@ public final class JavaTestMethodNode extends TestMethodNode {
     }
 
     private String tryGetQualifiedName() {
-        if (specificTestcase == null) {
-            return null;
-        }
-
-        String className = specificTestcase.getTestClassName();
-        String methodName = specificTestcase.getTestMethodName();
-        return className + '.' + methodName;
+        return specificTestcase != null
+                ? specificTestcase.getQualifiedName()
+                : null;
     }
 
     private String[] tryGetStackTrace() {

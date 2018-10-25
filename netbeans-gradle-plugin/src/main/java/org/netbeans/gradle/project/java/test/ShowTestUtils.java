@@ -52,6 +52,8 @@ public final class ShowTestUtils {
         cancelToken.checkCanceled();
 
         try {
+            String testMethodName = specificTestcase.getTestMethodName().getRawMethodName();
+
             javaSource.runUserActionTask((CompilationController compilationController) -> {
                 compilationController.toPhase(JavaSource.Phase.ELEMENTS_RESOLVED);
                 Trees trees = compilationController.getTrees();
@@ -66,7 +68,7 @@ public final class ShowTestUtils {
                                 return;
                             }
 
-                            if (child.getSimpleName().contentEquals(specificTestcase.getTestMethodName())) {
+                            if (child.getSimpleName().contentEquals(testMethodName)) {
                                 long pos = trees.getSourcePositions().getStartPosition(compilationUnitTree, trees.getTree(child));
                                 line[0] = compilationUnitTree.getLineMap().getLineNumber(pos);
                                 break;
