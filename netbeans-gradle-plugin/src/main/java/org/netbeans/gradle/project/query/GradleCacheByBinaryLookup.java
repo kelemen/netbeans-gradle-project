@@ -72,7 +72,7 @@ public final class GradleCacheByBinaryLookup {
             if (artifactRoot == null) {
                 return null;
             }
-            String sourceFileName = artifactRoot.getNameExt() + "-" + binDir.getNameExt() + GradleFileUtils.SOURCES_CLASSIFIER;
+            String sourceFileName = artifactRoot.getNameExt() + "-" + binDir.getNameExt() + GradleFileUtils.SOURCES_SUFFIX;
             return new NewFormatCacheResult(binDir, sourceFileName);
         }
 
