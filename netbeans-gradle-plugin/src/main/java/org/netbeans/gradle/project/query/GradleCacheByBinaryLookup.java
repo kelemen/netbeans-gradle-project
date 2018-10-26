@@ -59,18 +59,24 @@ public final class GradleCacheByBinaryLookup {
             return null;
         }
 
-        String sourceFileName = binaryToSearchedEntry.apply(binaryRootObj);
-
         if (GradleFileUtils.isKnownBinaryDirName(binDir.getNameExt())) {
             final FileObject artifactRoot = binDir.getParent();
             if (artifactRoot == null) {
                 return null;
             }
-
+            String sourceFileName = binaryToSearchedEntry.apply(binaryRootObj);
             return new OldFormatCacheResult(artifactRoot, searchedPackaging, sourceFileName);
         }
+        else {
+            final FileObject artifactRoot = binDir.getParent();
+            if (artifactRoot == null) {
+                return null;
+            }
+            String sourceFileName = artifactRoot.getNameExt() + "-" + binDir.getNameExt() + GradleFileUtils.SOURCES_CLASSIFIER;
+            return new NewFormatCacheResult(binDir, sourceFileName);
+        }
 
-        return new NewFormatCacheResult(binDir, sourceFileName);
+
     }
 
     private static final class EventSource

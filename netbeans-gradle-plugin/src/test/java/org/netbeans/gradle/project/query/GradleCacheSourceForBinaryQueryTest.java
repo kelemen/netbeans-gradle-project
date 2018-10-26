@@ -16,6 +16,7 @@ import static org.junit.Assert.*;
 import static org.netbeans.gradle.project.query.TestSourceQueryUtils.*;
 
 public class GradleCacheSourceForBinaryQueryTest {
+
     @ClassRule
     public static final SafeTmpFolder TMP_DIR_ROOT = new SafeTmpFolder();
 
@@ -90,14 +91,15 @@ public class GradleCacheSourceForBinaryQueryTest {
         File gradleHome = TMP_DIR_ROOT.newFolder();
 
         File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org", "myproj");
-        File jarDir = BasicFileUtils.getSubPath(artifactRoot, "57436");
-        File jar = BasicFileUtils.getSubPath(jarDir, "myproj.jar");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11.2");
+        File jarDir = BasicFileUtils.getSubPath(versionDir, "57436");
+        File jar = BasicFileUtils.getSubPath(jarDir, "myproj-11.2.jar");
 
         jarDir.mkdirs();
         TestBinaryUtils.createTestJar(jar);
 
-        File srcDir = BasicFileUtils.getSubPath(artifactRoot, "25754");
-        File srcFile = BasicFileUtils.getSubPath(srcDir, "myproj-sources.jar");
+        File srcDir = BasicFileUtils.getSubPath(versionDir, "25754");
+        File srcFile = BasicFileUtils.getSubPath(srcDir, "myproj-11.2-sources.jar");
 
         srcDir.mkdirs();
         TestBinaryUtils.createTestJar(srcFile);
@@ -119,6 +121,37 @@ public class GradleCacheSourceForBinaryQueryTest {
 
         URL binaryUrl = Utilities.toURI(jar).toURL();
         verifyNotDownloadedSource(gradleHome, binaryUrl);
+    }
+
+    @Test
+    public void testNewCacheFormatMultipleBinaries() throws IOException {
+        File gradleHome = TMP_DIR_ROOT.newFolder();
+
+        File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org.openjfx", "javafx-base");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11");
+        File jarDir1 = BasicFileUtils.getSubPath(versionDir, "57436");
+        File binary1 = BasicFileUtils.getSubPath(jarDir1, "javafx-base-11-win.jar");
+
+        File jarDir2 = BasicFileUtils.getSubPath(versionDir, "63457");
+        File binary2 = BasicFileUtils.getSubPath(jarDir2, "javafx-base-11.jar");
+
+        jarDir1.mkdirs();
+        TestBinaryUtils.createTestJar(binary1);
+
+        jarDir2.mkdirs();
+        TestBinaryUtils.createTestJar(binary2);
+
+        File srcDir = BasicFileUtils.getSubPath(versionDir, "25754");
+        File srcFile = BasicFileUtils.getSubPath(srcDir, "javafx-base-11-sources.jar");
+
+        srcDir.mkdirs();
+        TestBinaryUtils.createTestJar(srcFile);
+
+        URL binaryUrl1 = Utilities.toURI(binary1).toURL();
+        verifySource(gradleHome, binaryUrl1, srcFile);
+        
+        URL binaryUrl2 = Utilities.toURI(binary2).toURL();
+        verifySource(gradleHome, binaryUrl2, srcFile);
     }
 
     @Test
