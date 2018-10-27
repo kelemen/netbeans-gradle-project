@@ -10,8 +10,10 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 import static org.junit.Assert.*;
+import org.netbeans.api.java.queries.JavadocForBinaryQuery;
 
 public final class TestSourceQueryUtils {
+
     public static void expectSameArchive(String name, File expected, FileObject actual) {
         URI expectedUri;
         try {
@@ -21,10 +23,34 @@ public final class TestSourceQueryUtils {
         }
 
         URI actualUri = actual.toURI();
+        expectSameArchive(name, expectedUri, actualUri);
+    }
+
+    public static void expectSameArchive(String name, File expected, File actual) {
+        URI expectedUri;
+        try {
+            expectedUri = FileUtil.urlForArchiveOrDir(expected).toURI();
+        } catch (URISyntaxException ex) {
+            throw new RuntimeException(ex);
+        }
+        URI actualUri;
+        try {
+            actualUri = FileUtil.urlForArchiveOrDir(actual).toURI();
+        } catch (URISyntaxException ex) {
+            throw new RuntimeException(ex);
+        }
+        expectSameArchive(name, expectedUri, actualUri);
+    }
+
+    public static void expectSameArchive(String name, URI expectedUri, URI actualUri) {
         assertEquals(name, expectedUri, actualUri);
     }
 
     public static File expectedSingleFile(BinaryForSourceQuery.Result result) {
+        return expectedSingleFile(result.getRoots());
+    }
+
+    public static File expectedSingleFile(JavadocForBinaryQuery.Result result) {
         return expectedSingleFile(result.getRoots());
     }
 

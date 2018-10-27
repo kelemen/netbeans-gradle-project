@@ -98,15 +98,37 @@ public final class GradleFileUtils {
     }
 
     public static String binaryToSourceName(FileObject binaryPath) {
-        String binFileName = binaryPath.getName();
         String binFileExt = binaryPath.getExt();
-        return binFileName + SOURCES_CLASSIFIER + "." + binFileExt;
+        return binaryToBaseName(binaryPath) + SOURCES_CLASSIFIER + "." + binFileExt;
     }
 
     public static String binaryToJavadocName(FileObject binaryPath) {
-        String binFileName = binaryPath.getName();
         String binFileExt = binaryPath.getExt();
-        return binFileName + JAVADOC_CLASSIFIER + "." + binFileExt;
+        return binaryToBaseName(binaryPath) + JAVADOC_CLASSIFIER + "." + binFileExt;
+    }
+    
+    public static String binaryToBaseName(FileObject binaryPath) {
+        FileObject hashDir = binaryPath.getParent();
+        if (hashDir == null) {
+            return binaryPath.getName();
+        }
+
+        FileObject binDir = hashDir.getParent();
+        if (binDir == null) {
+            return binaryPath.getName();
+        }
+
+        if (GradleFileUtils.isKnownBinaryDirName(binDir.getNameExt())) {
+            return binaryPath.getName();
+        }
+        else {
+            final FileObject versionDir = binDir;
+            final FileObject artifactRoot = binDir.getParent();
+            if (artifactRoot == null) {
+                return binaryPath.getName();
+            }
+            return artifactRoot.getNameExt() + "-" + versionDir.getNameExt();
+        }
     }
 
     public static String sourceToBinaryName(FileObject sourcePath) {
