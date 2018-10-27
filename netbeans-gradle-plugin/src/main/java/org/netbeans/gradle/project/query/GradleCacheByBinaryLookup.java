@@ -13,6 +13,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 public final class GradleCacheByBinaryLookup {
+
     private static final FileObject[] NO_ROOTS = new FileObject[0];
     private static final LazyChangeSupport CHANGES = LazyChangeSupport.createSwing(new EventSource());
 
@@ -59,22 +60,21 @@ public final class GradleCacheByBinaryLookup {
             return null;
         }
 
-        String sourceFileName = binaryToSearchedEntry.apply(binaryRootObj);
-
-        if (GradleFileUtils.isKnownBinaryDirName(binDir.getNameExt())) {
-            final FileObject artifactRoot = binDir.getParent();
-            if (artifactRoot == null) {
-                return null;
-            }
-
-            return new OldFormatCacheResult(artifactRoot, searchedPackaging, sourceFileName);
+        final FileObject artifactRoot = binDir.getParent();
+        if (artifactRoot == null) {
+            return null;
         }
 
-        return new NewFormatCacheResult(binDir, sourceFileName);
+        String sourceFileName = binaryToSearchedEntry.apply(binaryRootObj);
+        if (GradleFileUtils.isKnownBinaryDirName(binDir.getNameExt())) {
+            return new OldFormatCacheResult(artifactRoot, searchedPackaging, sourceFileName);
+        } else {
+            return new NewFormatCacheResult(binDir, sourceFileName);
+        }
     }
 
     private static final class EventSource
-    implements
+            implements
             SourceForBinaryQueryImplementation2.Result,
             LazyChangeSupport.Source {
 
@@ -108,6 +108,7 @@ public final class GradleCacheByBinaryLookup {
     }
 
     private static class NewFormatCacheResult implements SourceForBinaryQueryImplementation2.Result {
+
         private final FileObject artifactRoot;
         private final String sourceFileName;
 
@@ -144,6 +145,7 @@ public final class GradleCacheByBinaryLookup {
     }
 
     private static class OldFormatCacheResult implements SourceForBinaryQueryImplementation2.Result {
+
         private final FileObject artifactRoot;
         private final String searchedPackaging;
         private final String searchedFileName;
@@ -161,7 +163,7 @@ public final class GradleCacheByBinaryLookup {
 
         @Override
         public FileObject[] getRoots() {
-                // The cache directory of Gradle looks like this:
+            // The cache directory of Gradle looks like this:
             //
             // ...... \\source\\HASH_OF_SOURCE\\binary-sources.jar
             // ...... \\packaging type\\HASH_OF_BINARY\\binary.jar

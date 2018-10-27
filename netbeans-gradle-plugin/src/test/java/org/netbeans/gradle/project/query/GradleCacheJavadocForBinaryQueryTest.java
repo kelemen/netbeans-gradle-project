@@ -13,15 +13,21 @@ import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.util.Utilities;
 
 import static org.junit.Assert.*;
+import org.netbeans.api.java.queries.JavadocForBinaryQuery;
 import static org.netbeans.gradle.project.query.TestSourceQueryUtils.*;
+import org.netbeans.spi.java.queries.JavadocForBinaryQueryImplementation;
 
-public class GradleCacheSourceForBinaryQueryTest {
+public class GradleCacheJavadocForBinaryQueryTest {
 
     @ClassRule
     public static final SafeTmpFolder TMP_DIR_ROOT = new SafeTmpFolder();
 
     private static SourceForBinaryQueryImplementation2 createWithRoot(final File gradleHomeRoot) {
         return new GradleCacheSourceForBinaryQuery(() -> gradleHomeRoot);
+    }
+
+    private static JavadocForBinaryQueryImplementation createJavadocQueryWithRoot(final File gradleHomeRoot) {
+        return new GradleCacheJavadocForBinaryQuery(() -> gradleHomeRoot);
     }
 
     private void verifySource(File gradleHome, URL binaryUrl, File srcFile) {
@@ -35,6 +41,18 @@ public class GradleCacheSourceForBinaryQueryTest {
         assertNotNull("result2", result2);
         expectSameArchive("sourcesPath", srcFile, expectedSingleFile(result2));
         assertFalse("preferSources", result2.preferSources());
+    }
+
+    private void verifyJavadoc(File gradleHome, URL binaryUrl, File javadocFile, boolean hasSources) {
+        JavadocForBinaryQueryImplementation query = createJavadocQueryWithRoot(gradleHome);
+
+        JavadocForBinaryQuery.Result result = query.findJavadoc(binaryUrl);
+        if (hasSources) {
+            assertNull("result", result);
+        } else {
+            assertNotNull("result", result);
+            expectSameArchive("javadocPath", javadocFile, expectedSingleFile(result));
+        }
     }
 
     private void verifyNotDownloadedSource(File gradleHome, URL binaryUrl) {
@@ -67,8 +85,15 @@ public class GradleCacheSourceForBinaryQueryTest {
         srcDir.mkdirs();
         TestBinaryUtils.createTestJar(srcFile);
 
+        File javadocDir = BasicFileUtils.getSubPath(artifactRoot, "javadoc", "676767");
+        File javadocFile = BasicFileUtils.getSubPath(javadocDir, "myproj-javadoc.jar");
+
+        javadocDir.mkdirs();
+        TestBinaryUtils.createTestJar(javadocFile);
+
         URL binaryUrl = Utilities.toURI(jar).toURL();
         verifySource(gradleHome, binaryUrl, srcFile);
+        verifyJavadoc(gradleHome, binaryUrl, javadocFile, true);
     }
 
     @Test
@@ -82,8 +107,15 @@ public class GradleCacheSourceForBinaryQueryTest {
         jarDir.mkdirs();
         TestBinaryUtils.createTestJar(jar);
 
+        File javadocDir = BasicFileUtils.getSubPath(artifactRoot, "javadoc", "676767");
+        File javadocFile = BasicFileUtils.getSubPath(javadocDir, "myproj-javadoc.jar");
+
+        javadocDir.mkdirs();
+        TestBinaryUtils.createTestJar(javadocFile);
+
         URL binaryUrl = Utilities.toURI(jar).toURL();
         verifyNotDownloadedSource(gradleHome, binaryUrl);
+        verifyJavadoc(gradleHome, binaryUrl, javadocFile, false);
     }
 
     @Test
@@ -104,8 +136,15 @@ public class GradleCacheSourceForBinaryQueryTest {
         srcDir.mkdirs();
         TestBinaryUtils.createTestJar(srcFile);
 
+        File javadocDir = BasicFileUtils.getSubPath(versionDir, "57657");
+        File javadocFile = BasicFileUtils.getSubPath(javadocDir, "myproj-11.2-javadoc.jar");
+
+        javadocDir.mkdirs();
+        TestBinaryUtils.createTestJar(javadocFile);
+
         URL binaryUrl = Utilities.toURI(jar).toURL();
         verifySource(gradleHome, binaryUrl, srcFile);
+        verifyJavadoc(gradleHome, binaryUrl, javadocFile, true);
     }
 
     @Test
@@ -113,18 +152,65 @@ public class GradleCacheSourceForBinaryQueryTest {
         File gradleHome = TMP_DIR_ROOT.newFolder();
 
         File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org", "myproj");
-        File jarDir = BasicFileUtils.getSubPath(artifactRoot, "57436");
-        File jar = BasicFileUtils.getSubPath(jarDir, "myproj.jar");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11.2");
+        File jarDir = BasicFileUtils.getSubPath(versionDir, "57436");
+        File jar = BasicFileUtils.getSubPath(jarDir, "myproj-11.2.jar");
 
         jarDir.mkdirs();
         TestBinaryUtils.createTestJar(jar);
 
+        File javadocDir = BasicFileUtils.getSubPath(versionDir, "57657");
+        File javadocFile = BasicFileUtils.getSubPath(javadocDir, "myproj-11.2-javadoc.jar");
+
+        javadocDir.mkdirs();
+        TestBinaryUtils.createTestJar(javadocFile);
+
         URL binaryUrl = Utilities.toURI(jar).toURL();
         verifyNotDownloadedSource(gradleHome, binaryUrl);
+        verifyJavadoc(gradleHome, binaryUrl, javadocFile, false);
     }
 
     @Test
     public void testNewCacheFormatMultipleBinaries() throws IOException {
+        File gradleHome = TMP_DIR_ROOT.newFolder();
+
+        File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org.openjfx", "javafx-base");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11.2");
+        File jarDir1 = BasicFileUtils.getSubPath(versionDir, "57436");
+        File binary1 = BasicFileUtils.getSubPath(jarDir1, "javafx-base-11.2-win.jar");
+
+        File jarDir2 = BasicFileUtils.getSubPath(versionDir, "63457");
+        File binary2 = BasicFileUtils.getSubPath(jarDir2, "javafx-base-11.2.jar");
+
+        jarDir1.mkdirs();
+        TestBinaryUtils.createTestJar(binary1);
+
+        jarDir2.mkdirs();
+        TestBinaryUtils.createTestJar(binary2);
+
+        File srcDir = BasicFileUtils.getSubPath(versionDir, "25754");
+        File srcFile = BasicFileUtils.getSubPath(srcDir, "javafx-base-11.2-sources.jar");
+
+        srcDir.mkdirs();
+        TestBinaryUtils.createTestJar(srcFile);
+
+        File javadocDir = BasicFileUtils.getSubPath(versionDir, "57657");
+        File javadocFile = BasicFileUtils.getSubPath(javadocDir, "javafx-base-11.2-javadoc.jar");
+
+        javadocDir.mkdirs();
+        TestBinaryUtils.createTestJar(javadocFile);
+
+        URL binaryUrl1 = Utilities.toURI(binary1).toURL();
+        verifySource(gradleHome, binaryUrl1, srcFile);
+        verifyJavadoc(gradleHome, binaryUrl1, javadocFile, true);
+
+        URL binaryUrl2 = Utilities.toURI(binary2).toURL();
+        verifySource(gradleHome, binaryUrl2, srcFile);
+        verifyJavadoc(gradleHome, binaryUrl2, javadocFile, true);
+    }
+
+    @Test
+    public void testNewCacheFormatMultipleBinariesMissingSource() throws IOException {
         File gradleHome = TMP_DIR_ROOT.newFolder();
 
         File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org.openjfx", "javafx-base");
@@ -141,21 +227,21 @@ public class GradleCacheSourceForBinaryQueryTest {
         jarDir2.mkdirs();
         TestBinaryUtils.createTestJar(binary2);
 
-        File srcDir = BasicFileUtils.getSubPath(versionDir, "25754");
-        File srcFile = BasicFileUtils.getSubPath(srcDir, "javafx-base-11-sources.jar");
+        File javadocDir = BasicFileUtils.getSubPath(versionDir, "57657");
+        File javadocFile = BasicFileUtils.getSubPath(javadocDir, "javafx-base-11-javadoc.jar");
 
-        srcDir.mkdirs();
-        TestBinaryUtils.createTestJar(srcFile);
+        javadocDir.mkdirs();
+        TestBinaryUtils.createTestJar(javadocFile);
 
         URL binaryUrl1 = Utilities.toURI(binary1).toURL();
-        verifySource(gradleHome, binaryUrl1, srcFile);
-        
+        verifyJavadoc(gradleHome, binaryUrl1, javadocFile, false);
+
         URL binaryUrl2 = Utilities.toURI(binary2).toURL();
-        verifySource(gradleHome, binaryUrl2, srcFile);
+        verifyJavadoc(gradleHome, binaryUrl2, javadocFile, false);
     }
 
     @Test
-    public void testNotInCache() throws IOException {
+    public void testJavadoccNotInCache() throws IOException {
         File root = TMP_DIR_ROOT.newFolder();
 
         File gradleHome = new File(root, ".gradle");
@@ -171,9 +257,8 @@ public class GradleCacheSourceForBinaryQueryTest {
         TestBinaryUtils.createTestJar(jar);
 
         URL binaryUrl = Utilities.toURI(jar).toURL();
-
-        SourceForBinaryQueryImplementation2 query = createWithRoot(gradleHome);
-        assertNull("result1", query.findSourceRoots(binaryUrl));
-        assertNull("result2", query.findSourceRoots2(binaryUrl));
+        
+        JavadocForBinaryQueryImplementation query = createJavadocQueryWithRoot(gradleHome);
+        assertNull("result", query.findJavadoc(binaryUrl));
     }
 }
