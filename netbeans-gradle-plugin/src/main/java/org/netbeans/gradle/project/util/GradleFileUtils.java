@@ -26,7 +26,7 @@ public final class GradleFileUtils {
     public static final PropertySource<File> GRADLE_USER_HOME = getGradleUserHome();
     public static final Supplier<File> GRADLE_USER_HOME_PROVIDER = GRADLE_USER_HOME::getValue;
 
-    public static final Set<String> BINARY_DIR_NAMES =  Collections.unmodifiableSet(
+    public static final Set<String> BINARY_DIR_NAMES = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList("jar", "bundle")));
     public static final String POM_DIR_NAME = "pom";
     public static final String JAVADOC_DIR_NAME = "javadoc";
@@ -106,7 +106,7 @@ public final class GradleFileUtils {
         String binFileExt = binaryPath.getExt();
         return binaryToBaseName(binaryPath) + JAVADOC_CLASSIFIER + "." + binFileExt;
     }
-    
+
     public static String binaryToBaseName(FileObject binaryPath) {
         FileObject hashDir = binaryPath.getParent();
         if (hashDir == null) {
@@ -146,7 +146,6 @@ public final class GradleFileUtils {
     //
     // binaries: GRADLE_HOME\\lib\\*.jar
     // sources for all binaries: GRADLE_HOME\\src
-
     public static File getLibDirOfGradle(File gradleHome) {
         return new File(gradleHome, "lib");
     }

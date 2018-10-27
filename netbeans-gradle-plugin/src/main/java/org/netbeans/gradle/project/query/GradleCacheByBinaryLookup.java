@@ -68,7 +68,8 @@ public final class GradleCacheByBinaryLookup {
         String sourceFileName = binaryToSearchedEntry.apply(binaryRootObj);
         if (GradleFileUtils.isKnownBinaryDirName(binDir.getNameExt())) {
             return new OldFormatCacheResult(artifactRoot, searchedPackaging, sourceFileName);
-        } else {
+        }
+        else {
             return new NewFormatCacheResult(binDir, sourceFileName);
         }
     }

@@ -5,17 +5,17 @@ import java.io.IOException;
 import java.net.URL;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.netbeans.api.java.queries.JavadocForBinaryQuery;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.project.util.SafeTmpFolder;
 import org.netbeans.gradle.project.util.TestBinaryUtils;
+import org.netbeans.spi.java.queries.JavadocForBinaryQueryImplementation;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.util.Utilities;
 
 import static org.junit.Assert.*;
-import org.netbeans.api.java.queries.JavadocForBinaryQuery;
 import static org.netbeans.gradle.project.query.TestSourceQueryUtils.*;
-import org.netbeans.spi.java.queries.JavadocForBinaryQueryImplementation;
 
 public class GradleCacheJavadocForBinaryQueryTest {
 
@@ -49,7 +49,8 @@ public class GradleCacheJavadocForBinaryQueryTest {
         JavadocForBinaryQuery.Result result = query.findJavadoc(binaryUrl);
         if (hasSources) {
             assertNull("result", result);
-        } else {
+        }
+        else {
             assertNotNull("result", result);
             expectSameArchive("javadocPath", javadocFile, expectedSingleFile(result));
         }
@@ -257,7 +258,7 @@ public class GradleCacheJavadocForBinaryQueryTest {
         TestBinaryUtils.createTestJar(jar);
 
         URL binaryUrl = Utilities.toURI(jar).toURL();
-        
+
         JavadocForBinaryQueryImplementation query = createJavadocQueryWithRoot(gradleHome);
         assertNull("result", query.findJavadoc(binaryUrl));
     }
