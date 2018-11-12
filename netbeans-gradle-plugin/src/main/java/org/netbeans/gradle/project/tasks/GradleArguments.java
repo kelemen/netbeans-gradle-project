@@ -109,9 +109,6 @@ public final class GradleArguments {
             result.add("-c");
             result.add(settingsGradle.toString());
         }
-        else if (!preferredSettings.isMaySearchUpwards()) {
-            result.add("-u");
-        }
 
         Path userInitScript = tryGetUserInitScript(context.getProject());
         if (userInitScript != null) {
