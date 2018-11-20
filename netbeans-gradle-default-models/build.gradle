@@ -81,9 +81,9 @@ dependencies {
 
     def gradleApiDependency = new org.netbeans.gradle.build.ZippedJarsFileCollection(
         project,
-        'distributions:gradle:1.8-bin@zip',
+        'distributions:gradle:2.6-bin@zip',
         ['gradle-api'],
-        ['gradle-1.8', 'lib']
+        ['gradle-2.6', 'lib']
     )
     modelBuildersCompileOnly gradleApiDependency
 
@@ -102,7 +102,7 @@ otherGradleVersions.each { String otherGradleVersion ->
 }
 
 task testAllFiltered {
-    dependsOn 'testGradle1.8'
+    dependsOn 'testGradle2.6'
     dependsOn test
 }
 
