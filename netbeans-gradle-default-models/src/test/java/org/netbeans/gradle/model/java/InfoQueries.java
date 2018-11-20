@@ -32,10 +32,12 @@ public final class InfoQueries {
 
     public static <T> GradleProjectInfoQuery2<T> toQueryWithKnownClassPath(final ProjectInfoBuilder2<T> builder) {
         return new GradleProjectInfoQuery2<T>() {
+            @Override
             public ProjectInfoBuilder2<T> getInfoBuilder() {
                 return builder;
             }
 
+            @Override
             public ModelClassPathDef getInfoClassPath() {
                 return ModelClassPathDef.EMPTY;
             }
@@ -44,10 +46,12 @@ public final class InfoQueries {
 
     public static <T> GradleBuildInfoQuery<T> toQueryWithKnownClassPath(final BuildInfoBuilder<T> builder) {
         return new GradleBuildInfoQuery<T>() {
+            @Override
             public BuildInfoBuilder<T> getInfoBuilder() {
                 return builder;
             }
 
+            @Override
             public ModelClassPathDef getInfoClassPath() {
                 return ModelClassPathDef.EMPTY;
             }
@@ -57,10 +61,12 @@ public final class InfoQueries {
 
     public static <T> GradleProjectInfoQuery2<T> toCustomQuery(final ProjectInfoBuilder2<T> builder) {
         return new GradleProjectInfoQuery2<T>() {
+            @Override
             public ProjectInfoBuilder2<T> getInfoBuilder() {
                 return builder;
             }
 
+            @Override
             public ModelClassPathDef getInfoClassPath() {
                 return classPathFromClass(builder.getClass());
             }
@@ -69,10 +75,12 @@ public final class InfoQueries {
 
     public static <T> GradleBuildInfoQuery<T> toCustomQuery(final BuildInfoBuilder<T> builder) {
         return new GradleBuildInfoQuery<T>() {
+            @Override
             public BuildInfoBuilder<T> getInfoBuilder() {
                 return builder;
             }
 
+            @Override
             public ModelClassPathDef getInfoClassPath() {
                 return classPathFromClass(builder.getClass());
             }

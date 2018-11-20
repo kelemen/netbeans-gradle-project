@@ -167,6 +167,7 @@ public final class TestUtils {
     private enum DefaultOperationInit implements OperationInitializer {
         INSTANCE;
 
+        @Override
         public void initOperation(BuildOperationArgs args) {
             args.setJvmArguments(new String[]{"-Xmx512m"});
             args.setJavaHome(getJDKHome());

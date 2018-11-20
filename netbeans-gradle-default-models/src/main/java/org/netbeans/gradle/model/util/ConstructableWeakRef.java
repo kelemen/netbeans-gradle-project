@@ -13,6 +13,7 @@ public final class ConstructableWeakRef<T> implements NbSupplier5<T> {
         this.defaultRefRef = new AtomicReference<WeakReference<T>>();
     }
 
+    @Override
     public T get() {
         while (true) {
             WeakReference<T> defaultRef = defaultRefRef.get();

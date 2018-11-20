@@ -84,6 +84,7 @@ public final class GradlePlatformInfo implements Serializable {
     private enum GradlePlatformBuilder implements BuildInfoBuilder<GradlePlatformInfo> {
         INSTANCE;
 
+        @Override
         public GradlePlatformInfo getInfo(BuildController controller) {
             BuildEnvironment buildEnv = controller.getModel(BuildEnvironment.class);
             JavaVersion javaVersion = JavaVersion.current();
@@ -91,6 +92,7 @@ public final class GradlePlatformInfo implements Serializable {
             return new GradlePlatformInfo(buildEnv, javaVersion);
         }
 
+        @Override
         public String getName() {
             return BuilderUtils.getNameForEnumBuilder(this);
         }

@@ -20,6 +20,7 @@ public final class BuiltInModelBuilder implements BuildInfoBuilder<Map<Class<?>,
         CollectionUtils.checkNoNullElements(this.modelClasses, "modelClasses");
     }
 
+    @Override
     public Map<Class<?>, Object> getInfo(BuildController controller) {
         Map<Class<?>, Object> result = new IdentityHashMap<Class<?>, Object>();
         for (Class<?> modelClass: modelClasses) {
@@ -31,6 +32,7 @@ public final class BuiltInModelBuilder implements BuildInfoBuilder<Map<Class<?>,
         return result;
     }
 
+    @Override
     public String getName() {
         return BuilderUtils.getNameForGenericBuilder(this, modelClasses.toString());
     }

@@ -59,18 +59,22 @@ public final class CompatibilityUtils {
             this.src = src;
         }
 
+        @Override
         public T getProjectInfo(Object project) {
             return src.getProjectInfo((Project)project);
         }
 
+        @Override
         public String getName() {
             return src.getName();
         }
 
+        @Override
         public Object getWrappedObject() {
             return src;
         }
 
+        @Override
         public Class<?> getWrappedType() {
             return getWrappedObject().getClass();
         }
@@ -88,18 +92,22 @@ public final class CompatibilityUtils {
             this.src = src;
         }
 
+        @Override
         public ProjectInfoBuilder2<T> getInfoBuilder() {
             return toBuilder2(src.getInfoBuilder());
         }
 
+        @Override
         public ModelClassPathDef getInfoClassPath() {
             return src.getInfoClassPath();
         }
 
+        @Override
         public Object getWrappedObject() {
             return src;
         }
 
+        @Override
         public Class<?> getWrappedType() {
             return getWrappedObject().getClass();
         }
@@ -120,18 +128,22 @@ public final class CompatibilityUtils {
             this.src = src;
         }
 
+        @Override
         public T getProjectInfo(Project project) {
             return src.getProjectInfo(project);
         }
 
+        @Override
         public String getName() {
             return src.getName();
         }
 
+        @Override
         public Object getWrappedObject() {
             return src;
         }
 
+        @Override
         public Class<?> getWrappedType() {
             return getWrappedObject().getClass();
         }
@@ -150,18 +162,22 @@ public final class CompatibilityUtils {
             this.src = src;
         }
 
+        @Override
         public org.netbeans.gradle.model.api.ProjectInfoBuilder<T> getInfoBuilder() {
             return toBuilder(src.getInfoBuilder());
         }
 
+        @Override
         public ModelClassPathDef getInfoClassPath() {
             return src.getInfoClassPath();
         }
 
+        @Override
         public Object getWrappedObject() {
             return src;
         }
 
+        @Override
         public Class<?> getWrappedType() {
             return getWrappedObject().getClass();
         }

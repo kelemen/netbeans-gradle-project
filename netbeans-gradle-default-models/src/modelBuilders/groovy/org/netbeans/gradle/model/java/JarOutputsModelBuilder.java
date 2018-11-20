@@ -25,6 +25,7 @@ implements
     // to explicitly declare to which source set they belong to.
     private static final String SOURCE_SET_NAME_PROPERTY = "netBeansSourceSets";
 
+    @Override
     public JarOutputsModel getProjectInfo(Object project) {
         return getProjectInfo((Project)project);
     }
@@ -88,6 +89,7 @@ implements
     }
 
     /** {@inheritDoc } */
+    @Override
     public String getName() {
         return BuilderUtils.getNameForEnumBuilder(this);
     }

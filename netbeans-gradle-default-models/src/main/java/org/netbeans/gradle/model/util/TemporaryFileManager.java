@@ -141,6 +141,7 @@ public final class TemporaryFileManager {
             }
         }
 
+        @Override
         public void close() throws IOException {
             lockedRef.close();
         }
@@ -155,12 +156,14 @@ public final class TemporaryFileManager {
             this.content = content;
             this.fileRef = fileRef;
             this.finalizer = new ObjectFinalizer(new Runnable() {
+                @Override
                 public void run() {
                     doClose();
                 }
             }, "SingleFileReference{" + fileRef.getFile() + "}");
         }
 
+        @Override
         public File getFile() {
             return fileRef.getFile();
         }
@@ -187,6 +190,7 @@ public final class TemporaryFileManager {
             }
         }
 
+        @Override
         public void close() throws IOException {
             finalizer.doFinalize();
         }

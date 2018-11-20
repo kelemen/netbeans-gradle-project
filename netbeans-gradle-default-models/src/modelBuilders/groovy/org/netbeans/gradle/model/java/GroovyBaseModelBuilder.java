@@ -8,6 +8,7 @@ import org.netbeans.gradle.model.util.BuilderUtils;
 enum GroovyBaseModelBuilder implements ProjectInfoBuilder2<GroovyBaseModel> {
     INSTANCE;
 
+    @Override
     public GroovyBaseModel getProjectInfo(Object project) {
         return getProjectInfo((Project)project);
     }
@@ -20,6 +21,7 @@ enum GroovyBaseModelBuilder implements ProjectInfoBuilder2<GroovyBaseModel> {
         return GroovyBaseModel.DEFAULT;
     }
 
+    @Override
     public String getName() {
         return BuilderUtils.getNameForEnumBuilder(this);
     }

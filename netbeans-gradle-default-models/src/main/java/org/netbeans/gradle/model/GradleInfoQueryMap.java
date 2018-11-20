@@ -84,6 +84,7 @@ final class GradleInfoQueryMap {
 
     public static GradleInfoQueryMap fromBuildInfos(Map<Object, List<GradleBuildInfoQuery<?>>> map) {
         return fromQueries(map, new BuilderRetriever<GradleBuildInfoQuery<?>>() {
+            @Override
             public Object getBuilder(GradleBuildInfoQuery<?> infoQuery) {
                 return infoQuery.getInfoBuilder();
             }
@@ -92,6 +93,7 @@ final class GradleInfoQueryMap {
 
     public static GradleInfoQueryMap fromProjectInfos(Map<Object, List<GradleProjectInfoQuery2<?>>> map) {
         return fromQueries(map, new BuilderRetriever<GradleProjectInfoQuery2<?>>() {
+            @Override
             public Object getBuilder(GradleProjectInfoQuery2<?> infoQuery) {
                 return infoQuery.getInfoBuilder();
             }
@@ -159,6 +161,7 @@ final class GradleInfoQueryMap {
     private static enum BuildInfoBuilderIssueTransformer implements IssueTransformer {
         INSTANCE;
 
+        @Override
         public Object transformIssue(Throwable issue) {
             return new FailingBuildInfoBuilder(issue);
         }
@@ -173,10 +176,12 @@ final class GradleInfoQueryMap {
             this.issue = TransferableExceptionWrapper.wrap(issue);
         }
 
+        @Override
         public Void getInfo(BuildController controller) {
             throw issue;
         }
 
+        @Override
         public String getName() {
             return "";
         }
@@ -185,6 +190,7 @@ final class GradleInfoQueryMap {
     private static enum BuilderIssueTransformer implements IssueTransformer {
         INSTANCE;
 
+        @Override
         public Object transformIssue(Throwable issue) {
             return new BuilderResult(null, new BuilderIssue("", issue));
         }
@@ -239,6 +245,7 @@ final class GradleInfoQueryMap {
             return result;
         }
 
+        @Override
         public Map<Object, List<?>> deserialize(
                 SerializationCache serializationCache,
                 ClassLoader parent,

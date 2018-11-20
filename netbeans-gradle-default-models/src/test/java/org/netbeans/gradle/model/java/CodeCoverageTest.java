@@ -39,6 +39,7 @@ public final class CodeCoverageTest {
     @Test
     public void testJacoco() {
         runTestForSubProject("", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JacocoModel jacocoModel
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JACOCO_BUILDER);

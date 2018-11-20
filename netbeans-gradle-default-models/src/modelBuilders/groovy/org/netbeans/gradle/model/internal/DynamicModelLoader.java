@@ -33,6 +33,7 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         this.classLoader = classLoader;
     }
 
+    @Override
     public boolean canBuild(String modelName) {
         return modelName.equals(ModelQueryOutputRef.class.getName());
     }
@@ -120,6 +121,7 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         return new BasicInfoWithError(result, error);
     }
 
+    @Override
     public Object buildAll(String modelName, Project project) {
         if (!canBuild(modelName)) {
             throw new IllegalArgumentException("Unsupported model: " + modelName);
@@ -160,6 +162,7 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
             this.modelQueryOutput = modelQueryOutput;
         }
 
+        @Override
         public byte[] getSerializedModelQueryOutput() {
             return SerializationUtils.serializeObject(modelQueryOutput);
         }

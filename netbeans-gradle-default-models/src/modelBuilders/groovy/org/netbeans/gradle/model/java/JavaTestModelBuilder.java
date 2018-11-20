@@ -22,6 +22,7 @@ implements
 
     private static final Logger LOGGER = Logger.getLogger(JavaTestModelBuilder.class.getName());
 
+    @Override
     public JavaTestModel getProjectInfo(Object project) {
         return getProjectInfo((Project)project);
     }
@@ -45,6 +46,7 @@ implements
     }
 
     /** {@inheritDoc } */
+    @Override
     public String getName() {
         return BuilderUtils.getNameForEnumBuilder(this);
     }

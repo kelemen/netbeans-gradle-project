@@ -87,19 +87,23 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder2<T
         return result;
     }
 
+    @Override
     public T getProjectInfo(Object project) {
         Object result = getWrapped().getProjectInfo(project);
         return modelType.cast(result);
     }
 
+    @Override
     public String getName() {
         return getWrapped().getName();
     }
 
+    @Override
     public Object getWrappedObject() {
         return null;
     }
 
+    @Override
     public Class<?> getWrappedType() {
         return modelType;
     }
