@@ -16,6 +16,16 @@ import org.netbeans.gradle.model.OperationInitializer;
 public final class TestUtils {
     private static final AtomicReference<String> TESTED_GRADLE_VERSION_REF = new AtomicReference<String>(null);
 
+    public static boolean isGradleAtLeast(String version) {
+        String currentVersionStr = getTestedGradleVersion();
+        GradleVersion currentVersion = "".equals(currentVersionStr)
+                ? GradleVersion.current()
+                : GradleVersion.version(currentVersionStr);
+        GradleVersion cmpVersion = GradleVersion.version(version);
+
+        return currentVersion.compareTo(cmpVersion) >= 0;
+    }
+
     private static String normString(String value) {
         if (value == null) {
             return null;

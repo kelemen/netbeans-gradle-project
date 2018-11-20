@@ -996,7 +996,7 @@ public class MultiLevelJavaProjectTest {
             boolean useGroovy) throws IOException {
 
         File classesDir = getSubPath(projectDir, "build", "myclasses", name);
-        List<File> classesDirs = useGroovy
+        List<File> classesDirs = useGroovy && isGradleAtLeast("4.0")
                 ? Arrays.<File>asList(classesDir, getSubPath(projectDir, "build", "myclasses-groovy", name))
                 : Arrays.<File>asList(classesDir);
 
