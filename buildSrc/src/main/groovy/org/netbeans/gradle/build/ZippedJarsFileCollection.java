@@ -21,6 +21,8 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.internal.file.AbstractFileCollection;
+import org.gradle.api.internal.tasks.DefaultTaskDependency;
+import org.gradle.api.tasks.TaskDependency;
 
 public final class ZippedJarsFileCollection extends AbstractFileCollection {
     private final Charset UTF8 = Charset.forName("UTF-8");
@@ -42,6 +44,11 @@ public final class ZippedJarsFileCollection extends AbstractFileCollection {
         this.unzipDir = resolve(project.getProjectDir().toPath(), unzipPath);
         this.dependencyNotation = dependencyNotation;
         this.subDirPath = new ArrayList<>(subDirPath);
+    }
+
+    @Override
+    public TaskDependency getBuildDependencies() {
+        return new DefaultTaskDependency();
     }
 
     private static Path resolve(Path dir, List<String> subDirs) {

@@ -10,7 +10,6 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaModelBuilders;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
@@ -23,9 +22,7 @@ import org.netbeans.gradle.project.java.model.JavaModelSource;
 import org.netbeans.gradle.project.java.model.JavaParsingUtils;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.netbeans.gradle.project.others.OtherPlugins;
-import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ServiceProvider;
@@ -87,28 +84,8 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
         return result;
     }
 
-    private Map<File, NbJavaModel> parseFromIdeaProject(
-            ModelLoadResult retrievedModels,
-            IdeaProject ideaProject,
-            ScriptFileProvider scriptProvider) throws IOException {
-        return IdeaJavaModelUtils.parseFromIdeaModel(
-                retrievedModels.getEvaluationEnvironment(),
-                retrievedModels.getMainProjectDir(),
-                ideaProject,
-                scriptProvider);
-    }
-
-    private ParsedModel<NbJavaModel> parseModelImpl(
-            ModelLoadResult retrievedModels,
-            ScriptFileProvider scriptProvider) throws IOException {
-        // FIXME: The specification allows IdeaProject to be available even
-        //   if did not request it, so this should be changed to use the
-        //   new models if they are available even if there is an IdeaProject.
-        IdeaProject ideaProject = retrievedModels.getMainProjectModels().lookup(IdeaProject.class);
-
-        Map<File, NbJavaModel> result = ideaProject != null
-                ? parseFromIdeaProject(retrievedModels, ideaProject, scriptProvider)
-                : parseFromNewModels(retrievedModels);
+    private ParsedModel<NbJavaModel> parseModelImpl(ModelLoadResult retrievedModels) throws IOException {
+        Map<File, NbJavaModel> result = parseFromNewModels(retrievedModels);
 
         NbJavaModel mainModule = result.get(retrievedModels.getMainProjectDir());
         return new ParsedModel<>(mainModule, result);
@@ -117,7 +94,7 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
     @Override
     public ParsedModel<NbJavaModel> parseModel(ModelLoadResult retrievedModels) {
         try {
-            return parseModelImpl(retrievedModels, NbGradleProjectFactory.DEFAULT_SCRIPT_FILE_PROVIDER);
+            return parseModelImpl(retrievedModels);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }

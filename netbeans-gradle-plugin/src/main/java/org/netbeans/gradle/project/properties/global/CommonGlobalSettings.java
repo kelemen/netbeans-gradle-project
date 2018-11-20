@@ -17,7 +17,6 @@ import org.netbeans.gradle.project.properties.GenericProfileSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDirectory;
-import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.MultiProfileProperties;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
@@ -45,7 +44,6 @@ public final class CommonGlobalSettings {
     private final PropertyReference<Boolean> skipTests;
     private final PropertyReference<Boolean> skipCheck;
     private final PropertyReference<Boolean> alwaysClearOutput;
-    private final PropertyReference<Boolean> mayRelyOnJavaOfScript;
     private final PropertyReference<Boolean> compileOnSave;
     private final PropertyReference<Boolean> replaceLfOnStdIn;
     private final PropertyReference<Boolean> askBeforeCancelExec;
@@ -54,7 +52,6 @@ public final class CommonGlobalSettings {
 
     private final PropertyReference<Boolean> detectProjectDependenciesByJarName;
     private final PropertyReference<SelfMaintainedTasks> selfMaintainedTasks;
-    private final PropertyReference<ModelLoadingStrategy> modelLoadingStrategy;
 
     private final PropertyReference<Integer> projectCacheSize;
     private final PropertyReference<Integer> gradleDaemonTimeoutSec;
@@ -71,14 +68,12 @@ public final class CommonGlobalSettings {
         this.skipTests = skipTests(activeSettingsQuery);
         this.skipCheck = skipCheck(activeSettingsQuery);
         this.alwaysClearOutput = alwaysClearOutput(activeSettingsQuery);
-        this.mayRelyOnJavaOfScript = mayRelyOnJavaOfScript(activeSettingsQuery);
         this.compileOnSave = compileOnSave(activeSettingsQuery);
         this.replaceLfOnStdIn = replaceLfOnStdIn(activeSettingsQuery);
         this.askBeforeCancelExec = askBeforeCancelExec(activeSettingsQuery);
         this.loadRootProjectFirst = loadRootProjectFirst(activeSettingsQuery);
         this.detectProjectDependenciesByJarName = detectProjectDependenciesByJarName(activeSettingsQuery);
         this.selfMaintainedTasks = selfMaintainedTasks(activeSettingsQuery);
-        this.modelLoadingStrategy = modelLoadingStrategy(activeSettingsQuery);
         this.projectCacheSize = projectCacheSize(activeSettingsQuery);
         this.gradleDaemonTimeoutSec = gradleDaemonTimeoutSec(activeSettingsQuery);
         this.showGradleVersion = showGradleVersion(activeSettingsQuery);
@@ -171,14 +166,6 @@ public final class CommonGlobalSettings {
         return alwaysClearOutput;
     }
 
-    public static PropertyReference<Boolean> mayRelyOnJavaOfScript(ActiveSettingsQuery activeSettingsQuery) {
-        return propertyRef(defineBooleanProperty("tasks", "rely-on-java-of-script"), activeSettingsQuery, false);
-    }
-
-    public PropertyReference<Boolean> mayRelyOnJavaOfScript() {
-        return mayRelyOnJavaOfScript;
-    }
-
     public static PropertyReference<Boolean> compileOnSave(ActiveSettingsQuery activeSettingsQuery) {
         return propertyRef(defineBooleanProperty("compile", "compile-on-save"), activeSettingsQuery, false);
     }
@@ -231,17 +218,6 @@ public final class CommonGlobalSettings {
 
     public PropertyReference<SelfMaintainedTasks> selfMaintainedTasks() {
         return selfMaintainedTasks;
-    }
-
-    public static PropertyReference<ModelLoadingStrategy> modelLoadingStrategy(ActiveSettingsQuery activeSettingsQuery) {
-        return propertyRef(
-                defineEnumProperty(ModelLoadingStrategy.class, "model-loading", "strategy"),
-                activeSettingsQuery,
-                ModelLoadingStrategy.NEWEST_POSSIBLE);
-    }
-
-    public PropertyReference<ModelLoadingStrategy> modelLoadingStrategy() {
-        return modelLoadingStrategy;
     }
 
     public static PropertyReference<Boolean> showGradleVersion(ActiveSettingsQuery activeSettingsQuery) {

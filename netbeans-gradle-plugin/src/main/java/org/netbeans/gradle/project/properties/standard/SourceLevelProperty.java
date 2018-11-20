@@ -11,7 +11,6 @@ import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.query.J2SEPlatformFromScriptQuery;
 import org.netbeans.gradle.project.util.CachedLookupValue;
 import org.openide.modules.SpecificationVersion;
@@ -30,10 +29,6 @@ public final class SourceLevelProperty {
         result.setValueDef(CommonProperties.<String>getIdentityValueDef());
         result.setValueMerger(CommonProperties.<String>getParentIfNullValueMerger());
         return result.create();
-    }
-
-    private static PropertySource<Boolean> mayRelyOnJavaOfScript() {
-        return CommonGlobalSettings.getDefault().mayRelyOnJavaOfScript().getActiveSource();
     }
 
     public static PropertySource<String> defaultValue(
@@ -61,11 +56,10 @@ public final class SourceLevelProperty {
             public ListenerRef addChangeListener(Runnable listener) {
                 Objects.requireNonNull(listener, "listener");
 
-                ListenerRef ref1 = mayRelyOnJavaOfScript().addChangeListener(listener);
-                ListenerRef ref2 = project.currentModel().addChangeListener(listener);
-                ListenerRef ref3 = targetPlatform.addChangeListener(listener);
+                ListenerRef ref1 = project.currentModel().addChangeListener(listener);
+                ListenerRef ref2 = targetPlatform.addChangeListener(listener);
 
-                return ListenerRefs.combineListenerRefs(ref1, ref2, ref3);
+                return ListenerRefs.combineListenerRefs(ref1, ref2);
             }
         };
     }
@@ -99,13 +93,8 @@ public final class SourceLevelProperty {
         return query != null ? query.getSourceLevel() : null;
     }
 
-    private static boolean isModelSourceReliable(JavaExtension javaExt) {
-        return javaExt.getCurrentModel().getModelSource().isReliableJavaVersion();
-    }
-
     public static boolean isReliableJavaVersion(JavaExtension javaExt) {
-        return (javaExt != null && isModelSourceReliable(javaExt))
-                || mayRelyOnJavaOfScript().getValue();
+        return javaExt != null;
     }
 
     private SourceLevelProperty() {

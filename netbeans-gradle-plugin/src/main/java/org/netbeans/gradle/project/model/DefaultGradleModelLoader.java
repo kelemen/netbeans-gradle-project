@@ -46,7 +46,6 @@ import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
-import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.tasks.GradleArguments;
@@ -528,7 +527,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             GradleTarget gradleTarget = new GradleTarget(
                     setup.getJDKVersion(),
                     GradleVersion.version(env.getGradle().getGradleVersion()));
-            NbModelLoader modelLoader = chooseModel(projectLoadKey.settingsGradleDef, gradleTarget, cachedEntry, setup);
+            NbModelLoader modelLoader = chooseModel(projectLoadKey.settingsGradleDef, gradleTarget, setup);
 
             loadedModels = modelLoader.loadModels(project, projectConnection, progress);
         } finally {
@@ -565,15 +564,9 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     private static NbModelLoader chooseModel(
             SettingsGradleDef settingsGradleDef,
             GradleTarget gradleTarget,
-            NbGradleModel cachedModel,
             OperationInitializer setup) {
 
-        GradleVersion version = gradleTarget.getGradleVersion();
-
-        ModelLoadingStrategy modelLoadingStrategy = CommonGlobalSettings.getDefault().modelLoadingStrategy().getActiveValue();
-        NbModelLoader result = modelLoadingStrategy.canUse18Api(version)
-                ? new NbGradle18ModelLoader(settingsGradleDef, setup, gradleTarget)
-                : new NbCompatibleModelLoader(settingsGradleDef, cachedModel, setup, gradleTarget);
+        NbModelLoader result = new NbGradle18ModelLoader(settingsGradleDef, setup, gradleTarget);
 
         LOGGER.log(Level.INFO, "Using model loader: {0}", result.getClass().getSimpleName());
         return result;
