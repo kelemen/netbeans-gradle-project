@@ -6,7 +6,7 @@ sourceCompatibility = '1.6'
 targetCompatibility = sourceCompatibility
 
 String gradleVersion = '5.0-rc-4'
-List otherGradleVersions = ['1.8', '1.9', '1.10', '1.11', '2.0', '2.1', '2.2', '2.7', '2.8', '2.9', '2.11', '2.12', '2.14.1', '3.0']
+List otherGradleVersions = ['2.6', '2.9', '2.12', '2.14.1', '3.0', '4.10.2']
 
 ext.scriptFile = { String fileName ->
     return new File(new File(rootDir, 'gradle'), fileName)
