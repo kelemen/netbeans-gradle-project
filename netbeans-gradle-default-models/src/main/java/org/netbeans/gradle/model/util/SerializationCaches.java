@@ -4,6 +4,7 @@ import java.io.File;
 
 public final class SerializationCaches {
     private static final NbSupplier5<SerializationCache> DEFAULT_REF = new ConstructableWeakRef<SerializationCache>(new NbSupplier5<SerializationCache>() {
+        @Override
         public SerializationCache get() {
             return new SharedTypesSerializationCache(File.class);
         }

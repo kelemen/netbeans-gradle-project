@@ -84,19 +84,23 @@ public final class ConstrProjectInfoBuilderRef<T> implements ProjectInfoBuilder2
         throw new IllegalStateException("Cannot find appropriate constructor for " + wrappedTypeName);
     }
 
+    @Override
     public T getProjectInfo(Object project) {
         Object result = getWrapped().getProjectInfo(project);
         return modelType.cast(result);
     }
 
+    @Override
     public String getName() {
         return getWrapped().getName();
     }
 
+    @Override
     public Object getWrappedObject() {
         return null;
     }
 
+    @Override
     public Class<?> getWrappedType() {
         return modelType;
     }

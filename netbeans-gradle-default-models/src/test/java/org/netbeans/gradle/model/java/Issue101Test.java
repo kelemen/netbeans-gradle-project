@@ -39,6 +39,7 @@ public class Issue101Test {
     @Test
     public void testIssue101() {
         runTestForSubProject("", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaSourcesModel sourcesModel
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE);

@@ -159,6 +159,7 @@ public class MultiLevelJavaProjectTest {
             final String[] unexpectedTasks) {
 
         runTestForSubProject(relativeProjectName, new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 GradleMultiProjectDef projectDef = fetchProjectDef(connection);
                 testBasicInfoForProject(relativeProjectName, projectDef);
@@ -318,6 +319,7 @@ public class MultiLevelJavaProjectTest {
             final String... projectDependencies) {
 
         runTestForSubProject(relativeProjectName, new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaSourcesModel sourcesModel
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE);
@@ -383,6 +385,7 @@ public class MultiLevelJavaProjectTest {
     @Test
     public void testExcludeIncludePatterns() throws IOException {
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaSourcesModel sourcesModel
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_SOURCES_BUILDER_ONLY_COMPILE);
@@ -401,6 +404,7 @@ public class MultiLevelJavaProjectTest {
     @Test
     public void testJavaSourcesModelForRoot() throws IOException {
         runTestForSubProject("", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaSourcesModel sourcesModel
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_SOURCES_BUILDER_ONLY_COMPILE);
@@ -411,6 +415,7 @@ public class MultiLevelJavaProjectTest {
 
     private void testJavaCompatibilityModel(String relativeProjectName) throws IOException {
         runTestForSubProject(relativeProjectName, new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaCompatibilityModel compatibilityModel
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER);
@@ -432,6 +437,7 @@ public class MultiLevelJavaProjectTest {
     @Test
     public void testJavaCompatibilityModelForRoot() throws IOException {
         runTestForSubProject("", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaCompatibilityModel compatibilityModel
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER);
@@ -443,6 +449,7 @@ public class MultiLevelJavaProjectTest {
     @Test
     public void testMissingJacocoPluginIsNotAProblem() throws IOException {
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JacocoModel jacocoModel
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JACOCO_BUILDER);
@@ -462,6 +469,7 @@ public class MultiLevelJavaProjectTest {
         final File expectedJarPath = getFileInLibs(projectDir, name + "-" + getProjectVersion(name) + ".jar");
 
         runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JarOutputsModel jarOutputs
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAR_OUTPUTS_BUILDER);
@@ -503,6 +511,7 @@ public class MultiLevelJavaProjectTest {
     @Test
     public void testCustomJarOutputsModel() throws IOException {
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JarOutputsModel jarOutputs
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAR_OUTPUTS_BUILDER);
@@ -557,6 +566,7 @@ public class MultiLevelJavaProjectTest {
         final File expectedXmlPathMyTest = getSubPath(projectDir, "build", "my-test-custom-results");
 
         runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaTestModel testModel
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_TEST_BUILDER);
@@ -581,6 +591,7 @@ public class MultiLevelJavaProjectTest {
     @Test
     public void testJavaTestModelForRoot() throws IOException {
          runTestForSubProject("", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaTestModel testModel
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_TEST_BUILDER);
@@ -592,6 +603,7 @@ public class MultiLevelJavaProjectTest {
     @Test
     public void testJarOutputsModelForRoot() throws IOException {
         runTestForSubProject("", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 JarOutputsModel jarOutputs
                         = fetchSingleProjectInfo(connection, JavaModelBuilders.JAR_OUTPUTS_BUILDER);
@@ -604,6 +616,7 @@ public class MultiLevelJavaProjectTest {
     public void testWarFoldersModel() throws IOException {
         for (String project: allProjects()) {
             runTestForSubProject(project, new ProjectConnectionTask() {
+                @Override
                 public void doTask(ProjectConnection connection) throws Exception {
                     WarFoldersModel warFolders
                             = fetchSingleProjectInfo(connection, JavaModelBuilders.WAR_FOLDERS_BUILDER);
@@ -616,6 +629,7 @@ public class MultiLevelJavaProjectTest {
     @Test
     public void testCustomQuery() throws IOException {
         runTestForSubProject("", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 String prefix = "testCustomQuery-";
                 String result = fetchSingleBuildInfo(connection, TestBuilders.testBuildInfoBuilder(prefix));
@@ -628,6 +642,7 @@ public class MultiLevelJavaProjectTest {
     @Test
     public void testFailingProjectQuery() throws IOException {
         runTestForSubProject("", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 String message = "testFailingProjectQuery-message";
                 ProjectInfoBuilder2<?> builder = TestBuilders.failingProjectInfoBuilder(message);
@@ -649,6 +664,7 @@ public class MultiLevelJavaProjectTest {
     @Test
     public void testFailingBuildQuery() throws IOException {
         runTestForSubProject("", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 String message = "testFailingBuildQuery-message";
                 BuildInfoBuilder<?> builder = TestBuilders.failingBuildInfoBuilder(message);
@@ -704,6 +720,7 @@ public class MultiLevelJavaProjectTest {
 
         final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 FetchedModels models = verifyNoError(fetcher.getModels(connection, TestUtils.defaultInit()));
 
@@ -761,6 +778,7 @@ public class MultiLevelJavaProjectTest {
 
         final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 FetchedModels models = verifyNoError(fetcher.getModels(connection, TestUtils.defaultInit()));
 
@@ -825,6 +843,7 @@ public class MultiLevelJavaProjectTest {
 
         final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 FetchedModels models = verifyNoError(fetcher.getModels(connection, TestUtils.defaultInit()));
                 BuilderResult result = CollectionUtils.getSingleElement(
@@ -883,6 +902,7 @@ public class MultiLevelJavaProjectTest {
 
         final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 FetchedModels models = verifyNoError(fetcher.getModels(connection, TestUtils.defaultInit()));
 
@@ -945,6 +965,7 @@ public class MultiLevelJavaProjectTest {
         final String projectPath = ":" + relativeProjectPath;
 
         runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
+            @Override
             public void doTask(ProjectConnection connection) throws Exception {
                 Class<?>[] models = new Class<?>[]{
                     EclipseProject.class,
@@ -996,7 +1017,7 @@ public class MultiLevelJavaProjectTest {
             boolean useGroovy) throws IOException {
 
         File classesDir = getSubPath(projectDir, "build", "myclasses", name);
-        List<File> classesDirs = useGroovy
+        List<File> classesDirs = useGroovy && isGradleAtLeast("4.0")
                 ? Arrays.<File>asList(classesDir, getSubPath(projectDir, "build", "myclasses-groovy", name))
                 : Arrays.<File>asList(classesDir);
 

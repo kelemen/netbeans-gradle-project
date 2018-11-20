@@ -31,10 +31,12 @@ public final class ConstBuilders {
             this.result = result;
         }
 
+        @Override
         public Object getProjectInfo(Object project) {
             return result;
         }
 
+        @Override
         public String getName() {
             return BuilderUtils.getNameForGenericBuilder(this, result.toString());
         }
@@ -50,10 +52,12 @@ public final class ConstBuilders {
             this.result = result;
         }
 
+        @Override
         public Object getInfo(BuildController controller) {
             return result;
         }
 
+        @Override
         public String getName() {
             return BuilderUtils.getNameForGenericBuilder(this, result.toString());
         }

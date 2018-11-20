@@ -59,10 +59,12 @@ public final class TestBuilders {
 
 
 
+        @Override
         public Object getProjectInfo(Object project) {
             throw new RuntimeException(infoMessage);
         }
 
+        @Override
         public String getName() {
             throw new RuntimeException(nameMessage);
         }
@@ -73,10 +75,12 @@ public final class TestBuilders {
 
         public final Object blockerOfSerialization = new Object();
 
+        @Override
         public Object getInfo(BuildController controller) {
             return new Object();
         }
 
+        @Override
         public String getName() {
             return getClass().getName();
         }
@@ -85,10 +89,12 @@ public final class TestBuilders {
     private static final class NotSerializableResultProjectInfoBuilder implements ProjectInfoBuilder2<Object> {
         private static final long serialVersionUID = 1L;
 
+        @Override
         public Object getProjectInfo(Object project) {
             return new Object();
         }
 
+        @Override
         public String getName() {
             return getClass().getName();
         }
@@ -98,10 +104,12 @@ public final class TestBuilders {
     private static final class NotSerializableProjectInfoBuilder implements ProjectInfoBuilder2<Void> {
         public final Object blockerOfSerialization = new Object();
 
+        @Override
         public Void getProjectInfo(Object controller) {
             return null;
         }
 
+        @Override
         public String getName() {
             return getClass().getName();
         }
@@ -111,10 +119,12 @@ public final class TestBuilders {
     private static final class NotSerializableBuildInfoBuilder implements BuildInfoBuilder<Void> {
         public final Object blockerOfSerialization = new Object();
 
+        @Override
         public Void getInfo(BuildController controller) {
             return null;
         }
 
+        @Override
         public String getName() {
             return getClass().getName();
         }
@@ -130,11 +140,13 @@ public final class TestBuilders {
             this.prefix = prefix;
         }
 
+        @Override
         public String getProjectInfo(Object project) {
             String rootName = ReflectionUtils.getStringProperty(project, "name");
             return prefix + rootName;
         }
 
+        @Override
         public String getName() {
             return BuilderUtils.getNameForGenericBuilder(this, prefix);
         }
@@ -150,11 +162,13 @@ public final class TestBuilders {
             this.prefix = prefix;
         }
 
+        @Override
         public String getInfo(BuildController controller) {
             String rootName = controller.getBuildModel().getRootProject().getName();
             return prefix + rootName;
         }
 
+        @Override
         public String getName() {
             return BuilderUtils.getNameForGenericBuilder(this, prefix);
         }
@@ -170,10 +184,12 @@ public final class TestBuilders {
             this.exceptionMessage = exceptionMessage;
         }
 
+        @Override
         public Void getInfo(BuildController controller) {
             throw new NotSerializableException(exceptionMessage);
         }
 
+        @Override
         public String getName() {
             return BuilderUtils.getNameForGenericBuilder(this, exceptionMessage);
         }
@@ -189,10 +205,12 @@ public final class TestBuilders {
             this.exceptionMessage = exceptionMessage;
         }
 
+        @Override
         public Void getProjectInfo(Object project) {
             throw new NotSerializableException(exceptionMessage);
         }
 
+        @Override
         public String getName() {
             return BuilderUtils.getNameForGenericBuilder(this, exceptionMessage);
         }

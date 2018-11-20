@@ -247,6 +247,7 @@ public final class GenericModelFetcher {
 
     private static ModelGetter defaultModelGetter(final BuildController controller) {
         return new ModelGetter() {
+            @Override
             public <T> T findModel(Class<T> modelClass) {
                 return controller.getModel(modelClass);
             }
@@ -258,6 +259,7 @@ public final class GenericModelFetcher {
             final BasicGradleProject referenceProject) {
 
         return new ModelGetter() {
+            @Override
             public <T> T findModel(Class<T> modelClass) {
                 return controller.findModel(referenceProject, modelClass);
             }
@@ -336,6 +338,7 @@ public final class GenericModelFetcher {
             return new ActionFetchedModels(buildModels, defaultModels, fetchedModels.values());
         }
 
+        @Override
         public ActionFetchedModelsOrError execute(final BuildController controller) {
             EvaluatedBuild evaluatedBuild;
             try {

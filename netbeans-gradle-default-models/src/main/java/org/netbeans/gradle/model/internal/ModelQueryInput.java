@@ -32,6 +32,7 @@ public final class ModelQueryInput implements Serializable {
     private static enum ProjectInfoBuilderIssueTransformer implements IssueTransformer {
         INSTANCE;
 
+        @Override
         public Object transformIssue(Throwable issue) {
             return new FailingProjectInfoBuilder(issue);
         }
@@ -46,10 +47,12 @@ public final class ModelQueryInput implements Serializable {
             this.issue = TransferableExceptionWrapper.wrap(issue);
         }
 
+        @Override
         public Void getProjectInfo(Object project) {
             throw issue;
         }
 
+        @Override
         public String getName() {
             return "";
         }

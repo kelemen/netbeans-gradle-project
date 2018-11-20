@@ -16,6 +16,7 @@ public final class SharedTypesSerializationCache implements SerializationCache {
         }
     }
 
+    @Override
     public Object getCached(Object src) {
         for (Class<?> type: shareableTypes) {
             if (type.isInstance(src)) {

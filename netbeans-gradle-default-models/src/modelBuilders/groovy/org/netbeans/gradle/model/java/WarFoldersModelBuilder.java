@@ -11,6 +11,7 @@ implements
 
     INSTANCE;
 
+    @Override
     public WarFoldersModel getProjectInfo(Object project) {
         return getProjectInfo((Project)project);
     }
@@ -24,6 +25,7 @@ implements
     }
 
     /** {@inheritDoc } */
+    @Override
     public String getName() {
         return BuilderUtils.getNameForEnumBuilder(this);
     }

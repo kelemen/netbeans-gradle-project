@@ -12,6 +12,7 @@ import org.netbeans.gradle.model.util.BuilderUtils;
 enum JacocoModelBuilder implements ProjectInfoBuilder2<JacocoModel> {
     INSTANCE;
 
+    @Override
     public JacocoModel getProjectInfo(Object project) {
         return getProjectInfo((Project)project);
     }
@@ -34,6 +35,7 @@ enum JacocoModelBuilder implements ProjectInfoBuilder2<JacocoModel> {
         return new JacocoModel(reportFiles);
     }
 
+    @Override
     public String getName() {
         return BuilderUtils.getNameForEnumBuilder(this);
     }

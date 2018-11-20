@@ -163,10 +163,12 @@ public class ConstrProjectInfoBuilderRefTest {
             this.name = name;
         }
 
+        @Override
         public TestObj getProjectInfo(Object project) {
             return arg;
         }
 
+        @Override
         public String getName() {
             return name;
         }
@@ -181,10 +183,12 @@ public class ConstrProjectInfoBuilderRefTest {
         public TestInfoBuilderBasic() {
         }
 
+        @Override
         public Object getProjectInfo(Object project) {
             return project;
         }
 
+        @Override
         public String getName() {
             return "TestInfoBuilderBasic";
         }
