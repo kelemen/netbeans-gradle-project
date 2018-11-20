@@ -2,7 +2,7 @@ apply plugin: 'groovy'
 apply plugin: 'custom-java-compilers'
 apply plugin: 'nb-gradle-maven-publish'
 
-sourceCompatibility = '1.5'
+sourceCompatibility = '1.6'
 targetCompatibility = sourceCompatibility
 
 String gradleVersion = '4.5.1'
