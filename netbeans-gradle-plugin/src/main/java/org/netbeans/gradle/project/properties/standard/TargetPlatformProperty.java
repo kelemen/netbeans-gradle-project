@@ -17,7 +17,6 @@ import org.netbeans.gradle.project.api.config.PropertyValueDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.query.J2SEPlatformFromScriptQuery;
 import org.netbeans.gradle.project.util.CachedLookupValue;
 import org.openide.util.Lookup;
@@ -63,11 +62,10 @@ public final class TargetPlatformProperty {
             public ListenerRef addChangeListener(Runnable listener) {
                 ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-                ListenerRef ref1 = CommonGlobalSettings.getDefault().mayRelyOnJavaOfScript().getActiveSource().addChangeListener(listener);
-                ListenerRef ref2 = project.currentModel().addChangeListener(listener);
-                ListenerRef ref3 = JavaPlatformUtils.installedPlatforms().addChangeListener(listener);
+                ListenerRef ref1 = project.currentModel().addChangeListener(listener);
+                ListenerRef ref2 = JavaPlatformUtils.installedPlatforms().addChangeListener(listener);
 
-                return ListenerRegistries.combineListenerRefs(ref1, ref2, ref3);
+                return ListenerRegistries.combineListenerRefs(ref1, ref2);
             }
         };
     }

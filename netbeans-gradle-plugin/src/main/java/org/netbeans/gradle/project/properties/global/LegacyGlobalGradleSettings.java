@@ -26,7 +26,6 @@ import org.netbeans.gradle.project.java.properties.DebugMode;
 import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
 import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
-import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PlatformSelectionMode;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
@@ -56,7 +55,6 @@ final class LegacyGlobalGradleSettings {
     private final StringBasedProperty<Boolean> alwaysClearOutput;
     private final StringBasedProperty<SelfMaintainedTasks> selfMaintainedTasks;
     private final StringBasedProperty<Boolean> mayRelyOnJavaOfScript;
-    private final StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy;
     private final StringBasedProperty<Integer> gradleDaemonTimeoutSec;
     private final StringBasedProperty<Boolean> compileOnSave;
     private final StringBasedProperty<PlatformOrder> platformPreferenceOrder;
@@ -103,9 +101,6 @@ final class LegacyGlobalGradleSettings {
         mayRelyOnJavaOfScript = new GlobalProperty<>(
                 withNS(namespace, "rely-on-java-of-script"),
                 new BooleanConverter(false));
-        modelLoadingStrategy = new GlobalProperty<>(
-                withNS(namespace, "model-load-strategy"),
-                new EnumConverter<>(ModelLoadingStrategy.NEWEST_POSSIBLE));
         gradleDaemonTimeoutSec = new GlobalProperty<>(
                 withNS(namespace, "gradle-daemon-timeout-sec"),
                 new IntegerConverter(1, Integer.MAX_VALUE, null));
@@ -171,8 +166,6 @@ final class LegacyGlobalGradleSettings {
         moveToNewSettings(projectCacheSize, newSettings.projectCacheSize());
         moveToNewSettings(alwaysClearOutput, newSettings.alwaysClearOutput());
         moveToNewSettings(selfMaintainedTasks, newSettings.selfMaintainedTasks());
-        moveToNewSettings(mayRelyOnJavaOfScript, newSettings.mayRelyOnJavaOfScript());
-        moveToNewSettings(modelLoadingStrategy, newSettings.modelLoadingStrategy());
         moveToNewSettings(gradleDaemonTimeoutSec, newSettings.gradleDaemonTimeoutSec());
         moveToNewSettings(compileOnSave, newSettings.compileOnSave());
         moveToNewSettings(platformPreferenceOrder, newSettings.platformPreferenceOrder());

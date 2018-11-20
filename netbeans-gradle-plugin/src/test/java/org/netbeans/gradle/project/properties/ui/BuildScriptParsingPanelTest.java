@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import org.junit.Test;
-import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbConsumer;
@@ -22,9 +21,7 @@ public class BuildScriptParsingPanelTest {
         GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
-                input.modelLoadingStrategy().setValue(ModelLoadingStrategy.USE_IDEA_MODEL);
                 input.loadRootProjectFirst().setValue(false);
-                input.mayRelyOnJavaOfScript().setValue(true);
             }
         });
     }
@@ -34,9 +31,7 @@ public class BuildScriptParsingPanelTest {
         GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
-                input.modelLoadingStrategy().setValue(ModelLoadingStrategy.NEWEST_POSSIBLE);
                 input.loadRootProjectFirst().setValue(true);
-                input.mayRelyOnJavaOfScript().setValue(false);
             }
         });
     }
