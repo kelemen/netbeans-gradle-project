@@ -992,11 +992,18 @@ public class MultiLevelJavaProjectTest {
 
     private static JavaOutputDirs defaultOutputOfSourceSet(
             File projectDir,
-            String name) throws IOException {
+            String name,
+            boolean useGroovy) throws IOException {
 
         File classesDir = getSubPath(projectDir, "build", "myclasses", name);
-        File resourcesDir = getSubPath(projectDir, "build", "myresources", name);
-        return new JavaOutputDirs(Collections.singleton(classesDir), resourcesDir, Collections.<File>emptySet());
+        List<File> classesDirs = useGroovy
+                ? Arrays.<File>asList(classesDir, getSubPath(projectDir, "build", "myclasses-groovy", name))
+                : Arrays.<File>asList(classesDir);
+
+        return new JavaOutputDirs(
+                classesDirs,
+                getSubPath(projectDir, "build", "myresources", name),
+                Collections.<File>emptySet());
     }
 
     private static JavaSourceGroup sourceGroupOfSourceSet(
@@ -1010,11 +1017,12 @@ public class MultiLevelJavaProjectTest {
 
     private static JavaSourceSet.Builder defaultSourceSetBuilder(
             File projectDir,
-            String name) throws IOException {
+            String name,
+            boolean useGroovy) throws IOException {
 
         JavaSourceSet.Builder sourceSet = new JavaSourceSet.Builder(
                 name,
-                defaultOutputOfSourceSet(projectDir, name));
+                defaultOutputOfSourceSet(projectDir, name, useGroovy));
 
         sourceSet.addSourceGroup(sourceGroupOfSourceSet(projectDir, name, JavaSourceGroupName.JAVA));
         sourceSet.addSourceGroup(sourceGroupOfSourceSet(projectDir, name, JavaSourceGroupName.RESOURCES));
@@ -1030,7 +1038,7 @@ public class MultiLevelJavaProjectTest {
             File projectDir,
             String name) throws IOException {
 
-        JavaSourceSet.Builder builder = defaultSourceSetBuilder(projectDir, name);
+        JavaSourceSet.Builder builder = defaultSourceSetBuilder(projectDir, name, false);
         return builder.create();
     }
 
@@ -1038,7 +1046,7 @@ public class MultiLevelJavaProjectTest {
             File projectDir,
             String name) throws IOException {
 
-        JavaSourceSet.Builder builder = defaultSourceSetBuilder(projectDir, name);
+        JavaSourceSet.Builder builder = defaultSourceSetBuilder(projectDir, name, true);
         builder.addSourceGroup(sourceGroupOfSourceSet(projectDir, name, JavaSourceGroupName.GROOVY));
 
         return builder.create();
