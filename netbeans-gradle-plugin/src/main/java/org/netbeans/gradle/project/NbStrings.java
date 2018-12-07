@@ -601,6 +601,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Tasks");
     }
 
+    public static String getSettingsCategoryJavaModules() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.JavaModules");
+    }
+
     public static String getSettingsCategoryDebugJava() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.DebugJava");
     }

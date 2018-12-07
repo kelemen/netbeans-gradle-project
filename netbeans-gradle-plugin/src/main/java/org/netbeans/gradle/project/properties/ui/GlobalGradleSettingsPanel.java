@@ -18,6 +18,7 @@ import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.java.JavaExtensionDef;
 import org.netbeans.gradle.project.java.properties.JavaDebuggingPanel;
+import org.netbeans.gradle.project.java.properties.JavaModulesPanel;
 import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.openide.awt.HtmlBrowser;
@@ -52,6 +53,10 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Pro
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryTasks(),
                 TaskExecutionPanel.createSettingsPage()));
+        categoriesModel.addElement(new CategoryItem(
+                NbStrings.getSettingsCategoryJavaModules(),
+                JavaModulesPanel.createSettingsPage(false),
+                JavaExtensionDef.EXTENSION_NAME));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryDebugJava(),
                 JavaDebuggingPanel.createSettingsPage(false),

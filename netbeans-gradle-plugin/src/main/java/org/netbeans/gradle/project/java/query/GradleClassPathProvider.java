@@ -44,11 +44,13 @@ import org.netbeans.gradle.project.java.model.JavaProjectDependencyDef;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.ProjectDependencyCandidate;
+import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.ClassPathKey;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.ClassPathType;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.ModuleBaseKeys;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SourceSetClassPathType;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SpecialClassPath;
+import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.SwingPropertyChangeForwarder;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
@@ -286,7 +288,11 @@ implements
                 : null;
     }
 
-    private static ClassPathType translateType(String type) {
+    private JavaProjectProperties javaProperties() {
+        return javaExt.getProjectProperties();
+    }
+
+    private ClassPathType translateType(String type) {
         switch (type) {
             case ClassPath.SOURCE:
                 return ClassPathType.SOURCES;
@@ -295,14 +301,21 @@ implements
                 return ClassPathType.COMPILE;
             case ClassPath.EXECUTE:
                 return ClassPathType.RUNTIME;
-            case JavaClassPathConstants.MODULE_EXECUTE_PATH:
-                return ClassPathType.MODULE_RUNTIME;
-            case JavaClassPathConstants.MODULE_COMPILE_PATH:
-                return ClassPathType.MODULE_COMPILE;
-            case JavaClassPathConstants.MODULE_BOOT_PATH:
-                return ClassPathType.MODULE_BOOT;
             default:
-                return null;
+                if (!javaProperties().allowModules().getActiveValue()) {
+                    return null;
+                }
+
+                switch (type) {
+                    case JavaClassPathConstants.MODULE_EXECUTE_PATH:
+                        return ClassPathType.MODULE_RUNTIME;
+                    case JavaClassPathConstants.MODULE_COMPILE_PATH:
+                        return ClassPathType.MODULE_COMPILE;
+                    case JavaClassPathConstants.MODULE_BOOT_PATH:
+                        return ClassPathType.MODULE_BOOT;
+                    default:
+                        return null;
+                }
         }
     }
 

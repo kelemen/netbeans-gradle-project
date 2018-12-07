@@ -61,6 +61,10 @@ public final class GradleCompilerOptionsQuery implements CompilerOptionsQueryImp
 
     @Override
     public Result getOptions(FileObject file) {
+        if (!javaExt.getProjectProperties().allowModules().getActiveValue()) {
+            return null;
+        }
+
         JavaSourceSet sourceSet = GradleClassPathProvider.findAssociatedSourceSet(javaExt.getCurrentModel(), file);
         if (sourceSet == null) {
             return null;

@@ -46,6 +46,7 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.nodes.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.nodes.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.properties.JavaDebuggingPanel;
+import org.netbeans.gradle.project.java.properties.JavaModulesPanel;
 import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
 import org.netbeans.gradle.project.java.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.java.query.GradleBinaryForSourceQuery;
@@ -145,6 +146,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
                     new JavaProjectContextActions(this),
                     new GradleJavaBuiltInCommands(this),
                     new JavaInitScriptQuery(),
+                    JavaModulesPanel.createCustomizer(true),
                     JavaDebuggingPanel.createDebuggingCustomizer(true));
         });
         this.combinedLookupRef = LazyValues.lazyValue(() -> {
