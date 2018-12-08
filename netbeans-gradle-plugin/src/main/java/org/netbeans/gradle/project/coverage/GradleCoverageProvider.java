@@ -46,8 +46,8 @@ import org.xml.sax.SAXException;
 public class GradleCoverageProvider implements CoverageProvider {
     private static final Logger LOG = Logger.getLogger(GradleCoverageProvider.class.getName());
     private static final Map<String, String> JACOCO_DTD_BY_ID = ImmutableMap.of(
-            "-//JACOCO//DTD Report 1.0//EN", "jacoco-1.0",
-            "-//JACOCO//DTD Report 1.1//EN", "jacoco-1.1");
+            "-//JACOCO//DTD Report 1.0//EN", "jacoco-1.0.dtd",
+            "-//JACOCO//DTD Report 1.1//EN", "jacoco-1.1.dtd");
 
     private final JavaExtension javaExt;
     private final Project p;
