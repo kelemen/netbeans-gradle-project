@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.coverage;
 
+import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,6 +45,9 @@ import org.xml.sax.SAXException;
  */
 public class GradleCoverageProvider implements CoverageProvider {
     private static final Logger LOG = Logger.getLogger(GradleCoverageProvider.class.getName());
+    private static final Map<String, String> JACOCO_DTD_BY_ID = ImmutableMap.of(
+            "-//JACOCO//DTD Report 1.0//EN", "jacoco-1.0",
+            "-//JACOCO//DTD Report 1.1//EN", "jacoco-1.1");
 
     private final JavaExtension javaExt;
     private final Project p;
@@ -176,15 +180,17 @@ public class GradleCoverageProvider implements CoverageProvider {
             org.w3c.dom.Document report;
             InputSource inputSource = new InputSource(r.toURI().toString());
             report = XMLUtil.parse(inputSource, true, false, XMLUtil.defaultErrorHandler(), (publicId, systemId) -> {
+                String dtdResource;
                 if (systemId.equals("http://cobertura.sourceforge.net/xml/coverage-04.dtd")) {
-                    return new InputSource(GradleCoverageProvider.class.getResourceAsStream("coverage-04.dtd")); // NOI18N
-                }
-                else if (publicId.equals("-//JACOCO//DTD Report 1.0//EN")) {
-                    return new InputSource(GradleCoverageProvider.class.getResourceAsStream("jacoco-1.0.dtd"));
+                    dtdResource = "coverage-04.dtd";
                 }
                 else {
-                    return null;
+                    dtdResource = JACOCO_DTD_BY_ID.get(publicId);
                 }
+
+                return dtdResource != null
+                        ? new InputSource(GradleCoverageProvider.class.getResourceAsStream(dtdResource))
+                        : null;
             });
             LOG.log(Level.FINE, "parsed {0}", r);
             return Pair.of(r, report);
