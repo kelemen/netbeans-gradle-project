@@ -5,7 +5,7 @@ apply plugin: 'nb-gradle-maven-publish'
 sourceCompatibility = '1.6'
 targetCompatibility = sourceCompatibility
 
-String gradleVersion = '5.0-rc-4'
+String gradleVersion = '5.0'
 List otherGradleVersions = ['2.6', '2.9', '2.12', '2.14.1', '3.0', '4.10.2']
 
 ext.scriptFile = { String fileName ->
