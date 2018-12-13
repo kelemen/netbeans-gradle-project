@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 OpenIDE-Module: org.netbeans.gradle.project
 OpenIDE-Module-Localizing-Bundle: org/netbeans/gradle/project/Bundle.properties
-OpenIDE-Module-Requires: cnb.org.netbeans.modules.groovy.kit,
-  cnb.org.netbeans.modules.java.j2seproject
+OpenIDE-Module-Requires: cnb.org.netbeans.modules.java.j2seproject
+OpenIDE-Module-Recommends: cnb.org.netbeans.modules.groovy.kit
 OpenIDE-Module-Install: org/netbeans/gradle/project/NbGradleModuleInstall.class
 OpenIDE-Module-Specification-Version: 1.3.0.0.1
 OpenIDE-Module-Java-Dependencies: Java > 1.7
