@@ -1,4 +1,4 @@
 allprojects {
     group = 'com.github.kelemen'
-    version = '1.4.3'
+    version = '1.4.4'
 }
