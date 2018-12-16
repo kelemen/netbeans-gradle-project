@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.coverage;
 
+import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
