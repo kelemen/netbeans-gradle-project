@@ -58,6 +58,7 @@ nbm {
         add 'org.jtrim2.**'
     }
 
+    requires('cnb.org.netbeans.modules.groovy.kit')
     requires('cnb.org.netbeans.modules.java.j2seproject')
 
     keyStore {
