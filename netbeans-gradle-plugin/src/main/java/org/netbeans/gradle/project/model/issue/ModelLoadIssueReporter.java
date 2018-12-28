@@ -265,7 +265,11 @@ public final class ModelLoadIssueReporter {
             cause = cause.getCause();
         }
 
-        return Exceptions.getActualMessage(rootCause)
+        String message = Exceptions.getActualMessage(rootCause);
+        if (message == null) {
+            return "?";
+        }
+        return message
                 .replace("\r\n", " ")
                 .replace('\r', ' ')
                 .replace('\n', ' ');
