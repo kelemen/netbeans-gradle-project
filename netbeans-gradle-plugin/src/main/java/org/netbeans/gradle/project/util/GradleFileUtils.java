@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jtrim2.event.ListenerRef;
 import org.jtrim2.property.PropertySource;
 import org.netbeans.gradle.project.api.config.PropertyReference;
@@ -108,6 +110,47 @@ public final class GradleFileUtils {
     }
 
     public static String binaryToBaseName(FileObject binaryPath) {
+        // If the old cache format is used then the Gradle cache looks like this:
+        //
+        // ...KNOWN_DIR\\HASH_OF_SOURCE\\binary-sources.XXX
+        // ...KNOWN_DIR\HASH_OF_JAVADOC\\binary-javadoc.XXX
+        // ...KNOWN_DIR\\HASH_OF_BINARY\\binary.XXX
+        //
+        // where KNOWN_DIR can be either "bundle" or "jar".
+        //
+        // The new cache directory of Gradle looks like this:
+        //
+        // ...BINARY_NAME\\BINARY_VERSION\\HASH_OF_SOURCE\\binary-sources.XXX
+        // ...BINARY_NAME\\BINARY_VERSION\\HASH_OF_JAVADOC\\binary-javadoc.XXX
+        // ...BINARY_NAME\\BINARY_VERSION\\HASH_OF_BINARY\\binary.XXX
+        //
+        // In some cases there are multiple binaries:
+        // ...BINARY_NAME\\BINARY_VERSION\\HASH_OF_BINARY\\binary-win.XXX
+        //
+        // where binary is the string BINARY_NAME-BINARY_VERSION
+        //
+        // If the binary is in a local maven repo, then Gradle does not cache
+        // In this case, the hash directory is missing from the above. ie.
+        // ...BINARY_NAME\\BINARY_VERSION\\binary-javadoc.XXX
+        // ...BINARY_NAME\\BINARY_VERSION\\binary.XXX
+        // ...BINARY_NAME\\BINARY_VERSION\\binary-win.XXX (optional)
+        //
+        // If the version is a snapshot (ends in -SNAPSHOT) and it's in a local maven
+        // repository, then binary is not BINARY_NAME-BINARY_VERSION. 
+        // Instead it's:
+        //
+        // BINARY_NAME-BINARY_VERSION_WITHOUT_SNAPSHOT-DATE-SNAPSHOT_NUM
+        //
+        // for example:
+        // foo/1.2-SNAPSHOT/foo-1.2-20110506.110000-3.jar
+        // foo/1.2-SNAPSHOT/foo-1.2-20110506.110000-3-sources.jar
+        // foo/1.2-SNAPSHOT/foo-1.2-20110506.110000-3-win.jar
+        // foo/1.2-SNAPSHOT/foo-1.2-20110506.110000-3-javadoc.jar
+        //
+        // where the snapshot was the 3rd snapshot for this version, 
+        // and it was generated at 2011/05/06 at 11:00:00)
+        
+
         FileObject hashDir = binaryPath.getParent();
         if (hashDir == null) {
             return binaryPath.getName();
@@ -118,6 +161,27 @@ public final class GradleFileUtils {
             return binaryPath.getName();
         }
 
+        //File stored in local maven repository, and version is snapshot
+        if (hashDir.getNameExt().endsWith("-SNAPSHOT")) {
+            String mavenVersion = hashDir.getNameExt().substring(0, hashDir.getNameExt().length() - "-SNAPSHOT".length());
+            String mavenLocalName = binDir.getNameExt() + "-" + mavenVersion;
+            if (binaryPath.getNameExt().startsWith(mavenLocalName)) {
+                Pattern p = Pattern.compile(Pattern.quote(mavenLocalName) + "-(\\d{8}\\.\\d{6}-[\\d]+)");
+                Matcher m = p.matcher(binaryPath.getName());
+                if (m.find()) {
+                    String dateTimeSnapshot = m.group(1);
+                    return mavenLocalName + "-" + dateTimeSnapshot;
+                }
+            }
+        }
+
+        //File stored in local maven repository
+        String mavenLocalName = binDir.getNameExt() + "-" + hashDir.getNameExt();
+        if (binaryPath.getNameExt().startsWith(mavenLocalName)) {
+            return mavenLocalName;
+        }
+
+        //File is in the gradle cache, and is either the old format or new format
         if (GradleFileUtils.isKnownBinaryDirName(binDir.getNameExt())) {
             return binaryPath.getName();
         }

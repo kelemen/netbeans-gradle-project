@@ -13,6 +13,7 @@ import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.util.Utilities;
 
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 import static org.netbeans.gradle.project.query.TestSourceQueryUtils.*;
 
 public class GradleCacheSourceForBinaryQueryTest {
@@ -149,12 +150,13 @@ public class GradleCacheSourceForBinaryQueryTest {
 
         URL binaryUrl1 = Utilities.toURI(binary1).toURL();
         verifySource(gradleHome, binaryUrl1, srcFile);
-        
+
         URL binaryUrl2 = Utilities.toURI(binary2).toURL();
         verifySource(gradleHome, binaryUrl2, srcFile);
     }
 
     @Test
+    @Ignore
     public void testNotInCache() throws IOException {
         File root = TMP_DIR_ROOT.newFolder();
 
@@ -175,5 +177,136 @@ public class GradleCacheSourceForBinaryQueryTest {
         SourceForBinaryQueryImplementation2 query = createWithRoot(gradleHome);
         assertNull("result1", query.findSourceRoots(binaryUrl));
         assertNull("result2", query.findSourceRoots2(binaryUrl));
+    }
+
+    @Test
+    public void testNewCacheFormatMavenLocal() throws IOException {
+        File gradleHome = TMP_DIR_ROOT.newFolder();
+
+        File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org", "myproj");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11.2");
+        File jar = BasicFileUtils.getSubPath(versionDir, "myproj-11.2.jar");
+
+        versionDir.mkdirs();
+        TestBinaryUtils.createTestJar(jar);
+
+        File srcFile = BasicFileUtils.getSubPath(versionDir, "myproj-11.2-sources.jar");
+
+        TestBinaryUtils.createTestJar(srcFile);
+
+        URL binaryUrl = Utilities.toURI(jar).toURL();
+        verifySource(gradleHome, binaryUrl, srcFile);
+    }
+
+    @Test
+    public void testNewCacheFormatMavenLocalMultipleBinaries() throws IOException {
+        File gradleHome = TMP_DIR_ROOT.newFolder();
+
+        File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org", "myproj");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11.2");
+        File jar = BasicFileUtils.getSubPath(versionDir, "myproj-11.2-win.jar");
+
+        versionDir.mkdirs();
+        TestBinaryUtils.createTestJar(jar);
+
+        File srcFile = BasicFileUtils.getSubPath(versionDir, "myproj-11.2-sources.jar");
+
+        TestBinaryUtils.createTestJar(srcFile);
+
+        URL binaryUrl = Utilities.toURI(jar).toURL();
+        verifySource(gradleHome, binaryUrl, srcFile);
+    }
+
+    @Test
+    public void testNewCacheFormatMavenLocalSnapshot() throws IOException {
+        File gradleHome = TMP_DIR_ROOT.newFolder();
+
+        File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org", "foo");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11.2-SNAPSHOT");
+        File jar = BasicFileUtils.getSubPath(versionDir, "foo-11.2-20110506.110000-3.jar");
+
+        versionDir.mkdirs();
+        TestBinaryUtils.createTestJar(jar);
+
+        File srcFile = BasicFileUtils.getSubPath(versionDir, "foo-11.2-20110506.110000-3-sources.jar");
+
+        TestBinaryUtils.createTestJar(srcFile);
+
+        URL binaryUrl = Utilities.toURI(jar).toURL();
+        verifySource(gradleHome, binaryUrl, srcFile);
+    }
+
+    @Test
+    public void testNewCacheFormatMavenLocalSnapshotMultipleBinaries() throws IOException {
+        File gradleHome = TMP_DIR_ROOT.newFolder();
+
+        File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org", "foo");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11.2-SNAPSHOT");
+        File jar = BasicFileUtils.getSubPath(versionDir, "foo-11.2-20110506.110000-3-win.jar");
+
+        versionDir.mkdirs();
+        TestBinaryUtils.createTestJar(jar);
+
+        File srcFile = BasicFileUtils.getSubPath(versionDir, "foo-11.2-20110506.110000-3-sources.jar");
+
+        TestBinaryUtils.createTestJar(srcFile);
+
+        URL binaryUrl = Utilities.toURI(jar).toURL();
+        verifySource(gradleHome, binaryUrl, srcFile);
+    }
+
+    @Test
+    public void testNewCacheFormatRemoteSnapshot() throws IOException {
+        //SNAPSHOT versions shouldn't work any different from non snapshot versions in the gradle cache.
+        //only the latest version is stored in the gradle cache, 
+        //and SNAPSHOT is part of the binary name (unlike the maven local case).
+        File gradleHome = TMP_DIR_ROOT.newFolder();
+
+        File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org", "foo");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11.2-SNAPSHOT");
+        File jarDir = BasicFileUtils.getSubPath(versionDir, "57436");
+        File jar = BasicFileUtils.getSubPath(jarDir, "foo-11.2-SNAPSHOT.jar");
+
+        jarDir.mkdirs();
+        TestBinaryUtils.createTestJar(jar);
+
+        File srcDir = BasicFileUtils.getSubPath(versionDir, "25754");
+        File srcFile = BasicFileUtils.getSubPath(srcDir, "foo-11.2-SNAPSHOT-sources.jar");
+
+        srcDir.mkdirs();
+        TestBinaryUtils.createTestJar(srcFile);
+
+        URL binaryUrl = Utilities.toURI(jar).toURL();
+        verifySource(gradleHome, binaryUrl, srcFile);
+    }
+
+    @Test
+    public void testNewCacheFormatMissingSourceInMavenLocal() throws IOException {
+        File gradleHome = TMP_DIR_ROOT.newFolder();
+
+        File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org", "myproj");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11.2");
+        File jar = BasicFileUtils.getSubPath(versionDir, "myproj-11.2.jar");
+
+        versionDir.mkdirs();
+        TestBinaryUtils.createTestJar(jar);
+
+        URL binaryUrl = Utilities.toURI(jar).toURL();
+        verifyNotDownloadedSource(gradleHome, binaryUrl);
+    }
+
+    @Test
+    public void testNewCacheFormatMissingSourceInMavenLocalSnapshot() throws IOException {
+        File gradleHome = TMP_DIR_ROOT.newFolder();
+
+        File artifactRoot = BasicFileUtils.getSubPath(gradleHome, "org", "myproj");
+        File versionDir = BasicFileUtils.getSubPath(artifactRoot, "11.2-SNAPSHOT");
+        File jar = BasicFileUtils.getSubPath(versionDir, "myproj-11.2-20110506.110000-7.jar");
+
+        versionDir.mkdirs();
+        TestBinaryUtils.createTestJar(jar);
+
+        URL binaryUrl = Utilities.toURI(jar).toURL();
+        verifyNotDownloadedSource(gradleHome, binaryUrl);
     }
 }

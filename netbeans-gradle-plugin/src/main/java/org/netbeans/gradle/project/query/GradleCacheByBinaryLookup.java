@@ -45,11 +45,6 @@ public final class GradleCacheByBinaryLookup {
             return null;
         }
 
-        FileObject cacheHome = FileUtil.toFileObject(gradleUserHome);
-        if (cacheHome == null || !FileUtil.isParentOf(cacheHome, binaryRootObj)) {
-            return null;
-        }
-
         FileObject hashDir = binaryRootObj.getParent();
         if (hashDir == null) {
             return null;
@@ -66,6 +61,9 @@ public final class GradleCacheByBinaryLookup {
         }
 
         String sourceFileName = binaryToSearchedEntry.apply(binaryRootObj);
+        if (sourceFileName == null) {
+            return null;
+        }
         if (GradleFileUtils.isKnownBinaryDirName(binDir.getNameExt())) {
             return new OldFormatCacheResult(artifactRoot, searchedPackaging, sourceFileName);
         }
