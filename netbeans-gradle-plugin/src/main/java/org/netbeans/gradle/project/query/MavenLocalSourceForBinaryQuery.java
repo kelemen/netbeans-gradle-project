@@ -22,6 +22,10 @@ public final class MavenLocalSourceForBinaryQuery extends AbstractSourceForBinar
     @Override
     protected Result tryFindSourceRoot(File binaryRoot) {
         final FileObject binaryRootObj = FileUtil.toFileObject(binaryRoot);
+        if (binaryRootObj == null) {
+            return null;
+        }
+        
         String sourceName = MavenFileUtils.binaryToSourceName(binaryRootObj);
         if (sourceName == null) {
             return null;

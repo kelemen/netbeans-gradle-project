@@ -41,20 +41,24 @@ public final class MavenLocalJavadocForBinaryQuery extends AbstractJavadocForBin
             //       over sources.
             return null;
         }
-        
+
         final FileObject binaryRootObj = FileUtil.toFileObject(binaryRoot);
+        if (binaryRootObj == null) {
+            return null;
+        }
+
         String javadocName = MavenFileUtils.binaryToJavadocName(binaryRootObj);
         if (javadocName == null) {
             return null;
         }
-        
+
         File binaryRootParent = binaryRoot.getParentFile();
         File javadocFile = new File(binaryRootParent, javadocName);
         FileObject javadocFileObj = FileUtil.toFileObject(javadocFile);
         if (javadocFileObj == null) {
             return null;
         }
-        
+
         FileObject asArchive = NbFileUtils.asArchiveOrDir(javadocFileObj);
         if (asArchive == null) {
             return null;
