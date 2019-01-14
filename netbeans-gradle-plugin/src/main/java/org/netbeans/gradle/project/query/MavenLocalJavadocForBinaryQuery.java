@@ -14,7 +14,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 
 @ServiceProviders({
-    @ServiceProvider(service = JavadocForBinaryQueryImplementation.class, position = 70)})
+    @ServiceProvider(service = JavadocForBinaryQueryImplementation.class)})
 public final class MavenLocalJavadocForBinaryQuery extends AbstractJavadocForBinaryQuery {
 
     final static MavenLocalSourceForBinaryQuery SOURCE_QUERY;

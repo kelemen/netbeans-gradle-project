@@ -5,8 +5,6 @@ import java.net.URL;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.api.java.queries.BinaryForSourceQuery.Result;
-import org.netbeans.gradle.project.util.GradleFileUtils;
-import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.netbeans.gradle.project.util.MavenFileUtils;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
