@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.Action;
-import javax.swing.JOptionPane;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
@@ -21,6 +20,7 @@ import org.netbeans.gradle.project.tasks.TaskOutputKey;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.ImageUtilities;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
@@ -69,12 +69,11 @@ public final class IOTabs {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            NotifyDescriptor d = new NotifyDescriptor.Confirmation(NbStrings.getConfirmStopTask(tabCaption),
+                    NbStrings.getConfirmStopTaskTitle(),
+                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.QUESTION_MESSAGE);
             if (!CommonGlobalSettings.getDefault().askBeforeCancelExec().getActiveValue()
-                    || JOptionPane.showConfirmDialog(null,
-                            NbStrings.getConfirmStopTask(tabCaption),
-                            NbStrings.getConfirmStopTaskTitle(),
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                    || DialogDisplayer.getDefault().notify(d) == NotifyDescriptor.YES_OPTION) {
                 cancelCurrentlyRunning();
             }
         }

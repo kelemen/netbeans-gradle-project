@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Supplier;
 import javax.swing.AbstractAction;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
@@ -15,6 +14,8 @@ import org.netbeans.gradle.project.script.CommonScripts;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -76,7 +77,9 @@ public final class OpenAlwaysFileAction extends AbstractAction {
         // TODO: I18N
         String message = "Cannot create file: " + fileRef.get();
         String title = "File open error";
-        JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
+        NotifyDescriptor d = new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE);
+        d.setTitle(title);
+        DialogDisplayer.getDefault().notify(d);
     }
 
     private void openFileNow() {
