@@ -28,10 +28,7 @@ import org.jtrim2.cancel.Cancellation;
 import org.jtrim2.cancel.CancellationToken;
 import org.jtrim2.concurrent.AsyncTasks;
 import org.jtrim2.executor.CancelableFunction;
-import static org.jtrim2.property.PropertyFactory.*;
 import org.jtrim2.property.PropertySource;
-import static org.jtrim2.property.swing.AutoDisplayState.*;
-import static org.jtrim2.property.swing.SwingProperties.*;
 import org.jtrim2.swing.concurrent.SwingExecutors;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -46,7 +43,6 @@ import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.AtomicIntProperty;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
-import static org.netbeans.gradle.project.properties.NbProperties.*;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.GlassPanes;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
@@ -54,6 +50,11 @@ import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+
+import static org.jtrim2.property.PropertyFactory.*;
+import static org.jtrim2.property.swing.AutoDisplayState.*;
+import static org.jtrim2.property.swing.SwingProperties.*;
+import static org.netbeans.gradle.project.properties.NbProperties.*;
 
 @SuppressWarnings("serial")
 public class ProfileBasedPanel extends javax.swing.JPanel {
@@ -548,7 +549,8 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
         NotifyDescriptor d = new NotifyDescriptor.Confirmation(
                 NbStrings.getConfirmRemoveProfile(profileItem.toString()),
-                NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+                NotifyDescriptor.YES_NO_OPTION,
+                NotifyDescriptor.WARNING_MESSAGE);
         if(DialogDisplayer.getDefault().notify(d) == NotifyDescriptor.NO_OPTION) {
             return;
         }
