@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
-import javax.swing.JOptionPane;
 import org.jtrim2.cancel.Cancellation;
 import org.jtrim2.cancel.CancellationController;
 import org.jtrim2.cancel.CancellationSource;
@@ -20,6 +19,8 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -60,7 +61,9 @@ public final class DeleteProjectAction extends AbstractAction {
             LOGGER.log(Level.INFO, "There was an error while trying to remove the project.", ex);
             String title = NbStrings.getErrorDeleteProjectTitle();
             String message = NbStrings.getErrorDeleteProject(ex);
-            JOptionPane.showMessageDialog(null, message, title, JOptionPane.WARNING_MESSAGE);
+            NotifyDescriptor d = new NotifyDescriptor.Message(message, NotifyDescriptor.WARNING_MESSAGE);
+            d.setTitle(title);
+            DialogDisplayer.getDefault().notify(d);
         }
     }
 
@@ -74,10 +77,10 @@ public final class DeleteProjectAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Object[] answers = {NbStrings.getYesOption(), NbStrings.getNoOption()};
         String message = NbStrings.getConfirmDeleteProject(project.getDisplayName());
         String title = NbStrings.getConfirmDeleteProjectTitle();
-        if (JOptionPane.showOptionDialog(null, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, answers, answers[1]) != 0) {
+	NotifyDescriptor d = new NotifyDescriptor.Confirmation(message, title, NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+        if(DialogDisplayer.getDefault().notify(d) == NotifyDescriptor.NO_OPTION) {
             return;
         }
 

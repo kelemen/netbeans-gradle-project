@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.jtrim2.cancel.Cancellation;
 import org.jtrim2.concurrent.AsyncTasks;
@@ -29,6 +28,8 @@ import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.netbeans.gradle.project.util.StringUtils;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -260,12 +261,8 @@ public final class BuildScriptsNode extends AbstractNode {
         private void confirmAndCreateProject(final Path buildSrcDir) {
             String message = NbStrings.getConfirmCreateBuildSrcMessage();
             String title = NbStrings.getConfirmCreateBuildSrcTitle();
-            boolean confirmed = JOptionPane.showConfirmDialog(null,
-                    message,
-                    title,
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
-            if (confirmed) {
+            NotifyDescriptor d = new NotifyDescriptor.Confirmation(message, title, NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.QUESTION_MESSAGE);
+            if (DialogDisplayer.getDefault().notify(d) == NotifyDescriptor.YES_OPTION) {
                 NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (cancelToken) -> {
                     createBuildSrc(buildSrcDir);
                     openProjectNow(buildSrcDir);
