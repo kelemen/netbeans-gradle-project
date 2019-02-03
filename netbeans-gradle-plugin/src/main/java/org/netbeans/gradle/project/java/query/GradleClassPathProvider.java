@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -50,7 +52,6 @@ import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.Cl
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.ModuleBaseKeys;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SourceSetClassPathType;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SpecialClassPath;
-import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.SwingPropertyChangeForwarder;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
@@ -64,6 +65,7 @@ import org.netbeans.modules.java.api.common.classpath.ClassPathSupportFactory;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
+import org.netbeans.spi.java.classpath.FlaggedClassPathImplementation;
 import org.netbeans.spi.java.classpath.PathResourceImplementation;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
@@ -75,11 +77,14 @@ implements
         ProjectInitListener,
         JavaModelChangeListener {
 
+    private static final Set<ClassPath.Flag> FLAGS_INCOMPLETE = Collections.unmodifiableSet(EnumSet.of(ClassPath.Flag.INCOMPLETE));
+
     private final JavaExtension javaExt;
     private final AtomicReference<Map<ClassPathKey, List<PathResourceImplementation>>> classpathResourcesRef;
     private final ConcurrentMap<ClassPathKey, ClassPath> classpaths;
 
     private final PropertyChangeSupport changes;
+    private final AtomicBoolean modelLoadedOnce;
     private final AtomicReference<ProjectPlatform> currentPlatformRef;
 
     private final Supplier<ProjectIssueRef> infoRefRef;
@@ -87,7 +92,7 @@ implements
     private final Supplier<ClassPath> allSourcesClassPathRef;
     private volatile List<PathResourceImplementation> allSources;
 
-    private volatile boolean loadedOnce;
+    private final AtomicBoolean loadedOnce;
 
     private final UpdateTaskExecutor classpathUpdateExecutor;
     private final UpdateTaskExecutor changesNotifier;
@@ -103,7 +108,8 @@ implements
             ProjectIssueManager infoManager = javaExt.getOwnerProjectLookup().lookup(ProjectIssueManager.class);
             return infoManager.createIssueRef();
         });
-        this.loadedOnce = false;
+        this.modelLoadedOnce = new AtomicBoolean(false);
+        this.loadedOnce = new AtomicBoolean(false);
         this.scriptFileProviderRef = LazyValues.lazyValue(() -> javaExt.getProject().getLookup().lookup(ScriptFileProvider.class));
 
         this.classpathResourcesRef = new AtomicReference<>(Collections.<ClassPathKey, List<PathResourceImplementation>>emptyMap());
@@ -172,6 +178,12 @@ implements
     @Override
     public void onModelChange() {
         scheduleReloadPathResources();
+
+        if (javaExt.hasEverBeenLoaded()) {
+            if (modelLoadedOnce.compareAndSet(false, true)) {
+                tryNotifyFlagsChange();
+            }
+        }
     }
 
     private ProjectPlatform getCurrentPlatform() {
@@ -402,7 +414,19 @@ implements
             });
         }
 
-        loadedOnce = true;
+        if (loadedOnce.compareAndSet(false, true)) {
+            tryNotifyFlagsChange();
+        }
+    }
+
+    private boolean isCompleteClasspath() {
+        return loadedOnce.get() && modelLoadedOnce.get();
+    }
+
+    private void tryNotifyFlagsChange() {
+        if (isCompleteClasspath()) {
+            changes.firePropertyChange(FlaggedClassPathImplementation.PROP_FLAGS, null, null);
+        }
     }
 
     private <T> ClassPathSupport.Selector getClassPathSelector(
@@ -502,7 +526,7 @@ implements
             return result;
         }
 
-        if (!loadedOnce) {
+        if (!loadedOnce.get()) {
             loadPathResources(javaExt.getCurrentModel());
         }
 
@@ -511,7 +535,7 @@ implements
         return classpaths.get(classPathKey);
     }
 
-    private class AllSourcesClassPaths implements ClassPathImplementation {
+    private class AllSourcesClassPaths implements FlaggedClassPathImplementation {
         @Override
         public List<PathResourceImplementation> getResources() {
             return allSources;
@@ -526,9 +550,16 @@ implements
         public final void removePropertyChangeListener(PropertyChangeListener listener) {
             changes.removePropertyChangeListener(listener);
         }
+
+        @Override
+        public Set<ClassPath.Flag> getFlags() {
+            return isCompleteClasspath()
+                    ? Collections.emptySet()
+                    : FLAGS_INCOMPLETE;
+        }
     }
 
-    private class GradleClassPaths implements ClassPathImplementation {
+    private class GradleClassPaths implements FlaggedClassPathImplementation {
         private final ClassPathKey classPathKey;
 
         public GradleClassPaths(ClassPathKey classPathKey) {
@@ -552,6 +583,13 @@ implements
         @Override
         public void removePropertyChangeListener(PropertyChangeListener listener) {
             changes.removePropertyChangeListener(listener);
+        }
+
+        @Override
+        public Set<ClassPath.Flag> getFlags() {
+            return modelLoadedOnce.get()
+                    ? Collections.emptySet()
+                    : FLAGS_INCOMPLETE;
         }
     }
 
