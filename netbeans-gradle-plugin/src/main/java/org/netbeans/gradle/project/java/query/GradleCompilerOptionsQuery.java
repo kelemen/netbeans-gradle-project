@@ -1,5 +1,8 @@
 package org.netbeans.gradle.project.java.query;
 
+import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.ModuleTree;
+import com.sun.source.tree.Tree;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -66,7 +69,7 @@ public final class GradleCompilerOptionsQuery implements CompilerOptionsQueryImp
         }
 
         JavaSourceSet sourceSet = GradleClassPathProvider.findAssociatedSourceSet(javaExt.getCurrentModel(), file);
-        if (sourceSet == null) {
+        if (sourceSet == null || JavaSourceSet.NAME_MAIN.equals(sourceSet.getName())) {
             return null;
         }
 
